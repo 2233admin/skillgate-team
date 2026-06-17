@@ -1,6 +1,6 @@
-# 入门指南（小白向）
+# 第一次上手
 
-这份文档配合 [README](../README.md)，按「第一次用」的顺序说明 Skillgate Team。
+配合 [README](../README.md) 使用。如果你已经 clone 完仓库，按下面三条路径选一条走下去就行。
 
 <p align="center">
   <img src="images/architecture.svg" alt="架构示意" width="720" />
@@ -8,21 +8,21 @@
 
 ---
 
-## 概念（30 秒）
+## 先弄清五个词
 
-| 名词 | 是什么 |
-|------|--------|
-| **团队目录** | 本仓库：`skills/` + `profiles/` + `skills.lock.yaml` |
-| **Profile** | 一份 YAML，列出要装哪些技能、给哪些 Agent（如 `quant`） |
-| **Apply** | 按 profile 把技能链接/复制到本机 Agent 目录 |
-| **Doctor** | 检查本机安装是否还和 profile 一致 |
-| **Lock** | `skills.lock.yaml` 里每个技能的哈希，防止目录被悄悄改掉 |
+| 名词 | 含义 |
+|------|------|
+| **团队目录** | 就是这个仓库：`skills/`、`profiles/`、`skills.lock.yaml` |
+| **Profile** | 一份 YAML，写死「装哪些技能、发给哪些 Agent」——默认用 `quant` |
+| **Apply** | 按 profile 把技能链到本机 `~/.claude/skills` 等目录 |
+| **Doctor** | 看本机实际安装和 profile 差在哪 |
+| **Lock** | `skills.lock.yaml` 里的内容哈希；目录被人改过，verify 会对不上 |
 
-你不需要会写 YAML 也能用：选好 profile，点 **Apply** 即可。
+不用会写 YAML。日常使用者：选 profile → Apply → 完事。
 
 ---
 
-## 路径 A：桌面版（最省心）
+## 路径 A：桌面版
 
 ### 准备
 
@@ -144,7 +144,7 @@ bun run smoke-team
 
 ## 还是卡住？
 
-到 GitHub 用 **[求助 / 使用问题](https://github.com/2233admin/skillgate-team/issues/new?template=help_request.yml)** 模板发帖，附上：
+用 **[求助 / 使用问题](https://github.com/2233admin/skillgate-team/issues/new?template=help_request.yml)** 模板发帖。把下面几项贴全，我们好对症：
 
 - 操作系统与 Node/Bun 版本
 - 用的是 CLI / TUI / Desktop
