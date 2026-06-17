@@ -20,7 +20,6 @@
 
 Skillgate Team 把技能收进**一个 Git 仓库**。维护者改 `profiles/`，大家 `git pull` 再 Apply，本机四个 Agent 目录就对齐了。不用在群里喊「谁没更新 skill」。
 
-> 文档结构借鉴 [huashu-skills](https://github.com/alchaincyf/huashu-skills)；视觉遵循 [Linear](https://linear.app) 式工程工具审美与第一性原理，见 [docs/DESIGN.md](docs/DESIGN.md)。
 
 ---
 
