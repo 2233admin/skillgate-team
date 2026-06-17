@@ -93,7 +93,50 @@ const MIGRATIONS: Migration[] = [
       INSERT OR IGNORE INTO schema_version VALUES (4);
     `,
   },
+  {
+    version: 5,
+    up: `
+      INSERT OR IGNORE INTO schema_version VALUES (5);
+    `,
+  },
 ]
+
+const CACHED_SKILLS_COLUMN_PATCHES: Array<{ name: string; ddl: string }> = [
+  { name: "project_name", ddl: "project_name TEXT" },
+  {
+    name: "has_supporting_files",
+    ddl: "has_supporting_files INTEGER NOT NULL DEFAULT 0",
+  },
+  {
+    name: "supporting_files",
+    ddl: "supporting_files TEXT NOT NULL DEFAULT '[]'",
+  },
+  { name: "installed_at", ddl: "installed_at TEXT" },
+  { name: "updated_at", ddl: "updated_at TEXT" },
+]
+
+function tableHasColumn(db: Database, table: string, column: string): boolean {
+  const rows = db
+    .query(`PRAGMA table_info(${table})`)
+    .all() as Array<{ name: string }>
+  return rows.some((row) => row.name === column)
+}
+
+function patchCachedSkillsColumns(db: Database): void {
+  try {
+    db.query(
+      "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'cached_skills'",
+    ).get()
+  } catch {
+    return
+  }
+
+  for (const patch of CACHED_SKILLS_COLUMN_PATCHES) {
+    if (!tableHasColumn(db, "cached_skills", patch.name)) {
+      db.exec(`ALTER TABLE cached_skills ADD COLUMN ${patch.ddl}`)
+    }
+  }
+}
 
 function getCurrentVersion(db: Database): number {
   try {
@@ -110,6 +153,12 @@ export function runMigrations(db: Database): void {
   for (const migration of MIGRATIONS) {
     if (migration.version > current) {
       db.exec(migration.up)
+      if (migration.version === 5) {
+        patchCachedSkillsColumns(db)
+      }
     }
+  }
+  if (getCurrentVersion(db) >= 2) {
+    patchCachedSkillsColumns(db)
   }
 }
