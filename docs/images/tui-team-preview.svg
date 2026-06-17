@@ -1,24 +1,48 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" role="img" aria-label="Skillgate TUI Team">
-  <rect width="720" height="420" rx="8" fill="#0C0C0D"/>
-  <rect x="0" y="0" width="720" height="32" fill="#141516"/>
-  <line x1="0" y1="32" x2="720" y2="32" stroke="#2E2E32"/>
-  <text x="16" y="21" fill="#8A8F98" font-family="ui-monospace, Consolas, monospace" font-size="12">skillgate tui · Team</text>
+  <defs>
+    <pattern id="tg" width="16" height="16" patternUnits="userSpaceOnUse">
+      <path d="M16 0H0V16" fill="none" stroke="#fff" stroke-opacity="0.04"/>
+    </pattern>
+  </defs>
 
-  <rect x="0" y="32" width="720" height="28" fill="#1C1C1F"/>
-  <text x="16" y="50" fill="#F59E0B" font-family="ui-monospace, Consolas, monospace" font-size="11">catalog behind  0.1.0 → 0.1.1   r refresh</text>
+  <rect width="720" height="420" fill="#0A0A0C"/>
+  <rect width="720" height="420" fill="url(#tg)"/>
+  <polygon points="0,0 720,0 720,32 0,28" fill="#141418"/>
+  <line x1="0" y1="32" x2="720" y2="32" stroke="#2A2A30"/>
+  <text x="16" y="21" fill="#57534E" font-family="ui-monospace, Consolas, monospace" font-size="11" letter-spacing="0.08em">skillgate tui · TEAM</text>
+  <circle cx="688" cy="16" r="4" fill="#F5A524">
+    <animate attributeName="opacity" values="1;0.3;1" dur="1.8s" repeatCount="indefinite"/>
+  </circle>
 
-  <rect x="16" y="72" width="688" height="92" rx="4" fill="#141516" stroke="#2E2E32"/>
-  <text x="28" y="94" fill="#5E6AD2" font-family="ui-monospace, Consolas, monospace" font-size="12" font-weight="bold">context</text>
-  <text x="28" y="116" fill="#6B6F76" font-family="ui-monospace, Consolas, monospace" font-size="11">root   ~/.skillgate-team</text>
-  <text x="28" y="134" fill="#6B6F76" font-family="ui-monospace, Consolas, monospace" font-size="11">profile quant (linked_project)</text>
-  <text x="28" y="152" fill="#6B6F76" font-family="ui-monospace, Consolas, monospace" font-size="11">agents claude-code · codex-cli · cursor · grok</text>
+  <polygon points="0,32 720,36 720,64 0,60" fill="#C41E3A" fill-opacity="0.35"/>
+  <text x="16" y="52" fill="#F5A524" font-family="ui-monospace, Consolas, monospace" font-size="11" font-weight="bold">CATALOG BEHIND · 0.1.0 → 0.1.1 · r refresh</text>
 
-  <text x="16" y="188" fill="#5E6AD2" font-family="ui-monospace, Consolas, monospace" font-size="12" font-weight="bold">profiles</text>
-  <text x="28" y="210" fill="#F7F8F8" font-family="ui-monospace, Consolas, monospace" font-size="11">▸ quant    12 skills · k-atana quant workflow</text>
-  <text x="28" y="228" fill="#6B6F76" font-family="ui-monospace, Consolas, monospace" font-size="11">  default   8 skills</text>
+  <g transform="translate(16, 76)">
+    <polygon points="0,0 688,4 684,96 0,92" fill="#141418" stroke="#2EC4B6" stroke-width="1"/>
+    <text x="12" y="24" fill="#2EC4B6" font-family="ui-monospace, Consolas, monospace" font-size="12" font-weight="bold">CONTEXT</text>
+    <text x="12" y="46" fill="#57534E" font-family="ui-monospace, Consolas, monospace" font-size="11">root   ~/.skillgate-team</text>
+    <text x="12" y="64" fill="#57534E" font-family="ui-monospace, Consolas, monospace" font-size="11">profile quant (linked_project)</text>
+    <text x="12" y="82" fill="#78716C" font-family="ui-monospace, Consolas, monospace" font-size="11">agents claude-code · codex-cli · cursor · grok</text>
+  </g>
 
-  <rect x="16" y="248" width="688" height="36" fill="#1C1C1F" stroke="#2E2E32"/>
-  <text x="28" y="270" fill="#8A8F98" font-family="ui-monospace, Consolas, monospace" font-size="11">j/k select · a apply · d doctor · ? help</text>
+  <text x="16" y="192" fill="#F5A524" font-family="ui-monospace, Consolas, monospace" font-size="12" font-weight="bold" letter-spacing="0.1em">PROFILES</text>
+  <text x="28" y="214" fill="#E7E5E4" font-family="ui-monospace, Consolas, monospace" font-size="11">▸ quant    12 skills · k-atana quant workflow</text>
+  <rect x="24" y="200" width="4" height="20" fill="#2EC4B6">
+    <animate attributeName="opacity" values="1;0.2;1" dur="1s" repeatCount="indefinite"/>
+  </rect>
+  <text x="28" y="232" fill="#57534E" font-family="ui-monospace, Consolas, monospace" font-size="11">  default   8 skills</text>
 
-  <text x="16" y="400" fill="#6B6F76" font-family="ui-monospace, Consolas, monospace" font-size="10">4 team · a apply · Shift+A lock · l verify · r drift</text>
+  <polygon points="16,248 704,252 704,288 16,284" fill="#141418" stroke="#2A2A30"/>
+  <text x="28" y="272" fill="#78716C" font-family="ui-monospace, Consolas, monospace" font-size="11">j/k select · a apply · d doctor · ? help</text>
+
+  <line x1="16" y1="304" x2="704" y2="304" stroke="#2A2A30" stroke-dasharray="4 6">
+    <animate attributeName="stroke-dashoffset" values="0;-20" dur="1.2s" repeatCount="indefinite"/>
+  </line>
+
+  <text x="16" y="328" fill="#57534E" font-family="ui-monospace, Consolas, monospace" font-size="10">STATUS</text>
+  <text x="28" y="348" fill="#2EC4B6" font-family="ui-monospace, Consolas, monospace" font-size="11">LOCK OK · 12/12 skills linked</text>
+  <text x="28" y="366" fill="#78716C" font-family="ui-monospace, Consolas, monospace" font-size="11">DRIFT 0 · doctor last run 2m ago</text>
+
+  <text x="16" y="400" fill="#57534E" font-family="ui-monospace, Consolas, monospace" font-size="10">4 team · a apply · Shift+A lock · l verify · r drift</text>
+  <path d="M680 380 L720 380 L720 420" fill="none" stroke="#F5A524" stroke-width="2"/>
 </svg>

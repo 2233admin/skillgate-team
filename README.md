@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/logo.svg" width="72" height="72" alt="Skillgate logo" />
+<img src="docs/images/hero.svg" width="920" alt="Skillgate Team — 团队技能作战面板" />
 
 # Skillgate Team
 
@@ -19,7 +19,6 @@
 团队里每个人的 `~/.claude/skills` 长得都不一样——这事我见过太多次了。有人多装了三个，有人还在用上周的版本，新人入职要问三遍「到底装哪些」。
 
 Skillgate Team 把技能收进**一个 Git 仓库**。维护者改 `profiles/`，大家 `git pull` 再 Apply，本机四个 Agent 目录就对齐了。不用在群里喊「谁没更新 skill」。
-
 
 ---
 
@@ -199,7 +198,7 @@ Page Object、CI 接入、产物、 flaky 处理——端到端别只跑 happy p
 | [`cli/`](cli/) | `skillgate` CLI + `team-api` |
 | [`desktop/`](desktop/) | Electron 桌面应用 |
 | [`tui/`](tui/) | OpenTUI 终端 UI |
-| [`docs/DESIGN.md`](docs/DESIGN.md) | Linear 式色板与设计约束 |
+| [`docs/DESIGN.md`](docs/DESIGN.md) | 视觉系统（工业 HUD / 解构构图） |
 | [`docs/images/`](docs/images/) | README 配图 |
 
 ---
@@ -228,6 +227,6 @@ Git-backed skill catalog for teams: profiles declare what to install, lock files
 
 <div align="center">
 
-<sub>旧仓库 <code>team-skills</code>、<code>skillgate</code> 已弃用。设计见 <a href="docs/DESIGN.md">DESIGN.md</a>。</sub>
+<sub>旧仓库 <code>team-skills</code>、<code>skillgate</code> 已弃用。</sub>
 
 </div>

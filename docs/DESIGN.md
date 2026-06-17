@@ -1,64 +1,55 @@
-# Skillgate Team — 设计系统
+# Skillgate Team — 视觉系统
 
-**哲学**：Linear 式工程工具审美 + 第一性原理取舍。
+**气质**：明日方舟式工业 HUD × 解构主义构图 × 苏联前卫几何（构成主义 / 罗德岛终端感）。
 
-## 第一性原理（视觉也要服从）
+不是 SaaS 浅色营销页，也不是 Linear 紫。是**作战面板**：暗底、斜切、网格、双强调色、会动的扫描线。
 
-| 问题 | 本质 | 设计推论 |
-|------|------|----------|
-| 团队 skills 为何乱？ | 没有单一事实源 | 信息图只画一条链：目录 → Skillgate → Agent |
-| 用户要信什么？ | 可验证状态（lock / doctor） | 用数据行、等宽字，不用装饰性插画 |
-| 产品是什么？ | 基础设施，不是营销页 | 浅色文档面 + 克制强调色，拒绝渐变光晕 |
+## 第一性原理
 
-删掉一切不服务于「对齐、验证、应用」的视觉元素。
+| 本质 | 视觉表达 |
+|------|----------|
+| 单一事实源 | 一条硬连线：CATALOG → DISPATCH → LOCAL |
+| 可验证 | 等宽数据行、状态灯、LOCK / DRIFT 标签 |
+| 团队同步 | Logo 三门 + 三点脉冲 = 对齐节拍 |
 
-## Linear 式约束
-
-- **留白即结构**：模块间距 8 的倍数；卡片内边距充足，不堆 badge
-- **层级靠字号与灰阶**，不靠阴影与发光
-- **1px 边框** 分隔区域（`#E6E6E8` 浅 / `#2E2E32` 深）
-- **一个强调色**：品牌紫 `#5E6AD2`，仅用于焦点、选中、主按钮
-- **字体**：UI 用 system-ui / Inter；路径与 lock 用等宽
+装饰必须像「系统 UI」，不能像贴纸。
 
 ## 色板
 
-| Token | 浅色（README / Social） | 深色（Desktop 示意） |
-|-------|-------------------------|----------------------|
-| `bg-base` | `#F9F9FB` | `#141516` |
-| `bg-elevated` | `#FFFFFF` | `#1C1C1F` |
-| `border` | `#E6E6E8` | `#2E2E32` |
-| `text-primary` | `#0C0C0D` | `#F7F8F8` |
-| `text-secondary` | `#6B6F76` | `#8A8F98` |
-| `text-tertiary` | `#9CA0A8` | `#6B6F76` |
-| `accent` | `#5E6AD2` | `#5E6AD2` |
-| `accent-subtle` | `#5E6AD214` | `#5E6AD226` |
-| `warning` | `#B45309` | `#F59E0B` |
+| Token | 值 | 用途 |
+|-------|-----|------|
+| `bg-void` | `#0A0A0C` | 主背景 |
+| `bg-panel` | `#141418` | 面板 |
+| `grid` | `#FFFFFF0A` | 战术网格 |
+| `text-primary` | `#E7E5E4` | 主文案 |
+| `text-muted` | `#78716C` | 次要 |
+| `ops-orange` | `#F5A524` | 主强调 / 告警 / 选中 |
+| `sync-cyan` | `#2EC4B6` | 次强调 / 链路 / 在线 |
+| `soviet-red` | `#C41E3A` | 斜切色块、构成主义楔 |
+| `border` | `#2A2A30` | 1px 硬边 |
 
-花叔 `huashu-design` 禁区：**赛博霓虹、深蓝渐变底（`#0D1117` 一类）** — 本系统不用。
+## 构图规则（解构 + 前卫）
 
-## Logo
+- **斜切**：面板用 `polygon` 或平行四边形裁切，禁止圆角卡片堆叠
+- **叠层**：色块可压在网格上，信息块允许 2–4° 视觉错位
+- **标签**：全大写 + 字间距（`OPERATION` `SYNC` `CATALOG`）
+- **动效**（README SVG）：扫描线、节点脉冲、网格呼吸——用 SMIL，GitHub 可播
 
-- **门（gate）**：左右立柱 + 顶梁，表示「准入 / 同步边界」
-- **三点**：团队目录里 skills 经 Skillgate 对齐到本机；强调色 `#5E6AD2`
-- 单色可反白；README 默认深描边 + 紫点
+## 资产
 
-## 配图清单
-
-| 文件 | 用途 |
+| 文件 | 说明 |
 |------|------|
-| `logo.svg` | README 顶栏 |
-| `architecture.svg` | 数据流（浅底） |
-| `social-preview.svg` | GitHub Social preview |
-| `desktop-team-preview.svg` | Desktop Team 页（深底，贴近 Linear 应用） |
-| `tui-team-preview.svg` | TUI（深底终端） |
+| `hero.svg` | README 顶栏动效横幅 |
+| `logo.svg` | 图标 / 小尺寸 |
+| `architecture.svg` | 解构数据流 |
+| `social-preview.svg` | 1280×640 社交封面 |
+| `desktop-team-preview.svg` | Desktop HUD 示意 |
+| `tui-team-preview.svg` | 终端战术视图 |
 
-实拍替换见 [SCREENSHOTS.md](./SCREENSHOTS.md)。
+实拍替换：[SCREENSHOTS.md](./SCREENSHOTS.md)
 
-## 文案调性（与视觉一致）
+## 禁止
 
-- 写「Apply profile」「Doctor 无漂移」，不写「赋能」「一站式」
-- 按钮动词开头：Apply、Verify、Refresh
-
----
-
-参考：[Linear](https://linear.app) 产品界面气质；文档结构借鉴 [huashu-skills](https://github.com/alchaincyf/huashu-skills)；视觉由本文件约束，非 huashu-design 自动生成。
+- README 里写「借鉴 XX」「遵循 XX 审美」的致谢式 blockquote
+- 浅灰 SaaS 底 + 单一品牌紫
+- 无意义的渐变光晕 blob

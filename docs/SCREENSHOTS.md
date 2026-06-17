@@ -2,16 +2,17 @@
 
 README 使用 `docs/images/` 下的矢量示意图，保证 GitHub 上始终能显示、不依赖本机截图环境。
 
-配色与布局约束见 [DESIGN.md](./DESIGN.md)（Linear 式浅底文档 + 深底应用示意）。
+配色、构图与 SMIL 动效约束见 [DESIGN.md](./DESIGN.md)（暗底工业 HUD · 解构斜切 · 橙/青双强调）。
 
 ## 文件说明
 
 | 文件 | 用途 |
 |------|------|
-| `logo.svg` | README 顶部 logo |
-| `architecture.svg` | 架构流程图 |
-| `desktop-team-preview.svg` | Desktop Team 页布局示意 |
-| `tui-team-preview.svg` | TUI Team 页布局示意 |
+| `hero.svg` | README 顶栏动效横幅（扫描线、节点脉冲） |
+| `logo.svg` | 小尺寸图标 / favicon 类场景 |
+| `architecture.svg` | 架构数据流（虚线流动动画） |
+| `desktop-team-preview.svg` | Desktop Team 页 HUD 示意 |
+| `tui-team-preview.svg` | TUI Team 页战术终端示意 |
 | `social-preview.svg` | GitHub 仓库 Social Preview（1280×640，在仓库 Settings → General 上传） |
 
 ## 换成真实截图（可选）
