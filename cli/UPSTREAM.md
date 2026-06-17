@@ -14,6 +14,7 @@ Local review clone: `C:\Users\Administrator\.cache\skillsgate-review`
 
 - `team-config.ts`, `team-lock.ts`, `profiles.ts`, `protect.ts`, `content-hash.ts`
 - Commands: `apply`, `doctor`, `setup --team`, `lock verify`
+- `team-api/` — in-process library (`skillgate/team-api`) shared by CLI, Desktop, TUI
 - Package rename: `skillgate` v0.1.0
 
 ## TUI (vendored from upstream)
@@ -22,7 +23,8 @@ Local review clone: `C:\Users\Administrator\.cache\skillsgate-review`
 - Launch: `skillgate tui` (Bun + source) or `cd tui && bun run start`
 - Requires [Bun](https://bun.sh) for dev/source mode; optional `@skillsgate/tui-win32-x64` binary fallback
 - SQLite state: `~/.skillgate/skillgate.db`
-- Team tabs (profiles / lock / doctor) — not yet wired; TUI still uses upstream Installed / Discover / Servers flow
+- **Team** tab — profiles, apply, doctor, lock verify, catalog drift (via `skillgate/team-api`)
+- Settings: `team.root`, `team.linkedProject`; badge when catalog is behind
 
 ## Desktop GUI (vendored from upstream)
 
@@ -31,7 +33,8 @@ Local review clone: `C:\Users\Administrator\.cache\skillsgate-review`
 - Launch: `skillgate gui` or `bun run gui` (runs `electron-vite dev` via Nx)
 - Requires root `bun install --ignore-scripts` then `bun run gui:install` (Electron + better-sqlite3 native build)
 - Shares SQLite with TUI: `~/.skillgate/skillgate.db`
-- Team workflows (profiles / apply / doctor) — not yet wired in GUI
+- **Team** tab — same workflows as TUI via Electron IPC → `team-api`
+- Startup catalog drift check (~6h cache) + sidebar badge when behind
 
 ## What we de-emphasized
 

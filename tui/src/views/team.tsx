@@ -298,7 +298,10 @@ export function TeamView() {
             <text fg={team.lastApplyResult.failed ? colors.warning : colors.success}>
               Apply: {team.lastApplyResult.installed} installs, {team.lastApplyResult.failed} failures
             </text>
-            {team.lastApplyResult.failures.slice(0, 5).map((f) => (
+            {team.lastApplyResult.results
+              .filter((r) => !r.success)
+              .slice(0, 5)
+              .map((f) => (
               <text key={`${f.skill}-${f.agent ?? ""}`} fg={colors.error}>
                 {"  "}{f.skill}{f.agent ? `@${f.agent}` : ""}: {f.error}
               </text>
@@ -310,7 +313,7 @@ export function TeamView() {
           <box style={{ flexDirection: "column", paddingTop: 1 }}>
             <text fg={colors.warning}>
               Lock: {team.lastLockVerify.mismatches.length} mismatch(es)
-              {team.lastLockVerify.written ? " (written)" : ""}
+              {team.lastLockVerify.updated ? " (updated)" : ""}
             </text>
             {team.lastLockVerify.mismatches.slice(0, 5).map((m) => (
               <text key={m.skill} fg={colors.error}>

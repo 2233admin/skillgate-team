@@ -9,7 +9,7 @@ import {
   runApply,
   runDoctor,
   runLockVerify,
-  type ApplySummary,
+  type ApplyResult,
   type CatalogDriftResult,
   type DoctorResult,
   type LastApplyState,
@@ -17,7 +17,7 @@ import {
   type ProfileSummary,
   type Result,
   type TeamContext,
-} from "./team-api-client.js"
+} from "../../../cli/src/team-api/index.js"
 
 export interface TeamState {
   loading: boolean
@@ -31,7 +31,7 @@ export interface TeamState {
   lastApply: LastApplyState | null
   actionLoading: boolean
   lastDoctor: DoctorResult | null
-  lastApplyResult: ApplySummary | null
+  lastApplyResult: ApplyResult | null
   lastLockVerify: LockVerifyResult | null
   lastActionError: string | null
 }
@@ -40,7 +40,7 @@ export interface TeamActions {
   refresh: () => Promise<void>
   refreshDrift: (force?: boolean) => Promise<void>
   selectProfile: (name: string) => void
-  apply: (opts?: { writeLock?: boolean; dryRun?: boolean }) => Promise<Result<ApplySummary>>
+  apply: (opts?: { writeLock?: boolean; dryRun?: boolean }) => Promise<Result<ApplyResult>>
   doctor: () => Promise<Result<DoctorResult>>
   lockVerify: (write?: boolean) => Promise<Result<LockVerifyResult>>
 }
@@ -65,9 +65,12 @@ export function useCatalogDriftBadge(): boolean {
       const profile = settings.get<string>("team.lastProfile", "")
 
       const ctxResult = await resolveTeamContext({
-        teamRoot: teamRoot || null,
-        linkedProject: linkedProject || null,
-        profile: profile || null,
+        settings: {
+          "team.root": teamRoot,
+          "team.linkedProject": linkedProject,
+          "team.lastProfile": profile,
+        },
+        profile: profile || undefined,
       })
 
       if (!ctxResult.ok || cancelled) return
@@ -107,14 +110,17 @@ export function useTeam(): TeamState & TeamActions {
   const [lastApply, setLastApply] = useState<LastApplyState | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
   const [lastDoctor, setLastDoctor] = useState<DoctorResult | null>(null)
-  const [lastApplyResult, setLastApplyResult] = useState<ApplySummary | null>(null)
+  const [lastApplyResult, setLastApplyResult] = useState<ApplyResult | null>(null)
   const [lastLockVerify, setLastLockVerify] = useState<LockVerifyResult | null>(null)
   const [lastActionError, setLastActionError] = useState<string | null>(null)
 
   const readSettingsInput = useCallback(() => ({
-    teamRoot: settings.get<string>("team.root", "") || null,
-    linkedProject: settings.get<string>("team.linkedProject", "") || null,
-    profile: settings.get<string>("team.lastProfile", "") || selectedProfile || null,
+    settings: {
+      "team.root": settings.get<string>("team.root", ""),
+      "team.linkedProject": settings.get<string>("team.linkedProject", ""),
+      "team.lastProfile": settings.get<string>("team.lastProfile", ""),
+    },
+    profile: selectedProfile || undefined,
   }), [settings, selectedProfile])
 
   const refreshDrift = useCallback(async (force = false) => {
@@ -197,7 +203,7 @@ export function useTeam(): TeamState & TeamActions {
       setLastApplyResult(result.data)
       setLastApply(await getLastApplyState())
     } else if (result.error.details && typeof result.error.details === "object") {
-      setLastApplyResult(result.error.details as ApplySummary)
+      setLastApplyResult(result.error.details as ApplyResult)
       setLastActionError(result.error.message)
     } else {
       setLastActionError(result.error.message)
@@ -241,10 +247,15 @@ export function useTeam(): TeamState & TeamActions {
     if (result.ok) {
       setLastLockVerify(result.data)
     } else if (result.error.details && typeof result.error.details === "object") {
-      const details = result.error.details as { mismatches?: LockVerifyResult["mismatches"]; written?: boolean }
+      const details = result.error.details as {
+        mismatches?: LockVerifyResult["mismatches"]
+        updated?: boolean
+      }
       setLastLockVerify({
+        ok: false,
         mismatches: details.mismatches ?? [],
-        written: details.written ?? false,
+        mismatchCount: details.mismatches?.length ?? 0,
+        updated: details.updated ?? false,
       })
       setLastActionError(result.error.message)
     } else {
