@@ -3,28 +3,35 @@
   "private": true,
   "version": "0.1.0",
   "description": "Team skill catalog + skillgate CLI + OpenTUI + Electron GUI",
+  "packageManager": "bun@1.3.14",
   "workspaces": [
     "cli",
     "ui",
-    "desktop"
+    "desktop",
+    "tui"
   ],
   "overrides": {
     "esbuild": "0.28.1"
   },
   "scripts": {
-    "build": "npm run build --prefix cli",
-    "install-global": "npm run build --prefix cli && node cli/bin/skillgate.mjs install-global",
+    "build": "nx run skillgate:build",
+    "build:all": "nx run-many -t build",
+    "install-global": "nx run skillgate:build && node cli/bin/skillgate.mjs install-global",
     "smoke-test": "node cli/bin/skillgate.mjs smoke-test",
-    "tui": "npm run start --prefix tui",
-    "tui:dev": "npm run dev --prefix tui",
+    "tui": "nx run @skillgate/tui:start",
+    "tui:dev": "nx run @skillgate/tui:dev",
     "tui:window": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch-tui-window.ps1",
-    "gui": "npm run dev --prefix desktop",
-    "gui:dev": "npm run dev --prefix desktop",
-    "gui:build": "npm run build --prefix desktop",
+    "gui": "nx run @skillgate/desktop:dev",
+    "gui:dev": "nx run @skillgate/desktop:dev",
+    "gui:build": "nx run @skillgate/desktop:build",
     "gui:install": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-gui.ps1",
     "gui:window": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch-gui.ps1",
-    "test": "node scripts/run-tests.mjs",
-    "test:desktop": "node scripts/run-tests.mjs desktop",
-    "test:cli": "node scripts/run-tests.mjs cli"
+    "test": "nx run-many -t test",
+    "test:desktop": "nx run @skillgate/desktop:test",
+    "test:cli": "nx run skillgate:test",
+    "graph": "nx graph"
+  },
+  "devDependencies": {
+    "nx": "22.7.5"
   }
 }

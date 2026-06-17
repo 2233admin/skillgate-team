@@ -5,3 +5,9 @@ tui/node_modules/
 .skillgate/
 *.log
 .DS_Store
+
+package-lock.json
+.bun-cache/
+
+.nx/cache
+.nx/workspace-data

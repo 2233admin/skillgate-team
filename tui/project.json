@@ -1,0 +1,16 @@
+{
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "name": "@skillgate/tui",
+  "projectType": "application",
+  "sourceRoot": "src",
+  "targets": {
+    "dev": {
+      "executor": "nx:run-script",
+      "options": { "script": "dev" }
+    },
+    "start": {
+      "executor": "nx:run-script",
+      "options": { "script": "start" }
+    }
+  }
+}

@@ -11,8 +11,8 @@ All onboarding runs through the **TypeScript CLI** (Node 18+) — macOS, Linux, 
 git clone https://github.com/2233admin/skillgate-team.git ~/.skillgate-team
 
 # 2. Build and install the skillgate CLI globally
-cd ~/.skillgate-team/cli && npm install && npm run build
-node bin/skillgate.mjs install-global
+cd ~/.skillgate-team && bun install --ignore-scripts && bun run build
+node cli/bin/skillgate.mjs install-global
 # or after PATH refresh: skillgate install-global
 
 # 3. Apply a profile
@@ -29,8 +29,21 @@ Override catalog path: `SKILLGATE_ROOT=/path/to/skillgate-team`
 From repo root you can also run:
 
 ```bash
-npm run install-global
-npm run smoke-test
+bun run install-global
+bun run smoke-test
+```
+
+## Monorepo tooling
+
+- **Bun** workspaces + single `bun.lock` at repo root (`packageManager: bun@1.3.14`)
+- **Nx** orchestrates `build` / `test` / `dev` across `cli`, `desktop`, `tui`, `ui`
+
+```bash
+bun install --ignore-scripts   # skip native scripts (Node 26 breaks better-sqlite3)
+bun run test                   # nx run-many -t test
+bun run build                  # skillgate CLI
+bun run graph                  # nx graph
+bun run gui:install            # Electron binary + better-sqlite3 rebuild (Node 22–25)
 ```
 
 ## Layout
@@ -53,14 +66,14 @@ skillgate-team/
 Upstream SkillsGate front-end experience in the terminal (Installed / Discover / SSH Servers / Settings).
 
 ```bash
-# One-time: install TUI deps (requires Bun)
-cd tui && bun install
+# One-time: install workspaces (Bun monorepo at repo root)
+bun install --ignore-scripts
 
 # From anywhere (after cli build + install-global)
 skillgate tui
 
 # Or from repo root
-npm run tui
+bun run tui
 ```
 
 Set `SKILLGATE_ROOT` to this repo so the TUI and CLI share the same team catalog. Local UI state is stored in `~/.skillgate/skillgate.db`.
@@ -72,19 +85,19 @@ Upstream SkillsGate Electron app (Installed / Discover / SSH Servers / Settings 
 ```bash
 # One-time: install workspace deps (Electron binary + better-sqlite3 rebuild)
 # Use Node 22–25 on Windows (Node 26 breaks native modules)
-cd D:\projects\_tools\skillgate-team && npm run gui:install
+cd D:\projects\_tools\skillgate-team && bun run gui:install
 
 # From anywhere (after cli build + install-global)
 skillgate gui
 
 # Or from repo root
-npm run gui
-npm run gui:window   # launch-gui.ps1 (picks Node 25 if installed)
+bun run gui
+bun run gui:window   # launch-gui.ps1 (picks Node 25 if installed)
 ```
 
 Shares the same SQLite DB as the TUI (`~/.skillgate/skillgate.db`). Team profile/apply/doctor tabs are not wired yet.
 
-If `skillgate gui` reports **Electron uninstall**, rerun `npm run gui:install` (forces
+If `skillgate gui` reports **Electron uninstall**, rerun `bun run gui:install` (forces
 `electron/install.js` + `electron-rebuild` for `better-sqlite3`).
 
 ## Project binding

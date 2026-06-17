@@ -28,8 +28,8 @@ Local review clone: `C:\Users\Administrator\.cache\skillsgate-review`
 
 - `desktop/` — Electron app from `apps/desktop` (SkillsGate upstream)
 - `ui/` — shared React components from `packages/ui`
-- Launch: `skillgate gui` or `npm run gui` (runs `electron-vite dev`)
-- Requires root `npm install` (Electron + better-sqlite3 native build)
+- Launch: `skillgate gui` or `bun run gui` (runs `electron-vite dev` via Nx)
+- Requires root `bun install --ignore-scripts` then `bun run gui:install` (Electron + better-sqlite3 native build)
 - Shares SQLite with TUI: `~/.skillgate/skillgate.db`
 - Team workflows (profiles / apply / doctor) — not yet wired in GUI
 
@@ -43,7 +43,7 @@ Local review clone: `C:\Users\Administrator\.cache\skillsgate-review`
 
 ```bash
 cd path/to/skillgate-team/cli
-npm run build && npm run install-global
+bun run build && bun run install-global
 # or: node bin/skillgate.mjs install-global
 ```
 

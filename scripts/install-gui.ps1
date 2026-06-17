@@ -1,4 +1,4 @@
-# Install Electron desktop GUI workspace deps (cli + ui + desktop).
+# Install Electron desktop GUI workspace deps (bun monorepo + Node natives).
 # Prefer Node 22–25 — better-sqlite3 and Electron are not validated on Node 26+.
 param(
   [switch]$SkipNative
@@ -34,13 +34,10 @@ if ($NodeDir) {
 }
 
 Write-Host "Using Node: $(& $NodeExe -v)" -ForegroundColor Cyan
-Write-Host "Installing skillgate-team GUI workspaces (cli, ui, desktop)..." -ForegroundColor Cyan
+Write-Host "Installing skillgate-team workspaces with Bun (ignore native scripts)..." -ForegroundColor Cyan
 
-if ($SkipNative) {
-  npm install --ignore-scripts
-} else {
-  npm install
-}
+# Root bun workspaces: skip better-sqlite3 compile during install (Node 26 breaks it).
+bun install --ignore-scripts
 
 Write-Host "Ensuring Electron binary..." -ForegroundColor Cyan
 $electronInstall = Join-Path $Root "node_modules\electron\install.js"
@@ -58,7 +55,7 @@ if (-not (Test-Path $electronExe)) {
 
 if (-not $SkipNative) {
   Write-Host "Rebuilding better-sqlite3 for Electron..." -ForegroundColor Cyan
-  npx electron-rebuild -f -w better-sqlite3 -m .
+  npx --yes electron-rebuild -f -w better-sqlite3 -m .
 }
 
-Write-Host "GUI deps OK. Launch with: skillgate gui" -ForegroundColor Green
+Write-Host "GUI deps OK. Launch with: bun run gui" -ForegroundColor Green

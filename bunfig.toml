@@ -1,0 +1,7 @@
+[install]
+# Monorepo root owns all workspace lockfile resolution.
+auto = "auto"
+
+[install.cache]
+# Keep installs fast on Windows; disable if CI needs fully hermetic trees.
+dir = ".bun-cache"

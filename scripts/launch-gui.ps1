@@ -27,5 +27,5 @@ if (-not (Test-Path $electronExe)) {
   & (Join-Path $Root "scripts\install-gui.ps1")
 }
 
-Set-Location (Join-Path $Root "desktop")
-npm run dev
+Set-Location $Root
+bun run gui:dev

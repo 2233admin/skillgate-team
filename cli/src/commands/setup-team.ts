@@ -41,7 +41,7 @@ export async function runSetupTeam(args: string[]): Promise<void> {
       profileHint,
       "",
       "Install CLI globally (from team repo):",
-      `  cd ${teamCliDir} && npm install && npm run build`,
+      `  cd ${root.replace(/\\/g, "/")} && bun install --ignore-scripts && bun run build`,
       "  node bin/skillgate.mjs install-global",
       "  Open a new terminal so PATH picks up skillgate.",
       "",
