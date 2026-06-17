@@ -1,45 +1,44 @@
-import fs from "node:fs/promises";
 import pc from "picocolors";
-import { hashDirectory } from "../core/content-hash.js";
 import {
-  readTeamLock,
-  resolveVendoredSkillDir,
-  writeTeamLock,
-} from "../core/team-lock.js";
-import { getTeamSkillsRoot } from "../core/team-config.js";
+  resolveTeamContext,
+  runLockVerify as runLockVerifyApi,
+} from "../team-api/index.js";
 
 export async function runLockVerify(args: string[]): Promise<void> {
   const write = args.includes("--write");
-  const teamRoot = getTeamSkillsRoot();
-  const lock = await readTeamLock(teamRoot);
-  let mismatches = 0;
+  const ctxResult = await resolveTeamContext();
 
-  for (const [name, entry] of Object.entries(lock.skills)) {
-    if (entry.source !== "vendored") continue;
-    const dir = resolveVendoredSkillDir(entry, teamRoot);
-    const hash = await hashDirectory(dir);
-    if (entry.contentHash !== hash) {
-      mismatches++;
-      console.error(
-        pc.yellow(
-          `${name}: lock ${entry.contentHash ?? "(empty)"} != disk ${hash}`,
-        ),
-      );
-      if (write) {
-        lock.skills[name] = { ...entry, contentHash: hash };
-      }
-    }
+  if (!ctxResult.ok) {
+    console.error(pc.red(ctxResult.error.message));
+    process.exit(1);
   }
 
-  if (write && mismatches > 0) {
-    lock.revision = (lock.revision ?? 0) + 1;
-    await writeTeamLock(lock, teamRoot);
-    console.log(pc.green(`Updated lock (${mismatches} entries).`));
+  const result = await runLockVerifyApi(ctxResult.data, { write });
+
+  if (!result.ok) {
+    console.error(pc.red(result.error.message));
+    process.exit(1);
+  }
+
+  const { data } = result;
+
+  for (const mismatch of data.mismatches) {
+    console.error(
+      pc.yellow(
+        `${mismatch.skill}: lock ${mismatch.lockHash ?? "(empty)"} != disk ${mismatch.diskHash}`,
+      ),
+    );
+  }
+
+  if (write && data.updated) {
+    console.log(pc.green(`Updated lock (${data.mismatchCount} entries).`));
     process.exit(0);
   }
 
-  if (mismatches > 0) {
-    console.error(pc.red(`${mismatches} hash mismatch(es). Run with --write to fix.`));
+  if (data.mismatchCount > 0) {
+    console.error(
+      pc.red(`${data.mismatchCount} hash mismatch(es). Run with --write to fix.`),
+    );
     process.exit(1);
   }
 

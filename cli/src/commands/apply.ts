@@ -1,26 +1,12 @@
 import * as p from "@clack/prompts";
-import fs from "node:fs/promises";
-import path from "node:path";
 import pc from "picocolors";
-import { detectInstalledAgents } from "../core/agents.js";
-import { hashDirectory } from "../core/content-hash.js";
-import { installSkillForAgent, sanitizeName } from "../core/installer.js";
-import { readProtectList } from "../core/protect.js";
-import { readTeamProfile } from "../core/profiles.js";
 import {
-  readTeamLock,
-  resolveVendoredSkillDir,
-  writeTeamLock,
-} from "../core/team-lock.js";
-import {
-  getSkillgateStatePath,
-  getTeamSkillsRoot,
-  readProjectProfile,
-} from "../core/team-config.js";
-import { discoverSkills } from "../core/skill-discovery.js";
-import type { AgentConfig, InstallMethod } from "../types.js";
+  resolveTeamContext,
+  runApply as runApplyApi,
+} from "../team-api/index.js";
+import type { InstallMethod } from "../types.js";
 
-interface ApplyOptions {
+interface ApplyCliOptions {
   profile?: string;
   upgrade: boolean;
   copy: boolean;
@@ -29,8 +15,8 @@ interface ApplyOptions {
   yes: boolean;
 }
 
-function parseApplyOptions(args: string[]): ApplyOptions {
-  const options: ApplyOptions = {
+function parseApplyOptions(args: string[]): ApplyCliOptions {
+  const options: ApplyCliOptions = {
     upgrade: false,
     copy: process.platform === "win32",
     writeLock: false,
@@ -58,145 +44,98 @@ function parseApplyOptions(args: string[]): ApplyOptions {
   return options;
 }
 
-async function saveApplyState(payload: Record<string, unknown>): Promise<void> {
-  const statePath = getSkillgateStatePath();
-  await fs.mkdir(path.dirname(statePath), { recursive: true });
-  await fs.writeFile(statePath, JSON.stringify(payload, null, 2), "utf-8");
-}
-
 export async function runApply(args: string[]): Promise<void> {
   const options = parseApplyOptions(args);
-  const teamRoot = getTeamSkillsRoot();
+  const ctxResult = await resolveTeamContext({
+    profile: options.profile,
+    cwd: process.cwd(),
+  });
 
-  try {
-    await fs.access(teamRoot);
-  } catch {
+  if (!ctxResult.ok) {
     console.error(
       pc.red(
-        `Team skills root not found: ${teamRoot}\nClone skillgate-team and set SKILLGATE_ROOT if needed.`,
+        ctxResult.error.code === "TEAM_ROOT_MISSING"
+          ? `${ctxResult.error.message}\nClone skillgate-team and set SKILLGATE_ROOT if needed.`
+          : ctxResult.error.message,
       ),
     );
     process.exit(1);
   }
 
-  try {
-    const profileName =
-      options.profile ?? (await readProjectProfile()) ?? "quant";
-    const lock = await readTeamLock(teamRoot);
-    const profile = await readTeamProfile(profileName, teamRoot);
-    const protect = await readProtectList(teamRoot);
+  const ctx = ctxResult.data;
+  const profileName = options.profile ?? ctx.effectiveProfile;
 
-    if (!options.yes) {
-      p.intro(pc.bold(`skillgate apply: profile ${profileName}`));
-    }
+  if (!options.yes) {
+    p.intro(pc.bold(`skillgate apply: profile ${profileName}`));
+  }
 
-    const detected = await detectInstalledAgents();
-    let targetAgents = detected.filter((a) => a.name !== "universal");
-    if (profile.agents?.length) {
-      const allowed = new Set(profile.agents);
-      targetAgents = targetAgents.filter((a) => allowed.has(a.name));
-    }
-    if (options.agent?.length) {
-      const allowed = new Set(options.agent);
-      targetAgents = targetAgents.filter((a) => allowed.has(a.name));
-    }
+  const method: InstallMethod = options.copy ? "copy" : "symlink";
+  const result = await runApplyApi(ctx, {
+    profile: options.profile,
+    upgrade: options.upgrade,
+    method,
+    agents: options.agent,
+    writeLock: options.writeLock,
+  });
 
-    if (targetAgents.length === 0) {
-      p.log.warn("No target agents detected.");
+  if (!result.ok) {
+    if (result.error.code === "NO_AGENTS") {
+      if (!options.yes) {
+        p.log.warn("No target agents detected.");
+      } else {
+        console.error(pc.red("No target agents detected."));
+      }
       process.exit(1);
     }
 
-    const method: InstallMethod = options.copy ? "copy" : "symlink";
-    const spinner = p.spinner();
-    let installed = 0;
-    let failed = 0;
+    const partial = result.error.details as
+      | { installed?: number; failed?: number; skipped?: string[] }
+      | undefined;
 
-    for (const skillName of profile.skills) {
-      if (protect.has(skillName.toLowerCase())) {
-        p.log.warn(`Skipping protected skill: ${skillName}`);
-        continue;
+    if (partial?.skipped?.length) {
+      for (const skill of partial.skipped) {
+        p.log.warn(`Skipping protected skill: ${skill}`);
       }
-
-      const entry = lock.skills[skillName];
-      if (!entry) {
-        p.log.warn(`No lock entry for skill: ${skillName}`);
-        failed++;
-        continue;
-      }
-
-      if (entry.source !== "vendored") {
-        p.log.warn(`Unsupported source for ${skillName}: ${entry.source} (MVP: vendored only)`);
-        failed++;
-        continue;
-      }
-
-      const skillDir = resolveVendoredSkillDir(entry, teamRoot);
-      const dirHash = await hashDirectory(skillDir);
-
-      if (options.writeLock) {
-        lock.skills[skillName] = { ...entry, contentHash: dirHash };
-      } else if (entry.contentHash && entry.contentHash !== dirHash) {
-        p.log.warn(
-          `${skillName}: lock hash mismatch (expected ${entry.contentHash}, got ${dirHash})`,
-        );
-      }
-
-      spinner.start(`Installing ${skillName}...`);
-      const skills = await discoverSkills(skillDir);
-      if (skills.length === 0) {
-        spinner.stop(pc.red(`No SKILL.md in ${skillDir}`));
-        failed++;
-        continue;
-      }
-
-      const skill = skills[0];
-      for (const agent of targetAgents) {
-        const result = await installSkillForAgent(
-          skill,
-          agent as AgentConfig,
-          "global",
-          method,
-        );
-        if (!result.success) {
-          failed++;
-          p.log.error(`${skillName} -> ${agent.displayName}: ${result.error}`);
-        } else {
-          installed++;
-        }
-      }
-      spinner.stop(`${skillName} -> ${targetAgents.length} agent(s)`);
     }
 
-    if (options.writeLock) {
-      lock.revision = (lock.revision ?? 0) + 1;
-      await writeTeamLock(lock, teamRoot);
-      p.log.success(`Updated ${getTeamSkillsRoot()}/skills.lock.yaml`);
-    }
-
-    await saveApplyState({
-      appliedAt: new Date().toISOString(),
-      profile: profileName,
-      revision: lock.revision,
-      teamRoot,
-      method,
-      agents: targetAgents.map((a) => a.name),
-    });
-
-    const summary = pc.green(
-      `Done. ${installed} installs, ${failed} failures.`,
-    );
-    if (options.yes) {
-      console.log(summary);
-    } else {
-      p.outro(summary);
-    }
-
-    if (failed > 0) {
+    if (result.error.code === "APPLY_PARTIAL_FAIL" && partial) {
+      const summary = pc.green(
+        `Done. ${partial.installed ?? 0} installs, ${partial.failed ?? 0} failures.`,
+      );
+      if (options.yes) {
+        console.log(summary);
+      } else {
+        p.outro(summary);
+      }
       process.exit(1);
     }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+
+    const message = result.error.message;
     console.error(pc.red(message));
     process.exit(1);
+  }
+
+  const { data } = result;
+  for (const skill of data.skipped) {
+    p.log.warn(`Skipping protected skill: ${skill}`);
+  }
+
+  for (const item of data.results.filter((r) => !r.success)) {
+    p.log.error(
+      `${item.skill} -> ${item.agent}: ${item.error ?? "failed"}`,
+    );
+  }
+
+  if (data.lockUpdated) {
+    p.log.success(`Updated ${ctx.teamRoot}/skills.lock.yaml`);
+  }
+
+  const summary = pc.green(
+    `Done. ${data.installed} installs, ${data.failed} failures.`,
+  );
+  if (options.yes) {
+    console.log(summary);
+  } else {
+    p.outro(summary);
   }
 }
