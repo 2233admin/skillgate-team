@@ -18,7 +18,8 @@
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build",
-    "install-global": "node -e \"require('child_process').execSync(process.platform==='win32'?'pwsh -NoProfile -File ../bin/skillgate-install.ps1':'bash ../bin/skillgate-install.sh',{stdio:'inherit',cwd:process.cwd()})\""
+    "install-global": "node bin/skillgate.mjs install-global",
+    "smoke-test": "node bin/skillgate.mjs smoke-test"
   },
   "keywords": [
     "ai",

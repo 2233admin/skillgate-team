@@ -25,10 +25,10 @@ Local review clone: `C:\Users\Administrator\.cache\skillsgate-review`
 
 `npm link -g` fails on npm v11+ (`ELINKGLOBAL`). Use:
 
-```powershell
-cd D:\projects\_tools\skillgate
-npm run install-global
-# or: pwsh -NoProfile -File bin/skillgate-install.ps1
+```bash
+cd path/to/skillgate-team/cli
+npm run build && npm run install-global
+# or: node bin/skillgate.mjs install-global
 ```
 
 Installs junction `~/.skillgate/repo` → source tree, shims in `~/.skillgate/bin`, sets User `PATH`, `SKILLGATE_HOME`, `SKILLGATE_CLI`.

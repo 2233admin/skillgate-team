@@ -73,7 +73,7 @@ export async function runApply(args: string[]): Promise<void> {
   } catch {
     console.error(
       pc.red(
-        `Team skills root not found: ${teamRoot}\nClone team-skills and set SKILLGATE_ROOT if needed.`,
+        `Team skills root not found: ${teamRoot}\nClone skillgate-team and set SKILLGATE_ROOT if needed.`,
       ),
     );
     process.exit(1);

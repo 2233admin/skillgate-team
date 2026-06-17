@@ -23,7 +23,7 @@ export async function runSetupTeam(args: string[]): Promise<void> {
   } catch {
     p.log.warn(`Team skills root does not exist yet: ${root}`);
     p.log.info(
-      `Clone your team-skills repo:\n  git clone <url> ${root}`,
+      `Clone skillgate-team:\n  git clone https://github.com/2233admin/skillgate-team.git ${root}`,
     );
   }
 

@@ -5,6 +5,7 @@
   "description": "Team skill catalog + skillgate CLI",
   "scripts": {
     "build": "npm run build --prefix cli",
-    "install-global": "pwsh -NoProfile -File bin/skillgate-install.ps1"
+    "install-global": "npm run build --prefix cli && node cli/bin/skillgate.mjs install-global",
+    "smoke-test": "node cli/bin/skillgate.mjs smoke-test"
   }
 }

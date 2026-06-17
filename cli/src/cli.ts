@@ -16,6 +16,10 @@ import { runApply } from "./commands/apply.js";
 import { runDoctor } from "./commands/doctor.js";
 import { runSetupTeam } from "./commands/setup-team.js";
 import { runLockVerify } from "./commands/lock-verify.js";
+import { runInstallGlobal } from "./commands/install-global.js";
+import { runTeamInit } from "./commands/team-init.js";
+import { runSmokeTest } from "./commands/smoke-test.js";
+import { runUpdateCheck } from "./commands/update-check.js";
 
 // "SKILLS" in dark silver (dim), "GATE" in bright white (bold)
 const s = (t: string) => pc.dim(t);       // dark silver
@@ -46,8 +50,25 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Show logo for interactive commands
-  if (command && !command.startsWith("-")) {
+  const quiet =
+    restArgs.includes("-q") ||
+    restArgs.includes("--quiet") ||
+    process.env.SKILLGATE_QUIET === "1";
+
+  const nonInteractive = new Set([
+    "smoke-test",
+    "update-check",
+    "doctor",
+    "lock",
+  ]);
+
+  // Show logo for interactive commands (skip in quiet / hook / automation mode)
+  if (
+    command &&
+    !command.startsWith("-") &&
+    !quiet &&
+    !nonInteractive.has(command)
+  ) {
     printLogo();
   }
 
@@ -128,6 +149,22 @@ async function main(): Promise<void> {
       }
       break;
 
+    case "install-global":
+      await runInstallGlobal(restArgs);
+      break;
+
+    case "team-init":
+      await runTeamInit(restArgs);
+      break;
+
+    case "smoke-test":
+      await runSmokeTest(restArgs);
+      break;
+
+    case "update-check":
+      await runUpdateCheck(restArgs);
+      break;
+
     case "tui": {
       const { execFileSync } = await import("node:child_process");
       try {
@@ -170,10 +207,14 @@ function printHelp(): void {
   console.log(`    skillgate ${DIM("<command>")} ${DIM("[options]")}`);
   console.log();
   console.log(`  ${BOLD("Team commands:")}`);
-  console.log(`    apply ${DIM("[--profile quant]")}   Install profile from team-skills lock`);
+  console.log(`    apply ${DIM("[--profile quant]")}   Install profile from skillgate-team lock`);
   console.log(`    doctor ${DIM("[--profile quant]")}  Detect drift vs lock/canonical`);
   console.log(`    setup --team         Print team onboarding steps`);
   console.log(`    lock verify ${DIM("[--write]")}   Verify/update skills.lock.yaml hashes`);
+  console.log(`    install-global     Link CLI to ~/.skillgate (all platforms)`);
+  console.log(`    team-init ${DIM("[--mode required]")}  Bind project (.skillgate + hook)`);
+  console.log(`    smoke-test ${DIM("[--skip-apply]")}  Post-merge verification`);
+  console.log(`    update-check ${DIM("[--force]")}   Catalog version drift (for hooks)`);
   console.log();
   console.log(`  ${BOLD("Legacy commands:")}`);
   console.log(
