@@ -12,6 +12,7 @@
     "install-global": "npm run build --prefix cli && node cli/bin/skillgate.mjs install-global",
     "smoke-test": "node cli/bin/skillgate.mjs smoke-test",
     "tui": "npm run start --prefix tui",
-    "tui:dev": "npm run dev --prefix tui"
+    "tui:dev": "npm run dev --prefix tui",
+    "tui:window": "powershell -NoExit -ExecutionPolicy Bypass -File scripts/launch-tui.ps1"
   }
 }

@@ -50,15 +50,25 @@ export function Layout() {
       else process.exit(0)
     }
 
-    // When search input is focused, only handle Escape, Tab, and Ctrl shortcuts
-    // All other keys pass through to the input component
+    const activeView = state.activeView as string
+    const inFormView = activeView === "detail" || activeView === "add-server"
+      || activeView === "edit-server" || activeView === "settings"
+      || activeView === "server-skills"
+
+    // When filter bar is focused, only handle navigation / clear shortcuts
     if (state.focusedPane === "search") {
       if (key.name === "escape") {
-        dispatch({ type: "SET_FOCUSED_PANE", pane: "list" })
+        if (state.activeView === "home" && state.installedFilter) {
+          dispatch({ type: "SET_INSTALLED_FILTER", filter: "" })
+        } else if (state.activeView === "discover" && state.searchQuery) {
+          dispatch({ type: "SET_SEARCH_QUERY", query: "" })
+        } else {
+          dispatch({ type: "SET_FOCUSED_PANE", pane: "list" })
+        }
         return
       }
       if (key.name === "tab" && !key.shift) {
-        dispatch({ type: "CYCLE_FOCUS" })
+        dispatch({ type: "SET_FOCUSED_PANE", pane: "list" })
         return
       }
       return
@@ -80,10 +90,6 @@ export function Layout() {
     if (state.showHelp) return
 
     // Tab switching (only when not in detail/form views)
-    const activeView = state.activeView as string
-    const inFormView = activeView === "detail" || activeView === "add-server"
-      || activeView === "edit-server" || activeView === "settings"
-      || activeView === "server-skills"
     if (!inFormView) {
       if (key.name === "1") dispatch({ type: "NAVIGATE", view: "home" })
       if (key.name === "2") dispatch({ type: "NAVIGATE", view: "discover" })
@@ -93,27 +99,33 @@ export function Layout() {
       }
     }
 
-    // "s" to open settings (only from home/servers views when not in search)
-    if (key.name === "s" && (state.focusedPane as string) !== "search"
-      && state.activeView !== "discover" && state.activeView !== "detail"
+    // "s" to open settings (only from home/servers views)
+    if (key.name === "s" && state.activeView !== "discover" && state.activeView !== "detail"
       && !inFormView) {
       dispatch({ type: "NAVIGATE", view: "settings" })
       return
     }
 
-    // Tab to cycle focus (only on home/discover views)
-    if (key.name === "tab" && !key.shift && (state.activeView === "home" || state.activeView === "discover")) {
-      dispatch({ type: "CYCLE_FOCUS" })
-      return
-    }
-
-    // "/" to focus search from anywhere
-    if (key.name === "/" && state.activeView !== "detail") {
+    // "/" to focus filter bar
+    if (key.name === "/" && state.activeView !== "detail" && !inFormView
+      && (state.activeView === "home" || state.activeView === "discover")) {
       dispatch({ type: "SET_FOCUSED_PANE", pane: "search" })
       return
     }
 
-    // Esc: go back from sub-views, clear search, etc.
+    // [ ] cycle library/agent filter on home (list focus)
+    if (state.activeView === "home" && state.focusedPane === "list" && !inFormView) {
+      if (key.name === "[" || key.name === "left") {
+        dispatch({ type: "CYCLE_AGENT_FILTER", direction: "prev" })
+        return
+      }
+      if (key.name === "]" || key.name === "right") {
+        dispatch({ type: "CYCLE_AGENT_FILTER", direction: "next" })
+        return
+      }
+    }
+
+    // Esc: go back from sub-views, clear filter, return focus to list
     if (key.name === "escape") {
       if (state.activeView === "detail" || state.activeView === "add-server"
         || state.activeView === "edit-server" || state.activeView === "settings"
@@ -121,17 +133,22 @@ export function Layout() {
         dispatch({ type: "GO_BACK" })
         return
       }
-      if (state.installedFilter) {
+      if (state.activeView === "home" && state.installedFilter) {
         dispatch({ type: "SET_INSTALLED_FILTER", filter: "" })
+        return
       }
-      if ((state.focusedPane as string) === "search") {
+      if (state.activeView === "discover" && state.searchQuery) {
+        dispatch({ type: "SET_SEARCH_QUERY", query: "" })
+        return
+      }
+      if (state.focusedPane === "agents") {
         dispatch({ type: "SET_FOCUSED_PANE", pane: "list" })
       }
       return
     }
 
-    // "r" to refresh installed skills (when not typing in search)
-    if (key.name === "r" && (state.focusedPane as string) !== "search" && activeView !== "detail") {
+    // "r" to refresh installed skills
+    if (key.name === "r" && activeView !== "detail" && state.activeView === "home") {
       dispatch({ type: "REFRESH_SKILLS" })
       return
     }

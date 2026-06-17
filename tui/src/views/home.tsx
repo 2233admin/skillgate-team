@@ -8,6 +8,7 @@ import { useStore, useDispatch } from "../store/context.js"
 import { useDb } from "../db/context.js"
 import { AgentFilter } from "../components/agent-filter.js"
 import { SkillList } from "../components/skill-list.js"
+import { SearchInput } from "../components/search-input.js"
 import { colors, agentBadges as badgeMap } from "../utils/colors.js"
 import type { EnrichedSkill } from "../store/types.js"
 import { agents } from "../../../cli/src/core/agents.js"
@@ -48,9 +49,9 @@ function stripFrontmatter(content: string): string {
 }
 
 /**
- * Three-panel home view:
- * LEFT   - Agent filter sidebar (fixed 22 chars)
- * MIDDLE - Compact skill name list (30%)
+ * Home view: filter bar on top, then three panels:
+ * LEFT   - Agent filter sidebar (narrow)
+ * MIDDLE - Skill list (~42%)
  * RIGHT  - Skill detail panel (flexGrow)
  */
 export function HomeView() {
@@ -183,14 +184,20 @@ Add your skill instructions here.
   }
 
   return (
-    <box style={{ flexDirection: "row", width: "100%", flexGrow: 1 }}>
+    <box style={{ flexDirection: "column", width: "100%", flexGrow: 1 }}>
+      <SearchInput
+        filterAction="SET_INSTALLED_FILTER"
+        placeholder="Filter installed skills…"
+      />
+
+      <box style={{ flexDirection: "row", width: "100%", flexGrow: 1 }}>
       {/* LEFT: Agent filter sidebar */}
       <AgentFilter />
 
       {/* MIDDLE: Skill list */}
       <box
         style={{
-          width: "30%",
+          width: "42%",
           border: true,
           borderColor: state.focusedPane === "list" ? colors.primary : colors.border,
           flexDirection: "column",
@@ -246,6 +253,7 @@ Add your skill instructions here.
           }}
         />
       ) : null}
+      </box>
     </box>
   )
 }
@@ -386,7 +394,7 @@ function DetailPanel({ skill, collections, selectedCollection }: DetailPanelProp
         <text>{" "}</text>
 
         {/* Shortcut hints */}
-        <text fg={colors.textDim}>v=view detail  d=remove  u=update  f=favorite  n=create skill  c=collections  Tab=switch pane</text>
+        <text fg={colors.textDim}>v=detail  d=remove  u=update  f=favorite  n=create  c=collections  [/]=sidebar filter</text>
         <text fg={colors.border}>---</text>
 
         {/* SKILL.md content */}

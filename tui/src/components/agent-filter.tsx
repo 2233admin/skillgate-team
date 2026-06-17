@@ -63,7 +63,7 @@ export function AgentFilter() {
     <box
       style={{
         flexDirection: "column",
-        width: 22,
+        width: 18,
         border: true,
         borderColor: isFocused ? colors.primary : colors.border,
         backgroundColor: colors.bg,
@@ -85,7 +85,7 @@ export function AgentFilter() {
         }}
       >
         <text fg={state.selectedAgentFilter === "all" ? colors.primary : colors.text}>
-          All Skills
+          All
         </text>
         <text fg={colors.textDim}> ({allCount})</text>
       </box>
@@ -100,7 +100,7 @@ export function AgentFilter() {
         }}
       >
         <text fg={state.selectedAgentFilter === "favorites" ? colors.primary : colors.text}>
-          {"★ "}Favorites
+          {"★ "}Favs
         </text>
         <text fg={colors.textDim}> ({favoritesCount})</text>
       </box>

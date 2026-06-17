@@ -13,9 +13,10 @@ const SHORTCUTS_LEFT: ShortcutEntry[] = [
   { key: "f", description: "Toggle favorite on selected skill" },
   { key: "n", description: "Create local skill (home)" },
   { key: "c", description: "Manage collections (home)" },
-  { key: "/", description: "Focus search input" },
-  { key: "Tab", description: "Cycle focus: agents > search > list" },
-  { key: "Esc", description: "Clear search / go back" },
+  { key: "/", description: "Focus filter bar (top)" },
+  { key: "[ / ]", description: "Cycle sidebar filter (home)" },
+  { key: "Tab", description: "Filter bar → list (when filtering)" },
+  { key: "Esc", description: "Clear filter / go back" },
 ]
 
 const SHORTCUTS_RIGHT: ShortcutEntry[] = [

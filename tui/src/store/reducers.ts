@@ -1,6 +1,7 @@
 import type { AppState, Action, FocusedPane } from "./types.js"
 
-const FOCUS_ORDER: FocusedPane[] = ["agents", "search", "list"]
+// List-first UX: sidebar is reached via [ ] keys, not Tab cycling.
+const FOCUS_ORDER: FocusedPane[] = ["list", "agents"]
 
 export const initialState: AppState = {
   activeView: "home",
@@ -23,12 +24,15 @@ export const initialState: AppState = {
 
 export function appReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
-    case "NAVIGATE":
+    case "NAVIGATE": {
+      const listFirstViews = new Set(["home", "discover", "servers"])
       return {
         ...state,
         previousView: state.activeView,
         activeView: action.view,
+        focusedPane: listFirstViews.has(action.view) ? "list" : state.focusedPane,
       }
+    }
 
     case "GO_BACK":
       if (!state.previousView) return state
@@ -104,6 +108,19 @@ export function appReducer(state: AppState, action: Action): AppState {
       const currentIdx = FOCUS_ORDER.indexOf(state.focusedPane)
       const nextIdx = (currentIdx + 1) % FOCUS_ORDER.length
       return { ...state, focusedPane: FOCUS_ORDER[nextIdx] }
+    }
+
+    case "CYCLE_AGENT_FILTER": {
+      const options = [
+        "all",
+        "favorites",
+        ...state.detectedAgents.map((a) => a.name),
+      ]
+      const currentIdx = options.indexOf(state.selectedAgentFilter)
+      const baseIdx = currentIdx >= 0 ? currentIdx : 0
+      const delta = action.direction === "next" ? 1 : -1
+      const nextIdx = (baseIdx + delta + options.length) % options.length
+      return { ...state, selectedAgentFilter: options[nextIdx] }
     }
 
     case "REFRESH_SKILLS":

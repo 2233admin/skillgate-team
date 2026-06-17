@@ -113,5 +113,6 @@ export type Action =
   | { type: "TOGGLE_HELP" }
   | { type: "SET_FOCUSED_PANE"; pane: FocusedPane }
   | { type: "CYCLE_FOCUS" }
+  | { type: "CYCLE_AGENT_FILTER"; direction: "prev" | "next" }
   | { type: "REFRESH_SKILLS" }
   | { type: "SET_SELECTED_SERVER"; serverId: string | null }

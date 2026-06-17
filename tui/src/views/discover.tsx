@@ -5,6 +5,7 @@ import { useSearch } from "../data/use-search.js"
 import { useTrending } from "../data/use-trending.js"
 import { useSkillActions } from "../data/use-skill-actions.js"
 import { ConfirmDialog } from "../components/confirm-dialog.js"
+import { SearchInput } from "../components/search-input.js"
 import type { CatalogSkill, SkillsShSkill } from "../data/api-client.js"
 import { filterSkills } from "../data/api-client.js"
 import { colors } from "../utils/colors.js"
@@ -14,25 +15,16 @@ import { colors } from "../utils/colors.js"
 const TOGGLE_INDEX = -1
 
 /**
- * Discover view: two-column layout with search results.
- * LEFT  - Search input + results list (40%)
- * RIGHT - Selected result detail (flexGrow)
+ * Discover view: filter bar on top, two-column results + detail below.
  */
 export function DiscoverView() {
   const state = useStore()
   const dispatch = useDispatch()
-  const [query, setQuery] = useState("")
+  const query = state.searchQuery
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [officialOnly, setOfficialOnly] = useState(false)
   const [installTarget, setInstallTarget] = useState<CatalogSkill | null>(null)
   const [previewSkill, setPreviewSkill] = useState<SkillsShSkill | null>(null)
-
-  // Auto-focus search input when Discover view mounts
-  useEffect(() => {
-    if (state.activeView === "discover") {
-      dispatch({ type: "SET_FOCUSED_PANE", pane: "search" })
-    }
-  }, [state.activeView])
 
   const { results, loading, error, total, hasMore, loadMore } =
     useSearch(query)
@@ -41,10 +33,6 @@ export function DiscoverView() {
 
   const isSearching = query.trim().length >= 2
 
-  // Compose the list shown to the user:
-  // - short query -> ranked trending (instant local browse)
-  // - 2+ chars    -> local filter over trending FIRST, then live API results
-  //   whose id is not already present, then optionally restrict to official.
   const visibleSkills = useMemo<SkillsShSkill[]>(() => {
     let combined: SkillsShSkill[]
     if (!isSearching) {
@@ -61,7 +49,10 @@ export function DiscoverView() {
     return combined
   }, [isSearching, query, trending, results, officialOnly])
 
-  // Clamp selection whenever the visible set changes.
+  useEffect(() => {
+    setSelectedIndex(0)
+  }, [query])
+
   useEffect(() => {
     setSelectedIndex((i) => {
       if (i === TOGGLE_INDEX) return TOGGLE_INDEX
@@ -69,7 +60,6 @@ export function DiscoverView() {
     })
   }, [visibleSkills.length])
 
-  // Update preview when selection changes
   useEffect(() => {
     if (selectedIndex >= 0 && visibleSkills[selectedIndex]) {
       setPreviewSkill(visibleSkills[selectedIndex])
@@ -78,14 +68,12 @@ export function DiscoverView() {
     }
   }, [selectedIndex, visibleSkills])
 
-  // Keyboard navigation for the discover list
   useKeyboard((key) => {
     if (state.activeView !== "discover") return
     if (state.showHelp) return
     if (state.focusedPane === "search") return
     if (installTarget) return
 
-    // space/enter toggles the focusable "Official only" row when selected
     if (
       selectedIndex === TOGGLE_INDEX &&
       (key.name === "space" || key.name === "return")
@@ -94,14 +82,12 @@ export function DiscoverView() {
       return
     }
 
-    // j/k or arrow keys (TOGGLE_INDEX sits above the first skill row)
     if (key.name === "up" || (key.name === "k" && !key.ctrl)) {
       setSelectedIndex((i) => Math.max(TOGGLE_INDEX, i - 1))
     }
     if (key.name === "down" || (key.name === "j" && !key.ctrl)) {
       setSelectedIndex((i) => {
         const next = Math.min(visibleSkills.length - 1, i + 1)
-        // If we're near the bottom and the live API has more, load next page.
         if (isSearching && next >= visibleSkills.length - 3 && hasMore && !loading) {
           loadMore()
         }
@@ -109,7 +95,6 @@ export function DiscoverView() {
       })
     }
 
-    // g = first, G = last
     if (key.name === "g" && !key.shift) {
       setSelectedIndex(0)
     }
@@ -117,7 +102,6 @@ export function DiscoverView() {
       setSelectedIndex(Math.max(0, visibleSkills.length - 1))
     }
 
-    // v to open full detail view
     if (key.name === "v" && visibleSkills[selectedIndex]) {
       const skill = visibleSkills[selectedIndex]
       dispatch({
@@ -127,14 +111,12 @@ export function DiscoverView() {
       return
     }
 
-    // i to install
     if (key.name === "i" && visibleSkills[selectedIndex]) {
       setInstallTarget(visibleSkills[selectedIndex])
       return
     }
   })
 
-  // Confirm dialog for install
   if (installTarget) {
     return (
       <ConfirmDialog
@@ -151,34 +133,11 @@ export function DiscoverView() {
 
   return (
     <box style={{ flexDirection: "column", width: "100%", flexGrow: 1 }}>
-      {/* Search input */}
-      {/* Search input -- only render <input> when focused to prevent click-to-type desync */}
-      <box
-        style={{
-          height: 3,
-          width: "100%",
-          border: true,
-          borderColor: state.focusedPane === "search" ? colors.primary : colors.border,
-          paddingLeft: 1,
-          paddingRight: 1,
-        }}
-        title={state.focusedPane === "search" ? "Search" : "/ to search"}
-      >
-        {state.focusedPane === "search" ? (
-          <input
-            placeholder="Search skills... (Enter to search)"
-            focused={state.activeView === "discover" && !state.showHelp}
-            onSubmit={((value: string) => {
-              setQuery(value)
-              setSelectedIndex(0)
-            }) as any}
-          />
-        ) : (
-          <text fg={colors.textDim}>/ to search, Tab to cycle panes</text>
-        )}
-      </box>
+      <SearchInput
+        filterAction="SET_SEARCH_QUERY"
+        placeholder="Search catalog… (2+ chars for API)"
+      />
 
-      {/* Status line */}
       <box
         style={{
           height: 1,
@@ -188,33 +147,28 @@ export function DiscoverView() {
           flexDirection: "row",
         }}
       >
-        {/* Results info */}
         <text fg={colors.textDim}>
           {isSearching && loading
-            ? "Loading..."
+            ? "Loading…"
             : isSearching && error
               ? `Error: ${error}`
               : `${visibleSkills.length} ${isSearching ? "result" : "skill"}${visibleSkills.length !== 1 ? "s" : ""}`}
         </text>
       </box>
 
-      {/* Two-column content: results list | detail */}
       <box style={{ flexDirection: "row", flexGrow: 1, width: "100%" }}>
-        {/* LEFT: Results list */}
         <box
           style={{
-            width: "40%",
+            width: "42%",
             border: true,
             borderColor: state.focusedPane === "list" ? colors.primary : colors.border,
             flexDirection: "column",
           } as any}
         >
-          {/* Section header */}
           <box style={{ height: 1, paddingLeft: 1, backgroundColor: colors.bgAlt }}>
             <text fg={colors.textDim}>{isSearching ? "Results" : "Trending"}</text>
           </box>
 
-          {/* Focusable "Official only" filter row */}
           <box
             style={{
               height: 1,
@@ -284,7 +238,7 @@ export function DiscoverView() {
               {isSearching && hasMore && (
                 <box style={{ paddingLeft: 1, height: 1 }}>
                   <text fg={colors.textDim}>
-                    {loading ? "Loading more..." : "Scroll down to load more..."}
+                    {loading ? "Loading more…" : "Scroll down to load more…"}
                   </text>
                 </box>
               )}
@@ -292,7 +246,6 @@ export function DiscoverView() {
           )}
         </box>
 
-        {/* RIGHT: Detail panel */}
         <box style={{ flexGrow: 1, flexDirection: "column" }}>
           {previewSkill ? (
             <DiscoverDetailPanel skill={previewSkill} />
@@ -306,8 +259,6 @@ export function DiscoverView() {
     </box>
   )
 }
-
-// ---------- Inline Detail Panel ----------
 
 interface DiscoverDetailPanelProps {
   skill: CatalogSkill
@@ -332,18 +283,15 @@ function DiscoverDetailPanel({ skill }: DiscoverDetailPanelProps) {
       }}
     >
       <box style={{ paddingLeft: 1, paddingRight: 1, flexDirection: "column" }}>
-        {/* Name */}
         <text fg={colors.primary}>
           <strong>{skill.name}</strong>
         </text>
 
-        {/* Skill ID */}
         <box style={{ flexDirection: "row", height: 1 }}>
           <text fg={colors.textDim}>ID: </text>
           <text fg={colors.text}>{skill.skillId}</text>
         </box>
 
-        {/* Source (owner/repo) */}
         {skill.source ? (
           <box style={{ flexDirection: "row", height: 1 }}>
             <text fg={colors.textDim}>Source: </text>
@@ -351,32 +299,25 @@ function DiscoverDetailPanel({ skill }: DiscoverDetailPanelProps) {
           </box>
         ) : null}
 
-        {/* Installs */}
         <box style={{ flexDirection: "row", height: 1 }}>
           <text fg={colors.textDim}>Installs: </text>
           <text fg={colors.success}>{skill.installs.toLocaleString()}</text>
         </box>
 
         <text>{" "}</text>
-        <text fg={colors.textDim}>v=full detail  i=install  Tab=switch pane</text>
+        <text fg={colors.textDim}>v=full detail  i=install  /=search</text>
       </box>
     </scrollbox>
   )
 }
 
-// ---------- Helpers ----------
-
-/**
- * Converts a catalog skill to an EnrichedSkill for the detail view.
- * Since catalog skills don't have a local file, we provide a placeholder.
- */
 function catalogSkillToEnriched(skill: CatalogSkill): import("../store/types.js").EnrichedSkill {
   const githubUrl = skill.source ? `https://github.com/${skill.source}` : undefined
 
   return {
     name: skill.name,
     description: "",
-    filePath: "", // No local file for catalog items
+    filePath: "",
     canonicalPath: "",
     agents: [],
     scope: "custom",
