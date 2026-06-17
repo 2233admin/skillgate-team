@@ -2,6 +2,10 @@
 
 这份文档配合 [README](../README.md)，按「第一次用」的顺序说明 Skillgate Team。
 
+<p align="center">
+  <img src="images/architecture.svg" alt="架构示意" width="720" />
+</p>
+
 ---
 
 ## 概念（30 秒）

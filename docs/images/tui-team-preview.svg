@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 420" role="img" aria-label="Skillgate TUI Team view preview">
+  <rect width="720" height="420" rx="10" fill="#0c0c0c"/>
+  <rect x="0" y="0" width="720" height="28" fill="#1a1a1a"/>
+  <text x="16" y="19" fill="#a3a3a3" font-family="Consolas, monospace" font-size="12">skillgate tui — Team</text>
+
+  <rect x="0" y="28" width="720" height="32" fill="#2a2200"/>
+  <text x="16" y="49" fill="#fbbf24" font-family="Consolas, monospace" font-size="12">Catalog behind  0.1.0 → 0.1.1  (r refresh)</text>
+
+  <rect x="16" y="72" width="688" height="88" rx="4" fill="#111" stroke="#333"/>
+  <text x="28" y="94" fill="#60a5fa" font-family="Consolas, monospace" font-size="12" font-weight="bold">Team Context</text>
+  <text x="28" y="114" fill="#737373" font-family="Consolas, monospace" font-size="11">Root: ~/.skillgate-team</text>
+  <text x="28" y="132" fill="#737373" font-family="Consolas, monospace" font-size="11">Profile: quant (linked_project)</text>
+  <text x="28" y="150" fill="#737373" font-family="Consolas, monospace" font-size="11">Agents: claude-code, codex-cli, cursor, grok</text>
+
+  <text x="16" y="184" fill="#60a5fa" font-family="Consolas, monospace" font-size="12" font-weight="bold">Profiles (j/k)</text>
+  <text x="28" y="206" fill="#fafafa" font-family="Consolas, monospace" font-size="11">▸ quant   12 skills — k-atana quant workflow</text>
+  <text x="28" y="224" fill="#525252" font-family="Consolas, monospace" font-size="11">  default  8 skills</text>
+
+  <rect x="16" y="244" width="688" height="36" fill="#171717"/>
+  <text x="28" y="266" fill="#a3a3a3" font-family="Consolas, monospace" font-size="11">Quick start: j/k → a apply → d doctor  (? = help)</text>
+
+  <text x="16" y="400" fill="#525252" font-family="Consolas, monospace" font-size="10">a=apply  Shift+A=lock  d=doctor  l=lock  r=drift  4=Team tab</text>
+</svg>
