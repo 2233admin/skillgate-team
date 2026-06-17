@@ -1,6 +1,6 @@
 # 第一次上手
 
-配合 [README](../README.md) 使用。如果你已经 clone 完仓库，按下面三条路径选一条走下去就行。
+配合 [README](../README.md) 用。clone 完仓库，下面三条路选一条走到底。
 
 <p align="center">
   <img src="images/architecture.svg" alt="架构示意" width="720" />
@@ -10,15 +10,15 @@
 
 ## 先弄清五个词
 
-| 名词 | 含义 |
-|------|------|
-| **团队目录** | 就是这个仓库：`skills/`、`profiles/`、`skills.lock.yaml` |
-| **Profile** | 一份 YAML，写死「装哪些技能、发给哪些 Agent」——默认用 `quant` |
-| **Apply** | 按 profile 把技能链到本机 `~/.claude/skills` 等目录 |
-| **Doctor** | 看本机实际安装和 profile 差在哪 |
-| **Lock** | `skills.lock.yaml` 里的内容哈希；目录被人改过，verify 会对不上 |
+不用背定义，知道谁管啥就行：
 
-不用会写 YAML。日常使用者：选 profile → Apply → 完事。
+- **团队目录** — 就是这个仓库（`skills/`、`profiles/`、`skills.lock.yaml`）
+- **Profile** — 一份 YAML，写死装哪些技能、发给哪些 Agent；默认 `quant`
+- **Apply** — 按 profile 把技能链到本机 `~/.claude/skills` 等目录
+- **Doctor** — 看本机实际安装和 profile 差在哪
+- **Lock** — `skills.lock.yaml` 里的哈希；目录被人悄悄改过，verify 会对不上
+
+日常使用者：**选 profile → Apply → 完事**。维护者才需要动 YAML 和 lock。
 
 ---
 
@@ -26,14 +26,12 @@
 
 ### 准备
 
-1. 安装 [Bun](https://bun.sh) 和 **Node 22 或 25**（不要用 26）。
-2. 克隆仓库到固定位置，例如：
-   - macOS/Linux: `~/.skillgate-team`
-   - Windows: `D:\skillgate-team`
+[Bun](https://bun.sh) + **Node 22 或 25**（不要用 26）。仓库 clone 到固定位置，例如：
+
+- macOS / Linux：`~/.skillgate-team`
+- Windows：`D:\skillgate-team`（路径别带中文空格，设置里要原样填）
 
 ### 安装
-
-在仓库根目录：
 
 ```powershell
 # Windows
@@ -44,53 +42,50 @@ bun run install-global
 ```
 
 ```bash
-# macOS / Linux（无 gui:install 时先 bun install）
+# macOS / Linux
 bun install --ignore-scripts
 bun run build
 bun run install-global
-# 若需桌面版，再按 README 安装 Electron 依赖
+# 桌面版依赖按 README 补装
 ```
 
-### 第一次打开
+### 打开后做什么
 
 ```bash
 skillgate gui
-# 或 bun run gui
 ```
 
-1. 打开 **设置 (Settings)**。
-2. **Team catalog root** 填克隆路径（如 `D:\skillgate-team`）。
-3. （可选）**Linked project** 填你的业务项目，它会读 `.skillgate/profile`。
-4. 侧边栏点 **Team**。
-5. 下拉选 `quant` → 点 **Apply profile** → 确认。
-6. 点 **Run doctor**，应显示无漂移。
+1. **设置** → **Team catalog root** 填 clone 路径  
+2. （可选）**Linked project** 填业务仓库，自动读 `.skillgate/profile`  
+3. 侧边栏 **Team** → 选 `quant` → **Apply profile** → 确认  
+4. **Run doctor**，无漂移就 OK  
 
-若顶部出现黄色横幅「目录可能落后」，先 `git pull` 再 Apply。
+顶部黄色横幅「目录可能落后」→ 先 `git pull`，再 Apply。
 
 ---
 
-## 路径 B：终端 UI（全键盘）
+## 路径 B：终端 UI
 
 ```bash
 skillgate tui
 ```
 
-| 按键 | 作用 |
-|------|------|
-| `4` | 切换到 Team |
-| `j` / `k` | 上下选 profile |
-| `a` | 应用 profile |
-| `d` | 运行 doctor |
+| 键 | 作用 |
+|----|------|
+| `4` | Team |
+| `j` / `k` | 选 profile |
+| `a` | Apply |
+| `d` | Doctor |
 | `l` | 验证 lock |
 | `r` | 刷新目录漂移 |
-| `s` | 设置（配置 team.root） |
-| `?` | 快捷键总表 |
+| `s` | 设置 team.root |
+| `?` | 快捷键表 |
 
-错误时：按 `s` 进入设置，填 **team.root** 为仓库路径。
+报错「目录不可用」→ 按 `s`，把 **team.root** 设成仓库路径。
 
 ---
 
-## 路径 C：只用命令行
+## 路径 C：纯命令行
 
 ```bash
 export SKILLGATE_ROOT=~/.skillgate-team   # Windows: set SKILLGATE_ROOT=D:\skillgate-team
@@ -101,7 +96,7 @@ skillgate lock verify
 skillgate smoke-test
 ```
 
-在业务项目里绑定：
+绑业务项目：
 
 ```bash
 cd ~/projects/my-app
@@ -110,43 +105,42 @@ skillgate team-init --mode required
 
 ---
 
-## Profile `quant` 包含什么？
+## `quant` profile 里有什么
 
-见 [profiles/quant.yaml](../profiles/quant.yaml)：
+默认装 **12 个技能** × **4 个 Agent**（claude-code、codex-cli、cursor、grok）。
 
-- **技能**：coding-standards、frontend-patterns、nextjs-turbopack、tdd-workflow 等 12 个
-- **Agent**：claude-code、codex-cli、cursor、grok
+每个技能干什么、按什么场景触发——README 里有一览表（`#### 技能名 — 一句话` 那种，写法跟 [huashu-skills](https://github.com/alchaincyf/huashu-skills) 一样）。YAML 源文件：[profiles/quant.yaml](../profiles/quant.yaml)。
 
-团队换 profile 或增删技能时，改 `profiles/*.yaml` 并更新 lock，成员 `git pull` 后 Apply。
-
----
-
-## 目录落后时怎么办？
-
-1. 在团队目录执行 `git pull`。
-2. Team 页横幅会提示本地/远程版本号。
-3. 再 **Apply** 一次同步技能。
-4. 维护者改完技能后运行 `skillgate lock verify --write` 提交 lock。
-
-SessionStart 钩子（`team-init --mode required`）也会在 Claude Code 启动时提示 `TEAM_CATALOG_UPGRADE`。
+团队要换清单：改 `profiles/*.yaml` → `skillgate lock verify --write` → 提交 → 成员 `git pull` 再 Apply。
 
 ---
 
-## 验证安装成功
+## 目录落后了怎么办
+
+1. 团队目录 `git pull`
+2. Team 页看横幅里的本地 / 远程版本号
+3. 再 **Apply** 一次
+4. 维护者：`skillgate lock verify --write` 后提交 lock
+
+`team-init --mode required` 还会在 Claude Code 启动时提示 `TEAM_CATALOG_UPGRADE`。
+
+---
+
+## 验证装对了没
 
 ```bash
 bun run smoke-team
 ```
 
-应通过 15 项检查（context、profiles、drift、doctor 等）。
+应过 15 项（context、profiles、drift、doctor 等）。
 
 ---
 
-## 还是卡住？
+## 还是卡住
 
-用 **[求助 / 使用问题](https://github.com/2233admin/skillgate-team/issues/new?template=help_request.yml)** 模板发帖。把下面几项贴全，我们好对症：
+用 **[求助模板](https://github.com/2233admin/skillgate-team/issues/new?template=help_request.yml)** 发帖，这几项贴全：
 
-- 操作系统与 Node/Bun 版本
-- 用的是 CLI / TUI / Desktop
-- Team catalog root 填的路径
-- 完整报错截图或终端输出
+- 系统 + Node / Bun 版本
+- 用的 CLI / TUI / Desktop 哪一个
+- **Team catalog root** 填的路径
+- 完整报错或截图

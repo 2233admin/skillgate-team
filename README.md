@@ -4,7 +4,7 @@
 
 # Skillgate Team
 
-**把团队的 Agent Skills 收进一个 Git 仓库，像锁依赖版本一样锁技能清单。**
+**团队 Agent Skills 的版本管理。一个 Git 仓库，全员装同一套。**
 
 [![Version](https://img.shields.io/badge/version-0.1.0-blue)](VERSION)
 [![Node](https://img.shields.io/badge/node-22--25-339933?logo=node.js&logoColor=white)](package.json)
@@ -12,66 +12,139 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](cli/package.json)
 [![Tests](https://img.shields.io/badge/tests-56%20passing-brightgreen)](#开发)
 
-[快速开始](#快速开始) · [界面长什么样](#界面长什么样) · [入门指南](docs/GETTING_STARTED.md) · [提 Issue](https://github.com/2233admin/skillgate-team/issues/new/choose) · [English](#english)
+[安装](#安装) · [能干什么](#能干什么) · [界面](#界面长什么样) · [上手](docs/GETTING_STARTED.md) · [提 Issue](https://github.com/2233admin/skillgate-team/issues/new/choose)
 
 </div>
 
----
+团队里每个人的 `~/.claude/skills` 长得都不一样——这事我见过太多次了。有人多装了三个，有人还在用上周的版本，新人入职要问三遍「到底装哪些」。
 
-## 这篇 README 在说什么
+Skillgate Team 把技能收进**一个 Git 仓库**。维护者改 `profiles/`，大家 `git pull` 再 Apply，本机四个 Agent 目录就对齐了。不用在群里喊「谁没更新 skill」。
 
-你肯定见过这种场面：有人本地多装了三个 skill，有人还在用上周的版本，新人入职要问三遍「到底装哪些、装到哪」。口头同步撑不了多久。
-
-Skillgate Team 的做法很直接——**团队目录就是一个 Git 仓库**。技能文件在 `skills/`，装什么由 `profiles/` 里的 YAML 说了算，改了什么用 `skills.lock.yaml` 钉死哈希。成员 `git pull` 之后 Apply 一下，本机的 Claude / Codex / Cursor / Grok 就跟目录对齐了。
-
-不想记命令就开 Desktop 或 TUI；要接 CI 就走 CLI。三端走同一套 `team-api`，不会出现「GUI 能装、命令行不行」这种分裂。
+> 文档写法参考了 [huashu-skills](https://github.com/alchaincyf/huashu-skills) 的 README 结构：先讲清这条链路解决什么，再列能点的按钮。
 
 ---
 
-## 谁适合用
+## 安装
 
-- **小队维护者**：改 profile、更 lock、发 PR，成员跟着 pull + Apply。
-- **日常写代码的人**：选好 `quant`（或你们自己的 profile），点 Apply，然后忘掉这件事。
-- **接自动化的同学**：`skillgate apply` / `doctor` / `lock verify` 可以塞进脚本或流水线。
+```bash
+git clone https://github.com/2233admin/skillgate-team.git ~/.skillgate-team
+cd ~/.skillgate-team
 
-默认带的 [`quant`](profiles/quant.yaml) profile：12 个技能，覆盖 Claude Code、Codex CLI、Cursor、Grok 四个 Agent。
+bun install --ignore-scripts
+bun run build
+bun run install-global
+```
+
+Windows 桌面版再多一步：`bun run gui:install`  
+环境：**Bun** + **Node 22–25**（Node 26 会把 SQLite 搞崩，别试）。
+
+装完应用默认 profile：
+
+```bash
+skillgate apply --profile quant -y
+skillgate doctor --profile quant
+```
 
 ---
 
-## 怎么运作
+## 能干什么
 
 <p align="center">
   <img src="docs/images/architecture.svg" alt="团队目录 → Skillgate → 本机 Agent" width="920" />
 </p>
 
-```
-skillgate-team/          profiles/quant.yaml        ~/.claude/skills/
-├── skills/      ──►    skillgate apply    ──►    ~/.codex/skills/
-├── profiles/            doctor / lock              ~/.cursor/skills/
-└── skills.lock.yaml     (CLI · TUI · Desktop)      ~/.grok/skills/
-```
+#### 团队目录 — 单一事实源
 
-| 动作 | 干什么 |
-|------|--------|
-| **Apply** | 按 profile 把技能链到本机；[`protect.yaml`](protect.yaml) 里标了保护的，不会误覆盖 |
-| **Doctor** | 对一下「本机已装」和 profile，缺了啥、漂了啥，列清楚 |
-| **Lock verify** | 磁盘上的技能和 `skills.lock.yaml` 哈希是否一致；维护者用 `--write` 更新 lock |
-| **Catalog drift** | 远程 `VERSION` 比本地新时，Desktop / TUI 顶部会挂横幅提醒你 pull |
-| **team-init** | 在业务仓库写 `.skillgate/profile`，可选挂上 SessionStart 检查 |
+`skills/` 放技能本体，`profiles/` 写「这支队伍装什么」，`skills.lock.yaml` 把每个文件的哈希钉死。改了什么，lock 对不上，Doctor 会告诉你。
+
+#### Profile — 装什么，一条 YAML 说了算
+
+默认 [`quant`](profiles/quant.yaml)：**12 个技能**，发给 **Claude Code / Codex CLI / Cursor / Grok** 四个 Agent。你不用会写 YAML——日常使用者选好 profile，点 Apply 就行。
+
+#### Apply · Doctor · Lock — 同步和自检
+
+- **Apply**：按 profile 链到本机；[`protect.yaml`](protect.yaml) 标了保护的条目不会误覆盖
+- **Doctor**：本机已装 vs profile，缺啥、漂了啥，列出来
+- **Lock verify**：磁盘内容和 lock 哈希是否一致；维护者用 `--write` 更新后提交
+- **Catalog drift**：远程 `VERSION` 比本地新，Desktop / TUI 顶部挂横幅——该 `git pull` 了
+
+#### Desktop · TUI · CLI — 同一套 `team-api`
+
+不想记命令 → `skillgate gui`  
+终端常驻 → `skillgate tui`，按 `4` 进 Team  
+接 CI / 脚本 → `skillgate apply --profile quant -y`
+
+三端走 `cli/src/team-api/`，不会出现「GUI 能装、CLI 不行」这种分裂。
+
+#### team-init — 绑到业务仓库
+
+在业务项目跑 `skillgate team-init --mode required`，生成 `.skillgate/profile`，可选挂 Claude Code SessionStart 检查。Desktop 里填 **Linked project** 也能自动读。
+
+### 默认 profile：`quant` 技能一览
+
+面向量化 / 全栈工程队。12 个技能，四个 Agent 一起装。完整清单见 [`profiles/quant.yaml`](profiles/quant.yaml)。
+
+#### coding-standards — 编码底线
+
+命名、可读性、不可变数据、代码审查时的通用规矩。框架细节交给下面的 frontend / backend 技能。
+
+#### frontend-patterns — React / Next 前端
+
+状态管理、性能、组件拆分——日常写 UI 时 Agent 按这套走，少各写各的。
+
+#### nextjs-turbopack — Next.js 16+ 与 Turbopack
+
+增量打包、FS 缓存、dev 速度；什么时候用 Turbopack、什么时候别硬上 webpack。
+
+#### backend-patterns — 后端架构
+
+Node / Express / Next API routes：分层、数据库、服务端常见坑。
+
+#### api-design — REST API 设计
+
+资源命名、状态码、分页、错误体、版本、限流——对外 API 别各端各一套。
+
+#### security-review — 安全审查清单
+
+鉴权、用户输入、密钥、支付相关改动——改这些路径时自动拉 checklist。
+
+#### tdd-workflow — 测试驱动
+
+新功能、修 bug、重构：先测后写，单元 + 集成 + E2E，覆盖率目标 80%+。
+
+#### e2e-testing — Playwright E2E
+
+Page Object、CI 接入、产物、 flaky 处理——端到端别只跑 happy path。
+
+#### verification-loop — 会话级验收
+
+大任务拆阶段，每阶段有验证步骤，避免「改完了其实没跑通」。
+
+#### documentation-lookup — 查现行文档
+
+用 Context7 MCP 拉库文档，不靠训练数据里的过期 API。
+
+#### deep-research — 多源调研
+
+网页搜索 + 交叉验证 + 引用来源——要写调研报告或技术选型时用。
+
+#### strategic-compact — 手动压缩上下文
+
+在逻辑断点建议 compact，别被自动截断砍在半路。
 
 ---
 
 ## 界面长什么样
 
-> 示意图，布局和真实 Desktop / TUI 一致。想换成实拍见 [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md)。
+> 示意图，布局和真机一致。实拍替换方法见 [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md)。
 
 <table>
 <tr>
 <td width="58%">
 
-**Desktop** — 不想记命令时用这个
+**Desktop**
 
-设好 **Team catalog root**，选 profile，Apply，再跑一遍 Doctor 自检。
+设置 **Team catalog root** → 选 profile → Apply → Doctor。
 
 <p align="center">
   <img src="docs/images/desktop-team-preview.svg" alt="Desktop Team 页示意" width="100%" />
@@ -80,9 +153,9 @@ skillgate-team/          profiles/quant.yaml        ~/.claude/skills/
 </td>
 <td width="42%">
 
-**TUI** — 终端里待着的人
+**TUI**
 
-`skillgate tui`，按 `4` 进 Team，`a` 应用，`d` 自检。
+`skillgate tui` → `4` 进 Team → `a` 应用 → `d` 自检。
 
 <p align="center">
   <img src="docs/images/tui-team-preview.svg" alt="TUI Team 页示意" width="100%" />
@@ -92,86 +165,28 @@ skillgate-team/          profiles/quant.yaml        ~/.claude/skills/
 </tr>
 </table>
 
-| 入口 | 命令 |
-|------|------|
-| Desktop | `skillgate gui` |
-| TUI | `skillgate tui` |
-| CLI | `skillgate apply --profile quant -y` |
-
 ---
 
-## 快速开始
+## 第一次用（图形界面）
 
-### 1. 克隆团队目录
+1. `skillgate gui` 或 `skillgate tui`
+2. **设置** → **Team catalog root** = 你 clone 的路径（Windows 例：`D:\skillgate-team`）
+3. **Team** → 选 `quant` → **Apply** → **Doctor**
 
-```bash
-git clone https://github.com/2233admin/skillgate-team.git ~/.skillgate-team
-cd ~/.skillgate-team
-```
-
-Windows 可以放在 `D:\skillgate-team`，路径别带中文空格，后面要在设置里原样填进去。
-
-### 2. 安装
-
-需要 [Bun](https://bun.sh) 和 **Node 22–25**。Node 26 会把 SQLite 原生模块搞崩，别踩这个坑。
-
-```bash
-bun install --ignore-scripts
-bun run build
-bun run install-global
-```
-
-Windows 要用桌面版的话，再多跑一步：
-
-```powershell
-bun run gui:install
-```
-
-### 3. 应用 profile
-
-命令行：
-
-```bash
-skillgate apply --profile quant -y
-skillgate doctor --profile quant
-```
-
-图形界面：`skillgate gui` 或 `skillgate tui` → **设置**里填 **Team catalog root** → **Team** → 选 `quant` → **Apply** → **Doctor**。
-
-装完可以跑 `bun run smoke-team` 做 15 项自检。更细的步骤在 [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)。
-
----
-
-## 绑到你的业务仓库
-
-```bash
-cd your-app
-skillgate team-init --mode required
-```
-
-会在项目里生成 `.skillgate/profile`，并挂上 Claude Code 的 SessionStart 检查。Desktop / TUI 里填 **Linked project** 也能自动读这个 profile。
+跑一遍自检：`bun run smoke-team`（15 项）。更细的三种路径见 [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)。
 
 ---
 
 ## 常见问题
 
-<details>
-<summary><strong>Team 页说「目录不可用」</strong></summary>
+**Team 页说「目录不可用」？**  
+**Team catalog root** 填错或路径不存在。去设置里改成 clone 目录，或设 `SKILLGATE_ROOT` 指向同一位置。
 
-多半是 **Team catalog root** 没填对，或者填了个不存在的路径。去 **设置** 里改成你 `git clone` 下来的目录；也可以设环境变量 `SKILLGATE_ROOT` 指向同一个地方。
-</details>
+**Desktop 起不来，报 Electron / SQLite？**  
+确认 Node 22–25，在仓库根目录跑 `bun run gui:install`。
 
-<details>
-<summary><strong>Desktop 起不来，报 Electron / SQLite</strong></summary>
-
-先确认 Node 版本在 22–25，然后在仓库根目录执行 `bun run gui:install` 重装原生依赖。
-</details>
-
-<details>
-<summary><strong>维护者更新了技能，我怎么跟？</strong></summary>
-
-在团队目录 `git pull`，打开 Team 页点 **Apply**（或 `skillgate apply -y`）。维护者改完技能内容后，记得 `skillgate lock verify --write` 更新 lock 并提交，这样大家 Doctor 时对得上。
-</details>
+**维护者更新了技能，我怎么跟？**  
+团队目录 `git pull` → Team 页 **Apply**。维护者改完技能后记得 `skillgate lock verify --write`，把 lock 提交上去，大家 Doctor 才对得上。
 
 ---
 
@@ -193,26 +208,26 @@ skillgate team-init --mode required
 
 ```bash
 bun install --ignore-scripts
-bun run test      # 56 tests (cli + desktop)
+bun run test      # 56 tests
 bun run build
-bun run graph     # Nx 依赖图
+bun run graph
 ```
 
-想提 PR 先看 [CONTRIBUTING.md](CONTRIBUTING.md)。
+提 PR 前看 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ---
 
 ## English
 
-Skillgate Team keeps your squad’s agent skills in one git repo. Profiles declare what to install and where; `skills.lock.yaml` pins content hashes; Apply / Doctor / drift checks keep everyone’s machine aligned across Claude Code, Codex, Cursor, and Grok — via CLI, TUI, or Desktop.
+Git-backed skill catalog for teams: profiles declare what to install, lock files pin hashes, Apply / Doctor / drift checks keep Claude Code, Codex, Cursor, and Grok aligned — CLI, TUI, or Desktop.
 
 - [GETTING_STARTED.md](docs/GETTING_STARTED.md)
-- [Open an issue](https://github.com/2233admin/skillgate-team/issues/new/choose)
+- [Issues](https://github.com/2233admin/skillgate-team/issues/new/choose)
 
 ---
 
 <div align="center">
 
-<sub>旧仓库 <code>team-skills</code>、<code>skillgate</code> 已弃用，请用本仓库。</sub>
+<sub>旧仓库 <code>team-skills</code>、<code>skillgate</code> 已弃用。README 结构借鉴 <a href="https://github.com/alchaincyf/huashu-skills">huashu-skills</a>。</sub>
 
 </div>
