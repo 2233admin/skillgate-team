@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" role="img" aria-label="Skillgate Team">
-  <rect width="1280" height="640" fill="#F9F9FB"/>
+  <rect width="1280" height="640" fill="#FAFAFA"/>
   <rect x="0" y="0" width="1280" height="1" fill="#E6E6E8"/>
   <rect x="80" y="80" width="48" height="48" rx="12" fill="#FFFFFF" stroke="#E6E6E8"/>
   <path fill="none" stroke="#2EC4B6" stroke-width="1" stroke-opacity="0.4" d="M116 116 L128 116 L128 128"/>
@@ -11,7 +11,7 @@
   <circle cx="103" cy="112" r="2.5" fill="#D4A054"/>
 
   <text x="144" y="108" fill="#0C0C0D" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="52" font-weight="600" letter-spacing="-0.02em">Skillgate Team</text>
-  <text x="80" y="168" fill="#6B6F76" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="26" font-weight="400">One Git catalog. Same skills on every agent.</text>
+  <text x="80" y="168" fill="#6B6F76" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="26" font-weight="400">One Git catalog. Codex CLI and agents stay aligned.</text>
   <text x="80" y="210" fill="#9CA0A8" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="18">profiles · lock · apply · doctor · CLI / TUI / Desktop</text>
 
   <rect x="80" y="260" width="540" height="280" rx="10" fill="#FFFFFF" stroke="#E6E6E8"/>

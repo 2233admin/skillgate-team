@@ -2,6 +2,8 @@
 
 **气质**：克制、干净、偏工程工具的高级感。明日方舟只作**点缀**（琥珀 + 青绿双强调），不做作战面板、不做斜切堆砌。
 
+**文档**：README / Getting started 分 `zh-CN` 与 `en`；GitHub 首页 `README.md` 为双语入口。产品叙事以 **Codex CLI**（`~/.codex/skills`）为首要同步目标，其余 Agent 并列。
+
 ## 原则
 
 | 要做 | 不做 |
@@ -14,7 +16,7 @@
 
 | Token | 值 | 用途 |
 |-------|-----|------|
-| `bg-doc` | `#F9F9FB` | README 架构图、社交封面底 |
+| `bg-doc` | `#FAFAFA` | README 架构图、社交封面底 |
 | `bg-app` | `#0C0C0D` / `#141516` | Desktop / TUI 示意 |
 | `text` | `#0C0C0D` / `#F7F8F8` | 主文案 |
 | `text-muted` | `#6B6F76` / `#8A8F98` | 次要 |

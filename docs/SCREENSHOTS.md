@@ -8,7 +8,7 @@ README 使用 `docs/images/` 下的矢量示意图，保证 GitHub 上始终能�
 
 | 文件 | 用途 |
 |------|------|
-| `logo.svg` | README 顶部 logo（72px） |
+| `logo.svg` | README 入口 / 各语言 readme 顶部 logo（72px） |
 | `architecture.svg` | 架构流程图 |
 | `desktop-team-preview.svg` | Desktop Team 页布局示意 |
 | `tui-team-preview.svg` | TUI Team 页布局示意 |
