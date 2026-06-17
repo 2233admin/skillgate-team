@@ -4,11 +4,31 @@
   <a href="GETTING_STARTED.md">简体中文</a> · <strong>English</strong>
 </p>
 
-Use with [README.en.md](../README.en.md). After cloning, pick one path and finish it.
+Use with [README.en.md](../README.en.md).
 
 <p align="center">
   <img src="images/architecture.svg" alt="Architecture" width="720" />
 </p>
+
+---
+
+## Easy install (start here)
+
+| Step | Action |
+|------|--------|
+| 0 | Install [Bun](https://bun.sh) + [Git](https://git-scm.com/downloads) (desktop: [Node 22](https://nodejs.org)) |
+| 1 | Clone to `~/.skillgate-team` |
+| 2 | Run **`bun run bootstrap`** (`bootstrap:desktop` on Windows for GUI) |
+| 3 | **New terminal** → `skillgate doctor --profile quant` |
+| 4 | Optional GUI → `skillgate gui`, set **Team catalog root** to the clone path |
+
+One-liner:
+
+```bash
+git clone https://github.com/2233admin/skillgate-team.git ~/.skillgate-team && cd ~/.skillgate-team && bun run bootstrap
+```
+
+Prefer an installer? [GitHub Releases](https://github.com/2233admin/skillgate-team/releases) (Windows). Then bind the team catalog in Settings.
 
 ---
 

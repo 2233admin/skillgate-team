@@ -4,11 +4,33 @@
   <strong>简体中文</strong> · <a href="GETTING_STARTED.en.md">English</a>
 </p>
 
-配合 [README.md](../README.md) 使用。Clone 完仓库，下面三条路选一条走到底。
+配合 [README.md](../README.md) 使用。
 
 <p align="center">
   <img src="images/architecture.svg" alt="架构示意" width="720" />
 </p>
+
+---
+
+## 零脑力安装（大多数人只走这里）
+
+| 步骤 | 做什么 |
+|------|--------|
+| 0 | 装 [Bun](https://bun.sh) + [Git](https://git-scm.com/downloads)（桌面版再加 [Node 22](https://nodejs.org)） |
+| 1 | Clone 仓库到 `~/.skillgate-team` |
+| 2 | 在仓库根目录执行 **`bun run bootstrap`**（桌面版：`bun run bootstrap:desktop`） |
+| 3 | **新开终端** → `skillgate doctor --profile quant` |
+| 4 | 想用图形界面 → `skillgate gui`，在设置里填 **Team catalog root**（就是 clone 路径） |
+
+一条命令（已装 Bun + Git）：
+
+```powershell
+git clone https://github.com/2233admin/skillgate-team.git $HOME\.skillgate-team; cd $HOME\.skillgate-team; bun run bootstrap
+```
+
+不想自己编译桌面版 → [GitHub Releases](https://github.com/2233admin/skillgate-team/releases) 下 Windows 安装包，再按上面步骤 4 绑团队目录。
+
+**卡住？** 用 [求助模板](https://github.com/2233admin/skillgate-team/issues/new?template=help_request.yml)，附上 `bun -v`、`node -v`、完整报错。
 
 ---
 
@@ -28,25 +50,17 @@
 
 ### 准备
 
-[Bun](https://bun.sh) + **Node 22 或 25**。Clone 到固定路径，例如：
-
-- macOS / Linux：`~/.skillgate-team`
-- Windows：`D:\skillgate-team`（避免中文与空格）
+Clone 到固定路径（避免中文与空格），例如 `~/.skillgate-team` 或 `D:\skillgate-team`。
 
 ### 安装
 
-```powershell
-bun install --ignore-scripts
-bun run build
-bun run gui:install
-bun run install-global
-```
+优先：**`bun run bootstrap:desktop`**（Windows），或 Releases 安装包 + 绑团队目录。
 
-```bash
-# macOS / Linux — 桌面依赖见 README
-bun install --ignore-scripts
-bun run build
-bun run install-global
+维护者手动装依赖：
+
+```powershell
+bun run bootstrap:desktop
+# 等价于 bootstrap + install-gui.ps1
 ```
 
 ### 打开后

@@ -8,7 +8,9 @@ body:
       value: |
         新手友好区。先对照 [入门指南](https://github.com/2233admin/skillgate-team/blob/master/docs/GETTING_STARTED.md)。
 
-        发帖前请确认：**Team catalog root** 是否指向你 `git clone` 的仓库路径。
+        推荐安装方式：clone 后执行 **`bun run bootstrap`**（或 Releases 桌面安装包 + 设置 Team catalog root）。
+
+        发帖前请确认：**Team catalog root** 是否指向你 `git clone` 的仓库路径；附上 `bun -v`、`node -v`、是否跑过 bootstrap。
   - type: dropdown
     id: experience
     attributes:

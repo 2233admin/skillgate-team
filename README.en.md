@@ -15,6 +15,7 @@
 [![Bun](https://img.shields.io/badge/bun-1.3.14-black?logo=bun&logoColor=white)](package.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](cli/package.json)
 [![Tests](https://img.shields.io/badge/tests-56%20passing-brightgreen)](#development)
+[![Releases](https://img.shields.io/github/v/release/2233admin/skillgate-team?label=releases)](https://github.com/2233admin/skillgate-team/releases)
 
 [Install](#install) · [What it does](#what-it-does) · [UI](#what-it-looks-like) · [Getting started](docs/GETTING_STARTED.en.md) · [Issues](https://github.com/2233admin/skillgate-team/issues/new/choose)
 
@@ -28,23 +29,27 @@ Skillgate Team is the **single Git catalog** for your squad. Maintainers edit `p
 
 ## Install
 
-```bash
-git clone https://github.com/2233admin/skillgate-team.git ~/.skillgate-team
-cd ~/.skillgate-team
+### Easy path (recommended)
 
-bun install --ignore-scripts
-bun run build
-bun run install-global
+**One-time:** [Bun](https://bun.sh) + [Git](https://git-scm.com/downloads). Desktop: [Node 22 LTS](https://nodejs.org).
+
+```bash
+git clone https://github.com/2233admin/skillgate-team.git ~/.skillgate-team && cd ~/.skillgate-team && bun run bootstrap
 ```
 
-Desktop on Windows: `bun run gui:install`  
-Runtime: **Bun** + **Node 22–25** (Node 26 breaks SQLite).
+Windows desktop: `bun run bootstrap:desktop`. From scratch without cloning: `bun run setup`.
 
-Apply the default profile:
+Open a **new terminal**, then `skillgate doctor --profile quant`.
+
+### Desktop installer (no compile)
+
+Download the Windows installer from [Releases](https://github.com/2233admin/skillgate-team/releases), clone this repo to a fixed path, then in the app: **Settings → Team catalog root** → **Team → quant → Apply**.
+
+### Manual (maintainers)
 
 ```bash
+bun install --ignore-scripts && bun run build && bun run install-global
 skillgate apply --profile quant -y
-skillgate doctor --profile quant
 ```
 
 Codex CLI target: `~/.codex/skills` (or `$CODEX_HOME/skills`).

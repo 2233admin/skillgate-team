@@ -11,6 +11,10 @@
     "tui"
   ],
   "scripts": {
+    "bootstrap": "node scripts/bootstrap.mjs",
+    "bootstrap:desktop": "node scripts/bootstrap.mjs --desktop",
+    "setup": "node scripts/setup.mjs",
+    "setup:desktop": "node scripts/setup.mjs --desktop",
     "build": "nx run skillgate:build",
     "build:all": "nx run-many -t build",
     "install-global": "nx run skillgate:build && node cli/bin/skillgate.mjs install-global",

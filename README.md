@@ -15,6 +15,7 @@
 [![Bun](https://img.shields.io/badge/bun-1.3.14-black?logo=bun&logoColor=white)](package.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](cli/package.json)
 [![Tests](https://img.shields.io/badge/tests-56%20passing-brightgreen)](#开发)
+[![Releases](https://img.shields.io/github/v/release/2233admin/skillgate-team?label=releases)](https://github.com/2233admin/skillgate-team/releases)
 
 [安装](#安装) · [能干什么](#能干什么) · [界面](#界面长什么样) · [上手](docs/GETTING_STARTED.md) · [提 Issue](https://github.com/2233admin/skillgate-team/issues/new/choose)
 
@@ -28,24 +29,51 @@ Skillgate Team 把技能收进**一个 Git 仓库**。维护者改 `profiles/`�
 
 ## 安装
 
-```bash
-git clone https://github.com/2233admin/skillgate-team.git ~/.skillgate-team
-cd ~/.skillgate-team
+### 零脑力版（推荐）
 
-bun install --ignore-scripts
-bun run build
-bun run install-global
+**只做一次：** 装 [Bun](https://bun.sh) 和 [Git](https://git-scm.com/downloads)。桌面版再装 [Node 22 LTS](https://nodejs.org)。
+
+**Windows（PowerShell，一条命令）：**
+
+```powershell
+git clone https://github.com/2233admin/skillgate-team.git $HOME\.skillgate-team; cd $HOME\.skillgate-team; bun run bootstrap
 ```
 
-Windows 桌面版：`bun run gui:install`  
-环境：**Bun** + **Node 22–25**（Node 26 与 SQLite 不兼容）。
+要桌面版：把最后一项换成 `bun run bootstrap:desktop`。
 
-装完应用默认 profile：
+**macOS / Linux：**
 
 ```bash
+git clone https://github.com/2233admin/skillgate-team.git ~/.skillgate-team && cd ~/.skillgate-team && bun run bootstrap
+```
+
+还没 clone、想从零开始：
+
+```bash
+bun run setup
+```
+
+脚本会自动：装依赖 → 编译 → 注册 `skillgate` 命令 → 应用 `quant` profile。  
+**装完新开一个终端**，运行 `skillgate doctor --profile quant`。
+
+### 桌面安装包（不用自己编译）
+
+在 [Releases](https://github.com/2233admin/skillgate-team/releases) 下载 Windows 安装包。装好后：
+
+1. 把本仓库 clone 到 `~/.skillgate-team`（或任意固定路径）
+2. 打开 Skillgate → **设置** → **Team catalog root** 填该路径
+3. **Team** → `quant` → **Apply**
+
+Releases 由 tag `v*` 自动构建；仓库发版见 [CONTRIBUTING.md](CONTRIBUTING.md#发版)。
+
+### 手动安装（维护者）
+
+```bash
+bun install --ignore-scripts && bun run build && bun run install-global
 skillgate apply --profile quant -y
-skillgate doctor --profile quant
 ```
+
+Windows 桌面开发：`bun run gui:install`（需 Node 22–25）。
 
 Codex CLI 技能目录：`~/.codex/skills`（或 `$CODEX_HOME/skills`）。
 
