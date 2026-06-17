@@ -80,6 +80,15 @@ export async function runSmokeTest(args: string[]): Promise<void> {
     failed++;
   }
 
+  console.log(pc.bold("=== smoke: desktop package ==="));
+  const desktopConfig = path.join(teamRoot, "desktop", "electron-vite.config.ts");
+  try {
+    await fs.access(desktopConfig);
+  } catch {
+    console.log(pc.red(`FAIL: desktop config missing at ${desktopConfig}`));
+    failed++;
+  }
+
   console.log(pc.bold("=== smoke: global shim ==="));
   const shim = path.join(os.homedir(), ".skillgate", "bin", "skillgate.mjs");
   const repoCli = path.join(os.homedir(), ".skillgate", "repo", "dist", "cli.js");

@@ -2,10 +2,11 @@
   "name": "skillgate-team",
   "private": true,
   "version": "0.1.0",
-  "description": "Team skill catalog + skillgate CLI + OpenTUI",
+  "description": "Team skill catalog + skillgate CLI + OpenTUI + Electron GUI",
   "workspaces": [
     "cli",
-    "tui"
+    "ui",
+    "desktop"
   ],
   "scripts": {
     "build": "npm run build --prefix cli",
@@ -13,6 +14,10 @@
     "smoke-test": "node cli/bin/skillgate.mjs smoke-test",
     "tui": "npm run start --prefix tui",
     "tui:dev": "npm run dev --prefix tui",
-    "tui:window": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch-tui-window.ps1"
+    "tui:window": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch-tui-window.ps1",
+    "gui": "npm run dev --prefix desktop",
+    "gui:dev": "npm run dev --prefix desktop",
+    "gui:build": "npm run build --prefix desktop",
+    "gui:install": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-gui.ps1"
   }
 }

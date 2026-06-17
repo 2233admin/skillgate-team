@@ -21,6 +21,7 @@ import { runTeamInit } from "./commands/team-init.js";
 import { runSmokeTest } from "./commands/smoke-test.js";
 import { runUpdateCheck } from "./commands/update-check.js";
 import { launchTui } from "./core/launch-tui.js";
+import { launchGui } from "./core/launch-gui.js";
 
 // "SKILLS" in dark silver (dim), "GATE" in bright white (bold)
 const s = (t: string) => pc.dim(t);       // dark silver
@@ -66,6 +67,8 @@ async function main(): Promise<void> {
     "doctor",
     "lock",
     "tui",
+    "gui",
+    "desktop",
   ]);
 
   if (yesFlag) {
@@ -107,6 +110,8 @@ async function main(): Promise<void> {
     "smoke-test",
     "update-check",
     "tui",
+    "gui",
+    "desktop",
     "--version",
     "-v",
     "--help",
@@ -221,6 +226,11 @@ async function main(): Promise<void> {
       launchTui(restArgs);
       break;
 
+    case "gui":
+    case "desktop":
+      launchGui(restArgs);
+      break;
+
     case "--version":
     case "-v":
       console.log(`skillgate v${VERSION}`);
@@ -281,6 +291,7 @@ function printHelp(): void {
   console.log(`    mcp                Run as MCP server (stdio transport)`);
   console.log(`    setup              Configure MCP for AI tools`);
   console.log(`    tui                Launch terminal UI (OpenTUI; requires Bun + tui/)`);
+  console.log(`    gui                Launch desktop GUI (Electron; requires npm install)`);
   console.log();
   console.log(`  ${BOLD("Examples:")}`);
   console.log(`    skillgate add @username/audit-website ${DIM("# install from SkillsGate")}`);

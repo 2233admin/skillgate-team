@@ -43,7 +43,9 @@ skillgate-team/
 ├── protect.yaml         # never overwrite (OMC, etc.)
 ├── VERSION
 ├── cli/                 # skillgate npm package (apply, doctor, install-global, …)
-└── tui/                 # OpenTUI terminal UI (vendored from SkillsGate upstream)
+├── tui/                 # OpenTUI terminal UI (vendored from SkillsGate upstream)
+├── desktop/             # Electron desktop GUI (vendored from SkillsGate upstream)
+└── ui/                  # shared React components for desktop
 ```
 
 ## Terminal UI (TUI)
@@ -62,6 +64,28 @@ npm run tui
 ```
 
 Set `SKILLGATE_ROOT` to this repo so the TUI and CLI share the same team catalog. Local UI state is stored in `~/.skillgate/skillgate.db`.
+
+## Desktop GUI
+
+Upstream SkillsGate Electron app (Installed / Discover / SSH Servers / Settings / skill editor).
+
+```bash
+# One-time: install workspace deps (Electron + native modules)
+# Prefer Node 22 LTS on Windows (better-sqlite3 / electron-builder)
+cd ~/.skillgate-team && npm run gui:install
+# or: powershell -File scripts/install-gui.ps1
+
+# From anywhere (after cli build + install-global)
+skillgate gui
+
+# Or from repo root
+npm run gui
+```
+
+Shares the same SQLite DB as the TUI (`~/.skillgate/skillgate.db`). Team profile/apply/doctor tabs are not wired yet.
+
+If `skillgate gui` reports **Electron uninstall**, rerun `npm run gui:install` or
+`node node_modules/electron/install.js` with `force_no_cache=true`.
 
 ## Project binding
 

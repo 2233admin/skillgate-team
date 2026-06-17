@@ -24,6 +24,15 @@ Local review clone: `C:\Users\Administrator\.cache\skillsgate-review`
 - SQLite state: `~/.skillgate/skillgate.db`
 - Team tabs (profiles / lock / doctor) — not yet wired; TUI still uses upstream Installed / Discover / Servers flow
 
+## Desktop GUI (vendored from upstream)
+
+- `desktop/` — Electron app from `apps/desktop` (SkillsGate upstream)
+- `ui/` — shared React components from `packages/ui`
+- Launch: `skillgate gui` or `npm run gui` (runs `electron-vite dev`)
+- Requires root `npm install` (Electron + better-sqlite3 native build)
+- Shares SQLite with TUI: `~/.skillgate/skillgate.db`
+- Team workflows (profiles / apply / doctor) — not yet wired in GUI
+
 ## What we de-emphasized
 
 - SkillsGate cloud login/publish as primary workflow (team uses lock + profiles)
