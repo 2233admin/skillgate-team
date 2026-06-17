@@ -20,7 +20,7 @@
 
 Skillgate Team 把技能收进**一个 Git 仓库**。维护者改 `profiles/`，大家 `git pull` 再 Apply，本机四个 Agent 目录就对齐了。不用在群里喊「谁没更新 skill」。
 
-> 文档写法参考了 [huashu-skills](https://github.com/alchaincyf/huashu-skills) 的 README 结构：先讲清这条链路解决什么，再列能点的按钮。
+> 文档结构借鉴 [huashu-skills](https://github.com/alchaincyf/huashu-skills)；视觉遵循 [Linear](https://linear.app) 式工程工具审美与第一性原理，见 [docs/DESIGN.md](docs/DESIGN.md)。
 
 ---
 
@@ -200,6 +200,7 @@ Page Object、CI 接入、产物、 flaky 处理——端到端别只跑 happy p
 | [`cli/`](cli/) | `skillgate` CLI + `team-api` |
 | [`desktop/`](desktop/) | Electron 桌面应用 |
 | [`tui/`](tui/) | OpenTUI 终端 UI |
+| [`docs/DESIGN.md`](docs/DESIGN.md) | Linear 式色板与设计约束 |
 | [`docs/images/`](docs/images/) | README 配图 |
 
 ---
@@ -228,6 +229,6 @@ Git-backed skill catalog for teams: profiles declare what to install, lock files
 
 <div align="center">
 
-<sub>旧仓库 <code>team-skills</code>、<code>skillgate</code> 已弃用。README 结构借鉴 <a href="https://github.com/alchaincyf/huashu-skills">huashu-skills</a>。</sub>
+<sub>旧仓库 <code>team-skills</code>、<code>skillgate</code> 已弃用。设计见 <a href="docs/DESIGN.md">DESIGN.md</a>。</sub>
 
 </div>

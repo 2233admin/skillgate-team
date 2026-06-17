@@ -1,60 +1,50 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 520" role="img" aria-label="Skillgate Desktop Team 页面示意">
-  <defs>
-    <linearGradient id="win" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#1a1a1e"/>
-      <stop offset="100%" stop-color="#121214"/>
-    </linearGradient>
-    <filter id="sh" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.45"/>
-    </filter>
-  </defs>
-  <rect width="920" height="520" rx="12" fill="#0a0a0b"/>
-  <g filter="url(#sh)">
-    <rect x="24" y="24" width="872" height="472" rx="10" fill="url(#win)" stroke="#2a2a30"/>
-    <!-- title bar -->
-    <rect x="24" y="24" width="872" height="32" rx="10" fill="#18181b"/>
-    <rect x="24" y="44" width="872" height="12" fill="#18181b"/>
-    <circle cx="48" cy="40" r="5" fill="#ef4444"/>
-    <circle cx="66" cy="40" r="5" fill="#eab308"/>
-    <circle cx="84" cy="40" r="5" fill="#22c55e"/>
-    <text x="460" y="44" text-anchor="middle" fill="#a1a1aa" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Skillgate</text>
-    <!-- sidebar -->
-    <rect x="24" y="56" width="168" height="440" fill="#141416"/>
-    <text x="44" y="88" fill="#71717a" font-family="Segoe UI, system-ui, sans-serif" font-size="10" font-weight="600">NAV</text>
-    <text x="44" y="116" fill="#a1a1aa" font-family="Segoe UI, system-ui, sans-serif" font-size="12">Skills</text>
-    <text x="44" y="142" fill="#a1a1aa" font-family="Segoe UI, system-ui, sans-serif" font-size="12">Agents</text>
-    <rect x="36" y="154" width="144" height="28" rx="6" fill="#27272a"/>
-    <text x="52" y="172" fill="#fafafa" font-family="Segoe UI, system-ui, sans-serif" font-size="12" font-weight="600">Team</text>
-    <text x="44" y="206" fill="#a1a1aa" font-family="Segoe UI, system-ui, sans-serif" font-size="12">Settings</text>
-    <!-- main -->
-    <rect x="192" y="56" width="704" height="440" fill="#0f0f11"/>
-    <text x="224" y="96" fill="#fafafa" font-family="Segoe UI, system-ui, sans-serif" font-size="20" font-weight="700">Team</text>
-    <text x="224" y="118" fill="#71717a" font-family="Segoe UI, system-ui, sans-serif" font-size="12">Apply team profiles to local agent skill directories</text>
-    <!-- onboarding card -->
-    <rect x="224" y="136" width="640" height="56" rx="8" fill="#172554" stroke="#3b82f6" stroke-opacity="0.35"/>
-    <text x="240" y="160" fill="#dbeafe" font-family="Segoe UI, system-ui, sans-serif" font-size="12" font-weight="600">Quick start</text>
-    <text x="240" y="178" fill="#93c5fd" font-family="Segoe UI, system-ui, sans-serif" font-size="11">1. Pick profile  2. Apply  3. Run doctor</text>
-    <!-- context card -->
-    <rect x="224" y="208" width="640" height="88" rx="8" fill="#18181b" stroke="#27272a"/>
-    <text x="240" y="232" fill="#fafafa" font-family="Segoe UI, system-ui, sans-serif" font-size="12" font-weight="600">Context</text>
-    <text x="240" y="256" fill="#71717a" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Team root</text>
-    <text x="780" y="256" text-anchor="end" fill="#e4e4e7" font-family="Consolas, monospace" font-size="10">D:\skillgate-team</text>
-    <text x="240" y="276" fill="#71717a" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Profile</text>
-    <text x="780" y="276" text-anchor="end" fill="#e4e4e7" font-family="Segoe UI, system-ui, sans-serif" font-size="11">quant</text>
-    <!-- profile picker -->
-    <rect x="224" y="312" width="640" height="72" rx="8" fill="#18181b" stroke="#27272a"/>
-    <text x="240" y="336" fill="#fafafa" font-family="Segoe UI, system-ui, sans-serif" font-size="12" font-weight="600">Profile</text>
-    <rect x="240" y="346" width="608" height="28" rx="6" fill="#09090b" stroke="#3f3f46"/>
-    <text x="252" y="364" fill="#fafafa" font-family="Segoe UI, system-ui, sans-serif" font-size="11">quant — 12 skills · 4 agents</text>
-    <!-- actions -->
-    <rect x="224" y="400" width="640" height="72" rx="8" fill="#18181b" stroke="#27272a"/>
-    <text x="240" y="424" fill="#fafafa" font-family="Segoe UI, system-ui, sans-serif" font-size="12" font-weight="600">Actions</text>
-    <rect x="240" y="434" width="108" height="28" rx="6" fill="#fafafa"/>
-    <text x="294" y="452" text-anchor="middle" fill="#09090b" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">Apply profile</text>
-    <rect x="358" y="434" width="96" height="28" rx="6" fill="none" stroke="#3f3f46"/>
-    <text x="406" y="452" text-anchor="middle" fill="#e4e4e7" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Run doctor</text>
-    <rect x="466" y="434" width="96" height="28" rx="6" fill="none" stroke="#3f3f46"/>
-    <text x="514" y="452" text-anchor="middle" fill="#e4e4e7" font-family="Segoe UI, system-ui, sans-serif" font-size="11">Verify lock</text>
-  </g>
-  <text x="460" y="508" text-anchor="middle" fill="#52525b" font-family="Segoe UI, system-ui, sans-serif" font-size="10">界面示意 · 与 Desktop Team 页布局一致</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 520" role="img" aria-label="Skillgate Desktop Team">
+  <rect width="920" height="520" rx="12" fill="#0C0C0D"/>
+  <rect x="24" y="24" width="872" height="472" rx="10" fill="#141516" stroke="#2E2E32"/>
+  <rect x="24" y="24" width="872" height="36" rx="10" fill="#1C1C1F"/>
+  <rect x="24" y="48" width="872" height="12" fill="#1C1C1F"/>
+  <circle cx="48" cy="42" r="5" fill="#6B6F76"/>
+  <circle cx="66" cy="42" r="5" fill="#6B6F76"/>
+  <circle cx="84" cy="42" r="5" fill="#6B6F76"/>
+  <text x="460" y="46" text-anchor="middle" fill="#8A8F98" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="11" font-weight="500">Skillgate</text>
+
+  <rect x="24" y="60" width="176" height="436" fill="#141516"/>
+  <line x1="200" y1="60" x2="200" y2="496" stroke="#2E2E32"/>
+  <text x="44" y="92" fill="#6B6F76" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="10" font-weight="500" letter-spacing="0.06em">WORKSPACE</text>
+  <text x="44" y="120" fill="#8A8F98" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="12">Skills</text>
+  <text x="44" y="146" fill="#8A8F98" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="12">Agents</text>
+  <rect x="36" y="158" width="152" height="30" rx="6" fill="#5E6AD226" stroke="#5E6AD2" stroke-opacity="0.35"/>
+  <text x="52" y="177" fill="#F7F8F8" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="12" font-weight="500">Team</text>
+  <text x="44" y="212" fill="#8A8F98" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="12">Settings</text>
+
+  <rect x="200" y="60" width="696" height="436" fill="#141516"/>
+  <text x="232" y="100" fill="#F7F8F8" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="22" font-weight="600" letter-spacing="-0.02em">Team</text>
+  <text x="232" y="124" fill="#8A8F98" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="13">Apply profiles to local agent skill directories.</text>
+
+  <rect x="232" y="144" width="640" height="52" rx="8" fill="#5E6AD218" stroke="#5E6AD2" stroke-opacity="0.25"/>
+  <text x="248" y="168" fill="#F7F8F8" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="12" font-weight="500">Quick start</text>
+  <text x="248" y="186" fill="#8A8F98" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="11">Select profile → Apply → Run doctor</text>
+
+  <rect x="232" y="212" width="640" height="84" rx="8" fill="#1C1C1F" stroke="#2E2E32"/>
+  <text x="248" y="236" fill="#F7F8F8" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="12" font-weight="500">Context</text>
+  <text x="248" y="260" fill="#6B6F76" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="11">Team root</text>
+  <text x="856" y="260" text-anchor="end" fill="#8A8F98" font-family="ui-monospace, Consolas, monospace" font-size="10">D:\skillgate-team</text>
+  <text x="248" y="280" fill="#6B6F76" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="11">Profile</text>
+  <text x="856" y="280" text-anchor="end" fill="#F7F8F8" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="11">quant</text>
+
+  <rect x="232" y="312" width="640" height="68" rx="8" fill="#1C1C1F" stroke="#2E2E32"/>
+  <text x="248" y="336" fill="#F7F8F8" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="12" font-weight="500">Profile</text>
+  <rect x="248" y="346" width="608" height="28" rx="6" fill="#141516" stroke="#2E2E32"/>
+  <text x="260" y="364" fill="#F7F8F8" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="11">quant — 12 skills · 4 agents</text>
+
+  <rect x="232" y="396" width="640" height="68" rx="8" fill="#1C1C1F" stroke="#2E2E32"/>
+  <text x="248" y="420" fill="#F7F8F8" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="12" font-weight="500">Actions</text>
+  <rect x="248" y="430" width="108" height="28" rx="6" fill="#5E6AD2"/>
+  <text x="302" y="448" text-anchor="middle" fill="#FFFFFF" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="11" font-weight="500">Apply profile</text>
+  <rect x="366" y="430" width="96" height="28" rx="6" fill="none" stroke="#2E2E32"/>
+  <text x="414" y="448" text-anchor="middle" fill="#8A8F98" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="11">Run doctor</text>
+  <rect x="472" y="430" width="96" height="28" rx="6" fill="none" stroke="#2E2E32"/>
+  <text x="520" y="448" text-anchor="middle" fill="#8A8F98" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="11">Verify lock</text>
+
+  <text x="460" y="508" text-anchor="middle" fill="#6B6F76" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="10">Desktop wireframe · Linear palette</text>
 </svg>

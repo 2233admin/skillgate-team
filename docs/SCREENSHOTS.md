@@ -2,6 +2,8 @@
 
 README 使用 `docs/images/` 下的矢量示意图，保证 GitHub 上始终能显示、不依赖本机截图环境。
 
+配色与布局约束见 [DESIGN.md](./DESIGN.md)（Linear 式浅底文档 + 深底应用示意）。
+
 ## 文件说明
 
 | 文件 | 用途 |
