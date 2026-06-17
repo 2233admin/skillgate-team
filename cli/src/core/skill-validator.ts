@@ -1,4 +1,4 @@
-import { matter } from "@skillgate/ui";
+import { matter } from "@skillgate/ui/frontmatter";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileExists, dirExists } from "../utils/fs.js";

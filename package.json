@@ -10,14 +10,12 @@
     "desktop",
     "tui"
   ],
-  "overrides": {
-    "esbuild": "0.28.1"
-  },
   "scripts": {
     "build": "nx run skillgate:build",
     "build:all": "nx run-many -t build",
     "install-global": "nx run skillgate:build && node cli/bin/skillgate.mjs install-global",
     "smoke-test": "node cli/bin/skillgate.mjs smoke-test",
+    "smoke-team": "bun run scripts/smoke-team-gui-tui.ts",
     "tui": "nx run @skillgate/tui:start",
     "tui:dev": "nx run @skillgate/tui:dev",
     "tui:window": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch-tui-window.ps1",
@@ -33,5 +31,8 @@
   },
   "devDependencies": {
     "nx": "22.7.5"
+  },
+  "overrides": {
+    "esbuild": "0.25.12"
   }
 }

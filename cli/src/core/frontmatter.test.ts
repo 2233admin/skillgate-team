@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matter } from "@skillgate/ui";
+import { matter } from "@skillgate/ui/frontmatter";
 
 describe("matter", () => {
   it("parses yaml frontmatter and body", () => {
