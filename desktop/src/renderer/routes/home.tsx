@@ -12,6 +12,7 @@ import { marked } from "marked"
 import { electronAPI } from "../lib/electron-api"
 import { SkillEditor, type SkillEditorHandle } from "../components/skill-editor"
 import { AgentLogo, AgentLogoRow } from "../components/agent-logo"
+import { AppLogo } from "../components/app-logo"
 
 // Map display names to registry keys
 const DISPLAY_NAME_TO_KEY: Record<string, string> = {
@@ -77,27 +78,13 @@ function SearchIcon({ size = 16 }: { size?: number }) {
   )
 }
 
-function SkillsGateIcon() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 64 64" className="text-muted">
-      <g transform="translate(8, 8)">
-        <path d="M16 2 L4 2 C2 2 1 4 1 6 L1 42 C1 44 2 46 4 46 L16 46" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M32 2 L44 2 C46 2 47 4 47 6 L47 42 C47 44 46 46 44 46 L32 46" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-        <circle cx="24" cy="14" r="3.5" fill="currentColor"/>
-        <circle cx="24" cy="24" r="3.5" fill="currentColor"/>
-        <circle cx="24" cy="34" r="3.5" fill="currentColor"/>
-      </g>
-    </svg>
-  )
-}
-
 function SourceBadge({ sourceType }: { sourceType?: string }) {
   if (!sourceType) return null
   const label =
     sourceType === "github"
       ? "github"
-      : sourceType === "skillsgate"
-        ? "skillsgate"
+      : sourceType === "skillsgate" || sourceType === "skillgate"
+        ? "skillgate"
         : "local"
   return (
     <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-surface-hover text-muted border border-border">
@@ -206,22 +193,19 @@ function LeftSidebar({
   onDropOnCollection,
 }: LeftSidebarProps) {
   return (
-    <aside className="w-48 flex-shrink-0 flex flex-col bg-surface border-r border-border overflow-y-auto">
-      {/* Library section */}
-      <div className="px-3 pt-4 pb-2">
-        <h3 className="text-[10px] uppercase tracking-widest font-semibold text-muted mb-2 px-2">
-          Library
-        </h3>
+    <aside className="w-44 flex-shrink-0 flex flex-col bg-surface border-r border-border overflow-y-auto">
+      <div className="px-3 pt-3 pb-2">
+        <h3 className="section-label mb-2 px-2">Views</h3>
         <nav className="flex flex-col gap-0.5">
           <button
             onClick={() => {
               onFilterChange("all")
               onSelectAgent(null)
             }}
-            className={`flex items-center justify-between px-2 py-1.5 rounded-md text-[12px] tracking-wide font-medium transition-colors text-left ${
+            className={`flex items-center justify-between px-2 py-1.5 rounded-md text-[12px] font-medium transition-colors text-left ${
               activeFilter === "all" && selectedAgent === null
-                ? "bg-surface-hover text-foreground"
-                : "text-muted hover:text-foreground hover:bg-surface-hover"
+                ? "list-row-active"
+                : "text-muted list-row-hover"
             }`}
           >
             <span>All Skills</span>
@@ -237,10 +221,10 @@ function LeftSidebar({
           </button>
           <button
             onClick={() => onFilterChange("favorites")}
-            className={`flex items-center justify-between px-2 py-1.5 rounded-md text-[12px] tracking-wide font-medium transition-colors text-left ${
+            className={`flex items-center justify-between px-2 py-1.5 rounded-md text-[12px] font-medium transition-colors text-left ${
               activeFilter === "favorites"
-                ? "bg-surface-hover text-foreground"
-                : "text-muted hover:text-foreground hover:bg-surface-hover"
+                ? "list-row-active"
+                : "text-muted list-row-hover"
             }`}
           >
             <span>Favorites</span>
@@ -258,9 +242,7 @@ function LeftSidebar({
       {/* Tools / Agents section */}
       {agentsWithSkills.length > 0 && (
         <div className="px-3 pt-3 pb-2">
-          <h3 className="text-[10px] uppercase tracking-widest font-semibold text-muted mb-2 px-2">
-            Tools
-          </h3>
+          <h3 className="section-label mb-2 px-2">Agents</h3>
           <nav className="flex flex-col gap-0.5">
             {agentsWithSkills.map((agent) => (
               <button
@@ -273,12 +255,12 @@ function LeftSidebar({
                       : agent.displayName,
                   )
                 }}
-                className={`flex items-center justify-between px-2 py-1.5 rounded-md text-[12px] tracking-wide font-medium transition-colors text-left ${
+                className={`flex items-center justify-between px-2 py-1.5 rounded-md text-[12px] font-medium transition-colors text-left ${
                   selectedAgent === agent.displayName
-                    ? "bg-surface-hover text-foreground"
+                    ? "list-row-active"
                     : dragOverTarget === `agent:${agent.displayName}`
-                      ? "bg-surface-hover/70 ring-1 ring-accent text-foreground"
-                    : "text-muted hover:text-foreground hover:bg-surface-hover"
+                      ? "bg-accent/10 ring-1 ring-accent/40 text-foreground"
+                    : "text-muted list-row-hover"
                 }`}
                 onDragOver={(e) => {
                   if (!dragSkill) return
@@ -313,9 +295,7 @@ function LeftSidebar({
 
       <div className="px-3 pt-3 pb-2">
         <div className="flex items-center justify-between px-2 mb-2">
-          <h3 className="text-[10px] uppercase tracking-widest font-semibold text-muted">
-            Collections
-          </h3>
+          <h3 className="section-label">Collections</h3>
           <button
             onClick={onCreateCollection}
             className="text-[11px] text-muted hover:text-foreground"
@@ -338,12 +318,12 @@ function LeftSidebar({
                       onSelectAgent(null)
                       onSelectCollection(selectedCollection === name ? null : name)
                     }}
-                    className={`flex flex-1 items-center justify-between px-2 py-1.5 rounded-md text-[12px] tracking-wide font-medium transition-colors text-left ${
+                    className={`flex flex-1 items-center justify-between px-2 py-1.5 rounded-md text-[12px] font-medium transition-colors text-left ${
                       selectedCollection === name
-                        ? "bg-surface-hover text-foreground"
+                        ? "list-row-active"
                         : dragOverTarget === `collection:${name}`
-                          ? "bg-surface-hover/70 ring-1 ring-accent shadow-[0_0_0_1px_rgba(255,255,255,0.06)] text-foreground scale-[1.01]"
-                          : "text-muted hover:text-foreground hover:bg-surface-hover"
+                          ? "bg-accent/10 ring-1 ring-accent/40 text-foreground"
+                          : "text-muted list-row-hover"
                     }`}
                     onDragOver={(e) => {
                       if (!dragSkill) return
@@ -453,14 +433,14 @@ const SkillListRow = memo(function SkillListRow({
           onDragSkillStart(skill)
         }}
         onDragEnd={() => onDragSkillEnd()}
-        className={`flex items-center w-full px-2.5 py-2 rounded-md text-left transition-colors ${
+        className={`flex items-center w-full px-2.5 py-1.5 rounded-sm text-left transition-colors ${
           isMultiChecked
             ? "bg-accent/10 text-foreground ring-1 ring-accent/30"
             : selectedSkillPath === skill.canonicalPath && !isMultiSelectActive
-              ? "bg-surface-hover text-foreground"
+              ? "list-row-active"
               : dragSkill?.canonicalPath === skill.canonicalPath
                 ? "opacity-60 ring-1 ring-accent/40"
-                : "text-muted hover:text-foreground hover:bg-surface-hover"
+                : "text-muted list-row-hover"
         }`}
       >
         {isMultiSelectActive && (
@@ -618,16 +598,18 @@ function MiddlePanel({
   }, [showCollectionDropdown])
 
   return (
-    <div className="w-72 flex-shrink-0 flex flex-col border-r border-border bg-background relative">
-      {/* Search input */}
+    <div className="w-64 flex-shrink-0 flex flex-col border-r border-border bg-background relative">
       <div className="p-3 border-b border-border">
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-[10px] uppercase tracking-widest text-muted">Local Library</p>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold text-foreground leading-tight">Skills</p>
+            <p className="text-[10px] text-muted">Installed on this machine</p>
+          </div>
           <button
             onClick={onCreateSkill}
-            className="rounded-md border border-border px-2 py-1 text-[11px] text-foreground hover:bg-surface-hover"
+            className="rounded-md bg-accent px-2 py-1 text-[11px] font-medium text-white hover:opacity-90 shrink-0"
           >
-            New Skill
+            New
           </button>
         </div>
         <div className="relative">
@@ -639,7 +621,7 @@ function MiddlePanel({
             placeholder="Search skills..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-8 pr-8 py-1.5 rounded-md bg-surface border border-border text-[12px] text-foreground placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+            className="w-full pl-8 pr-8 py-1.5 rounded-md bg-surface border border-border text-[12px] text-foreground placeholder:text-muted focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/25 transition-colors"
           />
           {searchQuery && (
             <button
@@ -666,7 +648,7 @@ function MiddlePanel({
 
       {/* Results count and select all toggle */}
       <div className="px-3 py-2 flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-widest text-muted">
+        <span className="section-label">
           {loading
             ? "Scanning..."
             : `${filteredSkills.length} skill${filteredSkills.length !== 1 ? "s" : ""}${selectedAgent ? ` in ${selectedAgent}` : ""}${selectedCollection ? ` in ${selectedCollection}` : ""}`}
@@ -693,12 +675,12 @@ function MiddlePanel({
           <div className="flex flex-col items-center justify-center py-12 text-center px-4">
             {skills.length === 0 ? (
               <>
-                <SkillsGateIcon />
+                <AppLogo size={40} className="text-muted opacity-60" />
                 <p className="text-muted text-[12px] mt-3">
                   No skills installed yet.
                 </p>
                 <p className="text-muted text-[11px] mt-1">
-                  Head to Discover to find skills.
+                  Open Explore to browse and install skills.
                 </p>
               </>
             ) : activeFilter === "favorites" ? (
@@ -725,7 +707,7 @@ function MiddlePanel({
         ) : (
           <List
             rowCount={filteredSkills.length}
-            rowHeight={36}
+            rowHeight={32}
             rowComponent={SkillListRow}
             rowProps={rowProps}
             overscanCount={10}
@@ -1133,8 +1115,8 @@ function RightPanel({
     return (
       <div className="flex-1 flex items-center justify-center bg-background">
         <div className="text-center">
-          <SkillsGateIcon />
-          <p className="text-muted text-sm mt-3">
+          <AppLogo size={40} className="text-muted opacity-60 mx-auto" />
+          <p className="text-muted text-[13px] mt-3">
             Select a skill to view details
           </p>
         </div>

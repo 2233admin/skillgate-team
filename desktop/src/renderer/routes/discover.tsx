@@ -857,9 +857,9 @@ export function Discover() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="px-8 pt-6 pb-4">
-        <h2 className="text-xl font-bold text-foreground mb-1">Discover</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-1">Explore</h2>
         <p className="text-[12px] text-muted mb-5">
-          Browse and search skills from skills.sh.{" "}
+          Browse and install agent skills from skills.sh.{" "}
           {skills.length > 0 && (
             <span className="font-mono">{skills.length} skills loaded</span>
           )}

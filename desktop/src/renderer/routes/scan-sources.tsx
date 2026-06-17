@@ -31,9 +31,9 @@ export function ScanSources() {
     <div className="flex-1 overflow-y-auto px-8 py-6">
       <div className="max-w-4xl">
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-foreground mb-1">Scan Sources</h2>
+          <h2 className="text-xl font-semibold text-foreground mb-1">Sources</h2>
           <p className="text-[12px] text-muted">
-            Add folders that SkillsGate should crawl for direct skill bundles and project-local tool skill directories.
+            Add folders for Skillgate to crawl — direct skill bundles and project-local agent skill directories.
           </p>
         </div>
 
@@ -44,7 +44,7 @@ export function ScanSources() {
                 Bring Your Own Skill Folders
               </h3>
               <p className="text-[12px] text-muted leading-relaxed mb-4">
-                Point SkillsGate at places like `~/projects`, `~/workspaces`, or `~/my-skills`. It will discover:
+                Point Skillgate at places like `~/projects`, `~/workspaces`, or `~/my-skills`. It will discover:
               </p>
               <div className="flex flex-col gap-2 text-[12px] text-foreground">
                 <div className="rounded-lg border border-border bg-background px-3 py-2">

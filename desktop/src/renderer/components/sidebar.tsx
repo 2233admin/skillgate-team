@@ -2,6 +2,7 @@ import { NavLink, useLocation } from "react-router-dom"
 import { useEffect, useMemo, useState } from "react"
 import { ThemeToggle } from "@skillgate/ui"
 import { electronAPI } from "../lib/electron-api"
+import { AppBrand } from "./app-logo"
 
 interface NavItem {
   to: string
@@ -13,34 +14,34 @@ interface NavItem {
 const navItems: NavItem[] = [
   {
     to: "/",
-    label: "Installed",
+    label: "Library",
     icon: (
       <svg
-        width="18"
-        height="18"
+        width="16"
+        height="16"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
       </svg>
     ),
   },
   {
     to: "/discover",
-    label: "Discover",
+    label: "Explore",
     icon: (
       <svg
-        width="18"
-        height="18"
+        width="16"
+        height="16"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
       >
@@ -51,15 +52,15 @@ const navItems: NavItem[] = [
   },
   {
     to: "/servers",
-    label: "Servers",
+    label: "Remote",
     icon: (
       <svg
-        width="18"
-        height="18"
+        width="16"
+        height="16"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
       >
@@ -72,15 +73,15 @@ const navItems: NavItem[] = [
   },
   {
     to: "/scan-sources",
-    label: "Scan Sources",
+    label: "Sources",
     icon: (
       <svg
-        width="18"
-        height="18"
+        width="16"
+        height="16"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="1.75"
         strokeLinecap="round"
         strokeLinejoin="round"
       >
@@ -92,24 +93,21 @@ const navItems: NavItem[] = [
   },
 ]
 
-// Compact icon-only nav button for Home view
+function navClass(isActive: boolean, compact: boolean) {
+  const base = compact
+    ? "relative flex items-center justify-center w-8 h-8 rounded-md transition-colors"
+    : "flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] font-medium transition-colors"
+  return isActive
+    ? `${base} nav-item-active`
+    : `${base} text-muted hover:text-foreground list-row-hover`
+}
+
 function CompactNavButton({ to, label, icon, badge }: NavItem) {
   return (
-    <NavLink
-      to={to}
-      end={to === "/"}
-      title={label}
-      className={({ isActive }) =>
-        `relative flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${
-          isActive
-            ? "bg-surface-hover text-foreground"
-            : "text-muted hover:text-foreground hover:bg-surface-hover"
-        }`
-      }
-    >
+    <NavLink to={to} end={to === "/"} title={label} className={({ isActive }) => navClass(isActive, true)}>
       {icon}
       {badge !== undefined && badge > 0 && (
-        <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-foreground text-background text-[8px] font-bold px-0.5">
+        <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-accent text-[8px] font-semibold text-white px-0.5">
           {badge}
         </span>
       )}
@@ -117,26 +115,13 @@ function CompactNavButton({ to, label, icon, badge }: NavItem) {
   )
 }
 
-// Full nav button with label for non-Home views
 function FullNavButton({ to, label, icon, badge }: NavItem) {
   return (
-    <NavLink
-      to={to}
-      end={to === "/"}
-      className={({ isActive }) =>
-        `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] tracking-wide font-medium transition-colors ${
-          isActive
-            ? "bg-surface-hover text-foreground"
-            : "text-muted hover:text-foreground hover:bg-surface-hover"
-        }`
-      }
-    >
+    <NavLink to={to} end={to === "/"} className={({ isActive }) => navClass(isActive, false)}>
       {icon}
       <span className="flex-1">{label}</span>
       {badge !== undefined && badge > 0 && (
-        <span className="text-[10px] font-mono text-muted">
-          {badge}
-        </span>
+        <span className="text-[10px] font-mono text-muted tabular-nums">{badge}</span>
       )}
     </NavLink>
   )
@@ -153,7 +138,6 @@ export function Sidebar() {
     electronAPI.appGetVersion().then(setAppVersion).catch(() => {})
   }, [])
 
-  // Enrich nav items with badge data
   const enrichedNavItems = useMemo(
     () =>
       navItems.map((item) =>
@@ -162,51 +146,30 @@ export function Sidebar() {
     [serverCount],
   )
 
-  // On Home view: show compact icon-only sidebar (the Home page has its own
-  // left panel with filters). On other views: show full sidebar with labels.
   if (isHome) {
     return (
-      <aside className="w-14 flex-shrink-0 flex flex-col items-center bg-surface border-r border-border">
-        {/* App icon (SkillsGate logo) */}
-        <div className="py-4">
-          <svg width="24" height="24" viewBox="0 0 64 64" className="text-foreground">
-            <g transform="translate(8, 8)">
-              <path d="M16 2 L4 2 C2 2 1 4 1 6 L1 42 C1 44 2 46 4 46 L16 46" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M32 2 L44 2 C46 2 47 4 47 6 L47 42 C47 44 46 46 44 46 L32 46" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-              <circle cx="24" cy="14" r="3.5" fill="currentColor"/>
-              <circle cx="24" cy="24" r="3.5" fill="currentColor"/>
-              <circle cx="24" cy="34" r="3.5" fill="currentColor"/>
-            </g>
-          </svg>
-        </div>
+      <aside className="w-[52px] flex-shrink-0 flex flex-col items-center bg-surface border-r border-border">
+        <AppBrand compact />
 
-        {/* Compact navigation */}
-        <nav className="flex flex-col items-center gap-1 px-1.5">
+        <nav className="flex flex-col items-center gap-0.5 px-1">
           {enrichedNavItems.map((item) => (
             <CompactNavButton key={item.to} {...item} />
           ))}
         </nav>
 
-        {/* Bottom section */}
-        <div className="mt-auto pb-3 flex flex-col items-center gap-1 px-1.5">
+        <div className="mt-auto pb-3 flex flex-col items-center gap-0.5 px-1">
           <NavLink
             to="/settings"
             title="Settings"
-            className={({ isActive }) =>
-              `flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${
-                isActive
-                  ? "bg-surface-hover text-foreground"
-                  : "text-muted hover:text-foreground hover:bg-surface-hover"
-              }`
-            }
+            className={({ isActive }) => navClass(isActive, true)}
           >
             <svg
-              width="18"
-              height="18"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="1.5"
+              strokeWidth="1.75"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
@@ -222,56 +185,25 @@ export function Sidebar() {
     )
   }
 
-  // Full sidebar for non-Home views
   return (
-    <aside className="w-60 flex-shrink-0 flex flex-col bg-surface border-r border-border">
-      {/* App header with SkillsGate logo */}
-      <div className="px-4 py-5 border-b border-border">
-        <div className="flex items-center gap-2.5">
-          <svg width="22" height="22" viewBox="0 0 64 64" className="text-foreground flex-shrink-0">
-            <g transform="translate(8, 8)">
-              <path d="M16 2 L4 2 C2 2 1 4 1 6 L1 42 C1 44 2 46 4 46 L16 46" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M32 2 L44 2 C46 2 47 4 47 6 L47 42 C47 44 46 46 44 46 L32 46" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-              <circle cx="24" cy="14" r="3.5" fill="currentColor"/>
-              <circle cx="24" cy="24" r="3.5" fill="currentColor"/>
-              <circle cx="24" cy="34" r="3.5" fill="currentColor"/>
-            </g>
-          </svg>
-          <span className="text-[17px] font-semibold tracking-tight text-foreground">
-            Skillgate
-          </span>
-        </div>
-        <span className="text-xs text-muted mt-1 block">
-          Desktop v{appVersion || "..."}
-        </span>
-      </div>
+    <aside className="w-56 flex-shrink-0 flex flex-col bg-surface border-r border-border">
+      <AppBrand version={appVersion || undefined} />
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+      <nav className="flex-1 px-2 py-3 flex flex-col gap-0.5">
         {enrichedNavItems.map((item) => (
           <FullNavButton key={item.to} {...item} />
         ))}
       </nav>
 
-      {/* Bottom section: Settings + Theme */}
-      <div className="px-3 py-3 border-t border-border flex flex-col gap-1">
-        <NavLink
-          to="/settings"
-          className={({ isActive }) =>
-            `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] tracking-wide font-medium transition-colors ${
-              isActive
-                ? "bg-surface-hover text-foreground"
-                : "text-muted hover:text-foreground hover:bg-surface-hover"
-            }`
-          }
-        >
+      <div className="px-2 py-3 border-t border-border flex flex-col gap-0.5">
+        <NavLink to="/settings" className={({ isActive }) => navClass(isActive, false)}>
           <svg
-            width="18"
-            height="18"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.5"
+            strokeWidth="1.75"
             strokeLinecap="round"
             strokeLinejoin="round"
           >
@@ -280,8 +212,8 @@ export function Sidebar() {
           </svg>
           Settings
         </NavLink>
-        <div className="flex items-center justify-between px-3 py-1">
-          <span className="text-xs text-muted">Theme</span>
+        <div className="flex items-center justify-between px-2.5 py-1.5">
+          <span className="text-[11px] text-muted">Theme</span>
           <ThemeToggle />
         </div>
       </div>

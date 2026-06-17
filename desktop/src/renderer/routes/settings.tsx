@@ -249,7 +249,7 @@ export function Settings() {
             {settingsLoaded && (
               <SettingToggle
                 label="Telemetry"
-                description="Send anonymous usage data to help improve SkillsGate"
+                description="Send anonymous usage data to help improve Skillgate"
                 value={telemetryEnabled}
                 onChange={(v) => {
                   setTelemetryEnabled(v)
@@ -316,7 +316,7 @@ export function Settings() {
             <div className="rounded-lg border border-border bg-surface p-3">
               <p className="text-sm text-foreground mb-1">Custom scan directories</p>
               <p className="text-[11px] text-muted mb-3">
-                SkillsGate will scan direct skill folders and project-local tool paths inside these roots.
+                Skillgate will scan direct skill folders and project-local tool paths inside these roots.
               </p>
               <div className="flex gap-2 mb-3">
                 <input

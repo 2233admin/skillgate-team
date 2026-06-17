@@ -1,39 +1,44 @@
 @import "tailwindcss";
 
-/* ─── Light mode (default) ─── */
+/* ─── Linear-inspired tokens ─── */
 :root {
-	--background: #fafaf9;
-	--foreground: #1c1917;
-	--muted: #78716c;
-	--accent: #a8a29e;
-	--border: #e7e5e4;
+	--background: #fbfbfc;
+	--foreground: #1b1b1f;
+	--muted: #6b6f76;
+	--accent: #5e6ad2;
+	--accent-hover: #6e7ae0;
+	--accent-muted: rgba(94, 106, 210, 0.1);
+	--accent-border: rgba(94, 106, 210, 0.35);
+	--border: #e4e5e9;
 	--surface: #ffffff;
-	--surface-hover: #f5f5f4;
-	--glow: rgba(28, 25, 23, 0.03);
-	--code-bg: #f5f5f4;
+	--surface-hover: #f3f4f6;
+	--glow: rgba(94, 106, 210, 0.06);
+	--code-bg: #f3f4f6;
 	--card-bg: #ffffff;
-	--card-border: #e7e5e4;
-	--nav-bg: rgba(250, 250, 249, 0.85);
-	--nav-border: rgba(231, 229, 228, 0.6);
-	--font-sora: "Sora", system-ui, sans-serif;
+	--card-border: #e4e5e9;
+	--nav-bg: rgba(251, 251, 252, 0.92);
+	--nav-border: rgba(228, 229, 233, 0.9);
+	--font-sans: "Inter", system-ui, -apple-system, sans-serif;
 	--font-geist-mono: "Geist Mono", ui-monospace, monospace;
 }
 
-/* ─── Dark mode ─── */
 .dark {
-	--background: #0a0a0b;
-	--foreground: #e7e5e4;
-	--muted: #78716c;
-	--accent: #a8a29e;
-	--border: #292524;
-	--surface: #141413;
-	--surface-hover: #1c1b1a;
-	--glow: rgba(231, 229, 228, 0.04);
-	--code-bg: #141413;
-	--card-bg: #141413;
-	--card-border: #292524;
-	--nav-bg: rgba(10, 10, 11, 0.85);
-	--nav-border: rgba(41, 37, 36, 0.6);
+	--background: #08090a;
+	--foreground: #ededef;
+	--muted: #8a8f98;
+	--accent: #5e6ad2;
+	--accent-hover: #7c85db;
+	--accent-muted: rgba(94, 106, 210, 0.14);
+	--accent-border: rgba(94, 106, 210, 0.45);
+	--border: #23252a;
+	--surface: #111214;
+	--surface-hover: #1a1b1f;
+	--glow: rgba(94, 106, 210, 0.08);
+	--code-bg: #141518;
+	--card-bg: #111214;
+	--card-border: #23252a;
+	--nav-bg: rgba(8, 9, 10, 0.94);
+	--nav-border: rgba(35, 37, 42, 0.9);
 }
 
 @theme inline {
@@ -49,7 +54,7 @@
 	--color-card-border: var(--card-border);
 	--color-nav-bg: var(--nav-bg);
 	--color-nav-border: var(--nav-border);
-	--font-sans: var(--font-sora);
+	--font-sans: var(--font-sans);
 	--font-mono: var(--font-geist-mono);
 }
 
@@ -65,19 +70,33 @@ body {
 	overflow-x: hidden;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+	font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* Noise grain overlay */
-body::before {
-	content: "";
-	position: fixed;
-	inset: 0;
-	z-index: 9999;
-	pointer-events: none;
-	opacity: 0.025;
-	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-	background-repeat: repeat;
-	background-size: 256px 256px;
+/* Tool chrome — no marketing grain overlay */
+
+/* Linear-style nav + list helpers */
+.nav-item-active {
+	background: var(--accent-muted);
+	color: var(--foreground);
+}
+
+.list-row-active {
+	background: var(--accent-muted);
+	color: var(--foreground);
+	box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.list-row-hover:hover {
+	background: var(--surface-hover);
+	color: var(--foreground);
+}
+
+.section-label {
+	font-size: 11px;
+	font-weight: 500;
+	color: var(--muted);
+	letter-spacing: 0.01em;
 }
 
 /* ─── Animations ─── */
@@ -89,7 +108,7 @@ body::before {
 @keyframes slide-down {
 	from {
 		opacity: 0;
-		transform: translateY(-8px);
+		transform: translateY(-6px);
 	}
 	to {
 		opacity: 1;
@@ -100,7 +119,7 @@ body::before {
 @keyframes slide-in-right {
 	from {
 		opacity: 0;
-		transform: translateX(24px);
+		transform: translateX(12px);
 	}
 	to {
 		opacity: 1;
@@ -109,15 +128,15 @@ body::before {
 }
 
 .animate-fade-in {
-	animation: fade-in 1s ease both;
+	animation: fade-in 0.35s ease both;
 }
 
 .animate-slide-down {
-	animation: slide-down 0.3s ease both;
+	animation: slide-down 0.2s ease both;
 }
 
 .animate-slide-in-right {
-	animation: slide-in-right 0.2s ease both;
+	animation: slide-in-right 0.15s ease both;
 }
 
 .official-tooltip {
@@ -137,7 +156,7 @@ body::before {
 
 /* ─── Markdown prose styles (skill detail page) ─── */
 .skill-prose {
-	line-height: 1.75;
+	line-height: 1.7;
 	color: var(--muted);
 }
 .skill-prose h1,
@@ -146,61 +165,62 @@ body::before {
 .skill-prose h4 {
 	color: var(--foreground);
 	font-weight: 600;
-	margin-top: 2em;
-	margin-bottom: 0.75em;
+	margin-top: 1.75em;
+	margin-bottom: 0.65em;
 }
 .skill-prose h1 {
-	font-size: 1.5rem;
+	font-size: 1.4rem;
 }
 .skill-prose h2 {
-	font-size: 1.25rem;
+	font-size: 1.15rem;
 	border-bottom: 1px solid var(--border);
-	padding-bottom: 0.5em;
+	padding-bottom: 0.45em;
 }
 .skill-prose h3 {
-	font-size: 1.1rem;
+	font-size: 1.05rem;
 }
 .skill-prose p {
-	margin-bottom: 1em;
+	margin-bottom: 0.9em;
 }
 .skill-prose a {
 	color: var(--accent);
-	text-decoration: underline;
-	text-underline-offset: 2px;
+	text-decoration: none;
 }
 .skill-prose a:hover {
-	color: var(--foreground);
+	color: var(--accent-hover);
+	text-decoration: underline;
+	text-underline-offset: 2px;
 }
 .skill-prose code {
 	font-family: var(--font-geist-mono);
 	font-size: 0.85em;
 	background: var(--code-bg);
-	padding: 0.15em 0.4em;
+	padding: 0.12em 0.35em;
 	border-radius: 4px;
 	border: 1px solid var(--border);
 }
 .skill-prose pre {
 	background: var(--code-bg);
 	border: 1px solid var(--border);
-	border-radius: 8px;
-	padding: 1em 1.25em;
+	border-radius: 6px;
+	padding: 0.9em 1.1em;
 	overflow-x: auto;
-	margin: 1.5em 0;
+	margin: 1.25em 0;
 }
 .skill-prose pre code {
 	background: none;
 	border: none;
 	padding: 0;
 	font-size: 0.8rem;
-	line-height: 1.6;
+	line-height: 1.55;
 }
 .skill-prose ul,
 .skill-prose ol {
-	padding-left: 1.5em;
-	margin-bottom: 1em;
+	padding-left: 1.4em;
+	margin-bottom: 0.9em;
 }
 .skill-prose li {
-	margin-bottom: 0.35em;
+	margin-bottom: 0.3em;
 }
 .skill-prose ul {
 	list-style-type: disc;
@@ -209,21 +229,20 @@ body::before {
 	list-style-type: decimal;
 }
 .skill-prose blockquote {
-	border-left: 3px solid var(--border);
-	padding-left: 1em;
+	border-left: 2px solid var(--border);
+	padding-left: 0.9em;
 	color: var(--muted);
-	font-style: italic;
-	margin: 1.5em 0;
+	margin: 1.25em 0;
 }
 .skill-prose table {
 	width: 100%;
 	border-collapse: collapse;
-	margin: 1.5em 0;
+	margin: 1.25em 0;
 }
 .skill-prose th,
 .skill-prose td {
 	border: 1px solid var(--border);
-	padding: 0.5em 0.75em;
+	padding: 0.45em 0.65em;
 	text-align: left;
 	font-size: 0.875rem;
 }
@@ -235,16 +254,16 @@ body::before {
 .skill-prose hr {
 	border: none;
 	border-top: 1px solid var(--border);
-	margin: 2em 0;
+	margin: 1.75em 0;
 }
 .skill-prose img {
 	max-width: 100%;
-	border-radius: 8px;
+	border-radius: 6px;
 }
 
 /* ─── Scrollbar styling ─── */
 ::-webkit-scrollbar {
-	width: 6px;
+	width: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -260,7 +279,6 @@ body::before {
 	background: var(--muted);
 }
 
-/* ─── Hidden scrollbar (sidebar) ─── */
 .overflow-y-auto {
 	scrollbar-width: none;
 }
@@ -268,13 +286,12 @@ body::before {
 	display: none;
 }
 
-/* ─── Smooth theme transition ─── */
 html.transitioning,
 html.transitioning *,
 html.transitioning *::before,
 html.transitioning *::after {
-	transition: background-color 0.3s ease,
-	            color 0.3s ease,
-	            border-color 0.3s ease,
-	            box-shadow 0.3s ease !important;
+	transition: background-color 0.2s ease,
+	            color 0.2s ease,
+	            border-color 0.2s ease,
+	            box-shadow 0.2s ease !important;
 }

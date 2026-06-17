@@ -24,7 +24,7 @@ function createWindow(): void {
     minWidth: 900,
     minHeight: 600,
     show: false,
-    title: "Skillgate",
+    title: "Skillgate — Skill Manager",
     icon,
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.js"),

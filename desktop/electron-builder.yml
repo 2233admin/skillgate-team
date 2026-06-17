@@ -42,5 +42,5 @@ linux:
 
 publish:
   provider: github
-  owner: skillsgate
-  repo: skillsgate
+  owner: 2233admin
+  repo: skillgate-team

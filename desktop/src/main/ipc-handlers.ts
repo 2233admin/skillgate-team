@@ -1218,7 +1218,7 @@ function parseTrending(html: string): TrendingSkill[] {
 async function fetchTrending(): Promise<TrendingSkill[]> {
   const res = await fetch(SKILLS_SH_TRENDING_URL, {
     headers: {
-      "User-Agent": "SkillsGate (+https://github.com/skillsgate/skillsgate)",
+      "User-Agent": "Skillgate (+https://github.com/2233admin/skillgate-team)",
     },
   })
   if (!res.ok) {
