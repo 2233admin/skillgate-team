@@ -1,6 +1,6 @@
 # Contributing
 
-感谢参与 Skillgate Team。本仓库是 **团队技能目录（含 Codex CLI `~/.codex/skills`）+ CLI/TUI/Desktop**，贡献前请先读 [README.zh-CN.md](README.zh-CN.md) / [README.en.md](README.en.md) 与 [上手文档](docs/GETTING_STARTED.md)。
+感谢参与 Skillgate Team。本仓库是 **团队技能目录（含 Codex CLI `~/.codex/skills`）+ CLI/TUI/Desktop**，贡献前请先读 [README.md](README.md)（中文）/ [README.en.md](README.en.md) 与 [上手文档](docs/GETTING_STARTED.md)。
 
 ## 报告问题
 

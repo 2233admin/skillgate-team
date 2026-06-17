@@ -2,7 +2,7 @@
 
 **气质**：克制、干净、偏工程工具的高级感。明日方舟只作**点缀**（琥珀 + 青绿双强调），不做作战面板、不做斜切堆砌。
 
-**文档**：README / Getting started 分 `zh-CN` 与 `en`；GitHub 首页 `README.md` 为双语入口。产品叙事以 **Codex CLI**（`~/.codex/skills`）为首要同步目标，其余 Agent 并列。
+**文档**：`README.md` / `docs/GETTING_STARTED.md` 为中文默认入口；英文见 `README.en.md` / `docs/GETTING_STARTED.en.md`。`*.zh-CN.md` 仅作旧链接跳转。产品叙事以 **Codex CLI**（`~/.codex/skills`）为首要同步目标，其余 Agent 并列。
 
 ## 原则
 

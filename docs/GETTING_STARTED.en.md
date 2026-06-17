@@ -1,7 +1,7 @@
 # Getting started
 
 <p>
-  <a href="GETTING_STARTED.md">Languages</a> · <a href="GETTING_STARTED.zh-CN.md">简体中文</a> · <strong>English</strong>
+  <a href="GETTING_STARTED.md">简体中文</a> · <strong>English</strong>
 </p>
 
 Use with [README.en.md](../README.en.md). After cloning, pick one path and finish it.

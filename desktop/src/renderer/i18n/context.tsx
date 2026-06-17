@@ -21,10 +21,9 @@ const catalogs: Record<Locale, Messages> = {
   "zh-CN": zhCN,
 }
 
-function detectSystemLocale(): Locale {
-  const lang = navigator.language?.toLowerCase() ?? "en"
-  if (lang.startsWith("zh")) return "zh-CN"
-  return "en"
+/** First paint and new installs default to zh-CN; persisted `ui.locale` overrides. */
+function detectInitialLocale(): Locale {
+  return "zh-CN"
 }
 
 function getNested(messages: Messages, key: string): string | undefined {
@@ -79,7 +78,7 @@ interface I18nContextValue {
 const I18nContext = createContext<I18nContextValue | null>(null)
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(detectSystemLocale())
+  const [locale, setLocaleState] = useState<Locale>(detectInitialLocale())
   const [ready, setReady] = useState(false)
 
   useEffect(() => {

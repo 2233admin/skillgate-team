@@ -113,7 +113,7 @@ export const zhCN: Messages = {
       "1. 把本仓库 git clone 到固定目录（如 ~/.skillgate-team）\n2. 设置 → Team catalog root → 填该路径\n3. 回到本页选 profile → 点「应用 profile」",
     onboardingTitle: "新手三步",
     onboardingSteps:
-      "选 profile（如 quant）→ 应用 profile → 运行 doctor。git pull 后若技能旧了，再应用一次。详见 docs/GETTING_STARTED.zh-CN.md（或 .en.md）。",
+      "选 profile（如 quant）→ 应用 profile → 运行 doctor。git pull 后若技能旧了，再应用一次。详见 docs/GETTING_STARTED.md（英文见 .en.md）。",
     contextTitle: "上下文",
     teamRoot: "团队根路径",
     linkedProject: "关联项目",

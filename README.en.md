@@ -5,7 +5,7 @@
 # Skillgate Team
 
 <p>
-  <a href="README.md">Home</a> · <a href="README.zh-CN.md">简体中文</a> · <strong>English</strong>
+  <a href="README.en.md">Home</a> · <a href="README.md">简体中文</a> · <strong>English</strong>
 </p>
 
 **Git-backed team skill catalog. One repo — aligned installs on Codex CLI and every agent.**
