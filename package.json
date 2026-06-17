@@ -8,6 +8,9 @@
     "ui",
     "desktop"
   ],
+  "overrides": {
+    "esbuild": "0.28.1"
+  },
   "scripts": {
     "build": "npm run build --prefix cli",
     "install-global": "npm run build --prefix cli && node cli/bin/skillgate.mjs install-global",

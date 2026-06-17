@@ -15,7 +15,7 @@
   "dependencies": {
     "@opentui/core": "0.1.90",
     "@opentui/react": "0.1.90",
-    "gray-matter": "4.0.3",
+    "yaml": "2.9.0",
     "react": "19.1.5"
   },
   "repository": {

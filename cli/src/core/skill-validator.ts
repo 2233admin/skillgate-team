@@ -1,4 +1,4 @@
-import matter from "gray-matter";
+import { matter } from "@skillgate/ui";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileExists, dirExists } from "../utils/fs.js";

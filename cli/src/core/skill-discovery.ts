@@ -1,7 +1,7 @@
 // Portions adapted from vercel-labs/skills (https://github.com/vercel-labs/skills)
 import fs from "node:fs/promises";
 import path from "node:path";
-import matter from "gray-matter";
+import { matter } from "@skillgate/ui";
 import { Skill } from "../types.js";
 import { SKILL_MD, SKIP_DIRS, MAX_SKILL_DEPTH } from "../constants.js";
 import {

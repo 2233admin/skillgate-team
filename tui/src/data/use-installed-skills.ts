@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react"
 import fs from "node:fs/promises"
 import path from "node:path"
 import os from "node:os"
-import matter from "gray-matter"
+import { matter } from "../../../ui/src/frontmatter"
 import { useStore, useDispatch } from "../store/context.js"
 import { useDb } from "../db/context.js"
 import { agents } from "../../../cli/src/core/agents.js"
@@ -152,7 +152,7 @@ function dispatchAgentCounts(
 
 /**
  * Scans all detected agent globalSkillsDir paths for SKILL.md files,
- * parses them with gray-matter, enriches with lock file data, and
+ * parses frontmatter, enriches with lock file data, and
  * populates the store.
  *
  * On first mount, cached results are served instantly while a background

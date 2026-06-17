@@ -9,6 +9,9 @@
       "default": "./src/index.ts"
     }
   },
+  "dependencies": {
+    "yaml": "2.9.0"
+  },
   "peerDependencies": {
     "react": "19.1.5"
   },
