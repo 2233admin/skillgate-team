@@ -42,8 +42,26 @@ skillgate-team/
 ├── skills.lock.yaml     # pinned hashes
 ├── protect.yaml         # never overwrite (OMC, etc.)
 ├── VERSION
-└── cli/                 # skillgate npm package (apply, doctor, install-global, …)
+├── cli/                 # skillgate npm package (apply, doctor, install-global, …)
+└── tui/                 # OpenTUI terminal UI (vendored from SkillsGate upstream)
 ```
+
+## Terminal UI (TUI)
+
+Upstream SkillsGate front-end experience in the terminal (Installed / Discover / SSH Servers / Settings).
+
+```bash
+# One-time: install TUI deps (requires Bun)
+cd tui && bun install
+
+# From anywhere (after cli build + install-global)
+skillgate tui
+
+# Or from repo root
+npm run tui
+```
+
+Set `SKILLGATE_ROOT` to this repo so the TUI and CLI share the same team catalog. Local UI state is stored in `~/.skillgate/skillgate.db`.
 
 ## Project binding
 

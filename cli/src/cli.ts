@@ -20,6 +20,7 @@ import { runInstallGlobal } from "./commands/install-global.js";
 import { runTeamInit } from "./commands/team-init.js";
 import { runSmokeTest } from "./commands/smoke-test.js";
 import { runUpdateCheck } from "./commands/update-check.js";
+import { launchTui } from "./core/launch-tui.js";
 
 // "SKILLS" in dark silver (dim), "GATE" in bright white (bold)
 const s = (t: string) => pc.dim(t);       // dark silver
@@ -64,6 +65,7 @@ async function main(): Promise<void> {
     "team-init",
     "doctor",
     "lock",
+    "tui",
   ]);
 
   if (yesFlag) {
@@ -215,16 +217,9 @@ async function main(): Promise<void> {
       await runUpdateCheck(restArgs);
       break;
 
-    case "tui": {
-      const { execFileSync } = await import("node:child_process");
-      try {
-        execFileSync("skillsgate-tui", [], { stdio: "inherit" });
-      } catch {
-        console.error(pc.red("TUI not found. Install with: npm install -g @skillsgate/tui"));
-        process.exit(1);
-      }
+    case "tui":
+      launchTui(restArgs);
       break;
-    }
 
     case "--version":
     case "-v":
@@ -285,7 +280,7 @@ function printHelp(): void {
   console.log(`    whoami             Show current user`);
   console.log(`    mcp                Run as MCP server (stdio transport)`);
   console.log(`    setup              Configure MCP for AI tools`);
-  console.log(`    tui                Launch terminal UI (requires @skillsgate/tui)`);
+  console.log(`    tui                Launch terminal UI (OpenTUI; requires Bun + tui/)`);
   console.log();
   console.log(`  ${BOLD("Examples:")}`);
   console.log(`    skillgate add @username/audit-website ${DIM("# install from SkillsGate")}`);

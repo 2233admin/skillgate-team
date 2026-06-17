@@ -71,6 +71,15 @@ export async function runSmokeTest(args: string[]): Promise<void> {
     }
   }
 
+  console.log(pc.bold("=== smoke: tui package ==="));
+  const tuiEntry = path.join(teamRoot, "tui", "src", "index.tsx");
+  try {
+    await fs.access(tuiEntry);
+  } catch {
+    console.log(pc.red(`FAIL: TUI entry missing at ${tuiEntry}`));
+    failed++;
+  }
+
   console.log(pc.bold("=== smoke: global shim ==="));
   const shim = path.join(os.homedir(), ".skillgate", "bin", "skillgate.mjs");
   const repoCli = path.join(os.homedir(), ".skillgate", "repo", "dist", "cli.js");

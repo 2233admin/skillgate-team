@@ -16,10 +16,17 @@ Local review clone: `C:\Users\Administrator\.cache\skillsgate-review`
 - Commands: `apply`, `doctor`, `setup --team`, `lock verify`
 - Package rename: `skillgate` v0.1.0
 
-## What we dropped (for now)
+## TUI (vendored from upstream)
 
-- TUI binary / `@skillsgate/tui` postinstall
-- SkillsGate cloud login/publish as primary workflow
+- `tui/` — OpenTUI terminal UI from `packages/tui` (SkillsGate upstream)
+- Launch: `skillgate tui` (Bun + source) or `cd tui && bun run start`
+- Requires [Bun](https://bun.sh) for dev/source mode; optional `@skillsgate/tui-win32-x64` binary fallback
+- SQLite state: `~/.skillgate/skillgate.db`
+- Team tabs (profiles / lock / doctor) — not yet wired; TUI still uses upstream Installed / Discover / Servers flow
+
+## What we de-emphasized
+
+- SkillsGate cloud login/publish as primary workflow (team uses lock + profiles)
 
 ## Global install (team)
 
