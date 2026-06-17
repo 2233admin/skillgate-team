@@ -59,18 +59,30 @@ skillgate team-init --mode required
 
 This writes `.skillgate/profile`, a portable `.claude/hooks/check-skillgate.sh`, and (when required) registers SessionStart in `.claude/settings.json`.
 
-## Catalog updates (optional hook)
+## Catalog updates (SessionStart hook)
+
+`skillgate team-init --mode required` registers a SessionStart hook that runs `doctor -q` and `update-check` (24h throttle). Re-run `team-init` after upgrading the CLI to refresh the hook script.
 
 ```bash
-skillgate update-check          # prints TEAM_CATALOG_UPGRADE when VERSION drifted
-skillgate update-check --force  # ignore 24h cache
+skillgate update-check          # prints TEAM_CATALOG_UPGRADE when catalog drifted
+skillgate update-check --force  # ignore 6h cache
 ```
+
+When drift is detected, the hook prints `TEAM_CATALOG_UPGRADE <local> <remote>` to stderr.
 
 ## Remote sync (optional)
 
+Two ways to detect catalog drift:
+
 ```bash
+# Git commit hash (default in SessionStart hook if unset)
 export SKILLGATE_TEAM_REMOTE_REPO="https://github.com/2233admin/skillgate-team.git"
+
+# Or compare VERSION file via raw URL (not a .git remote)
+export SKILLGATE_TEAM_REMOTE_URL="https://raw.githubusercontent.com/2233admin/skillgate-team/master/VERSION"
 ```
+
+`SKILLGATE_TEAM_REMOTE_URL` takes precedence when set. Use a **raw** `VERSION` URL, not `https://github.com/...git`.
 
 ## Legacy repos
 

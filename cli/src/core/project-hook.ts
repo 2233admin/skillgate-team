@@ -34,5 +34,9 @@ if [ ! -d "$ROOT" ]; then
 fi
 
 run_skillgate doctor --profile "$PROFILE" -q
+
+# Catalog drift (throttled; never fails the session)
+export SKILLGATE_TEAM_REMOTE_REPO="\${SKILLGATE_TEAM_REMOTE_REPO:-https://github.com/2233admin/skillgate-team.git}"
+run_skillgate update-check || true
 `;
 }

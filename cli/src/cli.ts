@@ -59,6 +59,7 @@ async function main(): Promise<void> {
     "smoke-test",
     "update-check",
     "install-global",
+    "team-init",
     "doctor",
     "lock",
   ]);
