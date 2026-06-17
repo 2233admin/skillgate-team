@@ -162,8 +162,10 @@ export function SkillDetailView() {
             notification: { type: "error", message: "Failed to open folder" },
           })
         }
-      } else if (skill.lock?.sourceType === "github") {
-        // Catalog/GitHub skill: open the source URL
+      } else if (
+        skill.lock?.sourceType === "github" ||
+        skill.lock?.sourceType === "git"
+      ) {
         const url = skill.lock.originalUrl
         if (url) {
           try {
@@ -484,7 +486,7 @@ export function SkillDetailView() {
         )}
         {isLocal ? (
           <text fg={colors.textDim}>o      Open folder</text>
-        ) : sourceType === "github" ? (
+        ) : sourceType === "github" || sourceType === "git" ? (
           <text fg={colors.textDim}>o      Open URL</text>
         ) : null}
         {isInstalled ? (

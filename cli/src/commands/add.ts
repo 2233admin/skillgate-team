@@ -62,6 +62,7 @@ export async function runAdd(args: string[]): Promise<void> {
 
   let tmpDir: string | undefined;
   const isLocal = parsed.type === "local";
+  const isRemoteGit = parsed.type === "github" || parsed.type === "git";
 
   try {
     let skillDir: string;
@@ -74,12 +75,17 @@ export async function runAdd(args: string[]): Promise<void> {
         );
       }
       skillDir = parsed.localPath!;
-    } else {
+    } else if (isRemoteGit) {
       const spinner = p.spinner();
       spinner.start(`Cloning ${sourceLabel}...`);
       tmpDir = await cloneRepo(parsed);
       spinner.stop("Repository cloned.");
       skillDir = tmpDir;
+    } else {
+      throw new SkillsGateError(
+        `Unsupported source type: ${parsed.type}`,
+        "UNSUPPORTED_SOURCE",
+      );
     }
 
     // Discover skills

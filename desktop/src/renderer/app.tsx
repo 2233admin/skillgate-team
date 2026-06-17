@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react"
 import { HashRouter, Routes, Route } from "react-router-dom"
 import { Sidebar } from "./components/sidebar"
 import { UpdateBanner } from "./components/update-banner"
+import { useI18n } from "./i18n"
 import { Home } from "./routes/home"
 
 const Discover = lazy(() =>
@@ -25,9 +26,10 @@ const ScanSources = lazy(() =>
 )
 
 function RouteFallback() {
+  const { t } = useI18n()
   return (
     <div className="flex flex-1 items-center justify-center text-[12px] text-muted">
-      Loading view...
+      {t("common.loadingView")}
     </div>
   )
 }

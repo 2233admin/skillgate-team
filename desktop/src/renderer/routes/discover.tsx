@@ -9,6 +9,13 @@ import {
 } from "react"
 import { marked } from "marked"
 import { electronAPI } from "../lib/electron-api"
+import { useI18n } from "../i18n"
+import { UpdateStatusBadge } from "../components/sync-status-badge"
+import {
+  classifySourceString,
+  getCatalogSourceKind,
+  isInstallableSource,
+} from "../lib/skill-source"
 
 // ---------------------------------------------------------------------------
 // Types matching the skills.sh response shape
@@ -217,6 +224,7 @@ function BadgeCheckIcon({ size = 13 }: { size?: number }) {
 }
 
 function OfficialBadge() {
+  const { t } = useI18n()
   return (
     <span className="official-badge relative inline-flex flex-shrink-0 items-center">
       <BadgeCheckIcon />
@@ -224,7 +232,7 @@ function OfficialBadge() {
         role="tooltip"
         className="official-tooltip pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md border border-border bg-surface px-2 py-1 text-[10px] font-medium text-foreground shadow-lg"
       >
-        Skill by a verified organization
+        {t("explore.officialBadgeTooltip")}
       </span>
     </span>
   )
@@ -265,7 +273,9 @@ const SkillCard = memo(function SkillCard({
   onSelect,
   installedNames,
 }: SkillCardProps) {
+  const { t } = useI18n()
   const isInstalled = installedNames.has(skill.name.toLowerCase())
+  const sourceKind = getCatalogSourceKind(skill.source)
 
   return (
     <button
@@ -280,7 +290,7 @@ const SkillCard = memo(function SkillCard({
         {skill.isOfficial && <OfficialBadge />}
         {isInstalled && (
           <span className="text-[9px] uppercase tracking-wider font-medium text-accent bg-surface-hover px-1.5 py-0.5 rounded flex-shrink-0">
-            installed
+            {t("explore.installedBadge")}
           </span>
         )}
         {skill.installs > 0 && (
@@ -291,10 +301,12 @@ const SkillCard = memo(function SkillCard({
         )}
       </div>
 
-      {/* Source (owner/repo) */}
-      <p className="text-[11px] text-muted font-mono truncate">
-        {skill.source}
-      </p>
+      <div className="flex items-center gap-2 min-w-0">
+        <UpdateStatusBadge kind={sourceKind} source={skill.source} />
+        <p className="text-[11px] text-muted font-mono truncate flex-1">
+          {skill.source}
+        </p>
+      </div>
     </button>
   )
 })
@@ -319,6 +331,7 @@ function AgentDropdown({
   defaults: string[]
   onToggle: (name: string) => void
 }) {
+  const { t } = useI18n()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -334,15 +347,15 @@ function AgentDropdown({
 
   const label =
     selected.length === 0
-      ? "No agents selected"
+      ? t("explore.agentsNoneSelected")
       : selected.length === agents.length
-        ? `All agents (${agents.length})`
-        : `${selected.length} agent${selected.length > 1 ? "s" : ""} selected`
+        ? t("explore.agentsAll", { count: agents.length })
+        : t("explore.agentsSelected", { count: selected.length })
 
   return (
     <div ref={ref} className="relative">
       <p className="text-[12px] font-medium text-foreground mb-2">
-        Install targets
+        {t("explore.installTargets")}
       </p>
       <button
         type="button"
@@ -428,6 +441,7 @@ function DetailPanel({
   cacheContent,
   onInstall,
 }: DetailPanelProps) {
+  const { t } = useI18n()
   const [selectedAgents, setSelectedAgents] = useState<string[]>([])
   const cacheKey = `${skill.source}:${skill.skillId}`
   const [content, setContent] = useState<string | null>(
@@ -568,7 +582,11 @@ function DetailPanel({
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {/* Meta */}
           <div className="mb-5">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3 mb-3 flex-wrap">
+              <UpdateStatusBadge
+                kind={getCatalogSourceKind(skill.source)}
+                source={skill.source}
+              />
               <span className="text-[11px] font-mono text-muted">
                 {skill.source}
               </span>
@@ -583,7 +601,7 @@ function DetailPanel({
             <div className="flex items-center gap-3 mb-4">
               {installed ? (
                 <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-[12px] font-medium bg-surface-hover text-muted border border-border">
-                  <CheckIcon /> Installed
+                  <CheckIcon /> {t("explore.installed")}
                 </span>
               ) : (
                 <button
@@ -593,11 +611,11 @@ function DetailPanel({
                 >
                   {installing ? (
                     <>
-                      <SpinnerIcon /> Installing...
+                      <SpinnerIcon /> {t("explore.installing")}
                     </>
                   ) : (
                     <>
-                      <DownloadIcon /> Install
+                      <DownloadIcon /> {t("explore.install")}
                     </>
                   )}
                 </button>
@@ -636,7 +654,7 @@ function DetailPanel({
             />
           ) : (
             <p className="text-sm text-muted">
-              Skill content not available.
+              {t("explore.contentUnavailable")}
             </p>
           )}
         </div>
@@ -646,10 +664,113 @@ function DetailPanel({
 }
 
 // ---------------------------------------------------------------------------
+// Custom repository install (GitHub + self-hosted Git + local path)
+// ---------------------------------------------------------------------------
+
+function CustomInstallBar({
+  availableAgents,
+  defaultAgents,
+  onInstall,
+}: {
+  availableAgents: DetectedAgent[]
+  defaultAgents: string[]
+  onInstall: (source: string, agentNames: string[]) => Promise<void>
+}) {
+  const { t } = useI18n()
+  const [source, setSource] = useState("")
+  const [selectedAgents, setSelectedAgents] = useState<string[]>(defaultAgents)
+  const [installing, setInstalling] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setSelectedAgents(defaultAgents)
+  }, [defaultAgents])
+
+  const trimmed = source.trim()
+  const previewKind = trimmed ? classifySourceString(trimmed) : null
+  const canInstall =
+    isInstallableSource(trimmed) && selectedAgents.length > 0 && !installing
+
+  async function handleInstall() {
+    if (!canInstall) return
+    setInstalling(true)
+    setError(null)
+    try {
+      await onInstall(trimmed, selectedAgents)
+      setSource("")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      setInstalling(false)
+    }
+  }
+
+  function toggleAgent(name: string) {
+    setSelectedAgents((prev) =>
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
+    )
+  }
+
+  return (
+    <div className="mt-4 max-w-xl rounded-lg border border-border bg-surface/60 p-3">
+      <p className="text-[12px] font-medium text-foreground mb-0.5">
+        {t("explore.customInstallTitle")}
+      </p>
+      <p className="text-[11px] text-muted mb-2.5">{t("explore.customInstallHint")}</p>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={source}
+          onChange={(e) => {
+            setSource(e.target.value)
+            setError(null)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void handleInstall()
+          }}
+          placeholder={t("explore.customInstallPlaceholder")}
+          className="flex-1 min-w-0 px-3 py-2 rounded-md bg-background border border-border text-[12px] text-foreground placeholder:text-muted focus:outline-none focus:border-accent/40"
+        />
+        <button
+          type="button"
+          onClick={() => void handleInstall()}
+          disabled={!canInstall}
+          className="flex-shrink-0 px-3 py-2 rounded-md text-[12px] font-medium bg-foreground text-background hover:opacity-90 disabled:opacity-40 transition-opacity"
+        >
+          {installing ? t("explore.customInstallInstalling") : t("explore.customInstallButton")}
+        </button>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        {previewKind && trimmed && (
+          <UpdateStatusBadge kind={previewKind} source={trimmed} />
+        )}
+        {trimmed && !isInstallableSource(trimmed) && (
+          <span className="text-[11px] text-amber-400/90">
+            {t("explore.customInstallInvalid")}
+          </span>
+        )}
+      </div>
+      {availableAgents.length > 0 && (
+        <div className="mt-2">
+          <AgentDropdown
+            agents={availableAgents}
+            selected={selectedAgents}
+            defaults={defaultAgents}
+            onToggle={toggleAgent}
+          />
+        </div>
+      )}
+      {error && <p className="text-[11px] text-red-400 mt-2">{error}</p>}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Discover (main export)
 // ---------------------------------------------------------------------------
 
 export function Discover() {
+  const { t } = useI18n()
   const [skills, setSkills] = useState<CatalogSkill[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -857,11 +978,15 @@ export function Discover() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="px-8 pt-6 pb-4">
-        <h2 className="text-xl font-semibold text-foreground mb-1">Explore</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-1">
+          {t("explore.title")}
+        </h2>
         <p className="text-[12px] text-muted mb-5">
-          Browse and install agent skills from skills.sh.{" "}
+          {t("explore.subtitle")}{" "}
           {skills.length > 0 && (
-            <span className="font-mono">{skills.length} skills loaded</span>
+            <span className="font-mono">
+              {t("explore.skillsLoaded", { count: skills.length })}
+            </span>
           )}
         </p>
 
@@ -871,7 +996,7 @@ export function Discover() {
           </div>
           <input
             type="text"
-            placeholder="Search by name or keyword... (Enter to search)"
+            placeholder={t("explore.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleSearchSubmit() }}
@@ -904,15 +1029,24 @@ export function Discover() {
           )}
         </div>
 
+        <CustomInstallBar
+          availableAgents={availableAgents}
+          defaultAgents={defaultAgents}
+          onInstall={handleInstall}
+        />
+
         {/* Section label + official-only filter */}
         <div className="mt-3 flex items-center justify-between max-w-xl">
           <div className="flex items-center gap-2">
             <span className="text-[11px] uppercase tracking-wider font-medium text-muted">
-              {isSearching ? "Results" : "Trending"}
+              {isSearching ? t("explore.results") : t("explore.trending")}
             </span>
             {isSearching && (
               <span className="text-[11px] text-muted font-mono">
-                {visibleSkills.length} for "{trimmedQuery}"
+                {t("explore.resultsFor", {
+                  count: visibleSkills.length,
+                  query: trimmedQuery,
+                })}
               </span>
             )}
           </div>
@@ -923,7 +1057,7 @@ export function Discover() {
               onChange={(e) => setOfficialOnly(e.target.checked)}
               className="h-3 w-3 accent-blue-500"
             />
-            Official only
+            {t("explore.officialOnly")}
           </label>
         </div>
       </div>

@@ -16,6 +16,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "npm run build",
     "install-global": "node bin/skillgate.mjs install-global",
@@ -45,6 +47,7 @@
   "devDependencies": {
     "@types/node": "22.19.11",
     "tsup": "8.5.1",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "^3.2.4"
   }
 }

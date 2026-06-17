@@ -5,44 +5,116 @@ import { PushDialog, type PushDialogMode } from "./push-dialog"
 import { ManagePopover } from "../components/manage-popover"
 import {
   computeServerStatus,
+  computeSkillSyncDiff,
   type DotColor,
   type LocalSkillForStatus,
   type RemoteSkillForStatus,
+  type SkillSyncDiff,
+  type SkillSyncStatusKind,
 } from "../lib/server-status"
+import { loadLocalSkillHashes } from "../lib/load-local-skill-hashes"
+import {
+  loadLocalSkillSourceByFolder,
+  type LocalSkillSourceEntry,
+} from "../lib/load-local-skill-sources"
+import { SyncStatusBadge, UpdateStatusBadge } from "../components/sync-status-badge"
+import { useI18n, formatRelativeTime, formatServerStatus } from "../i18n"
 
-// ---------------------------------------------------------------------------
-// SHA-256 helper (Web Crypto, renderer-side)
-// ---------------------------------------------------------------------------
+function ServerSyncBreakdown({
+  diff,
+  expanded,
+  onToggle,
+  onPush,
+  pushableCount,
+  neverSynced,
+  sourceByFolder,
+}: {
+  diff: SkillSyncDiff
+  expanded: boolean
+  onToggle: () => void
+  onPush: () => void
+  pushableCount: number
+  neverSynced: boolean
+  sourceByFolder: Map<string, LocalSkillSourceEntry>
+}) {
+  const { t } = useI18n()
+  const groups: SkillSyncStatusKind[] = [
+    "needsPush",
+    "newLocal",
+    "onlyRemote",
+    "inSync",
+  ]
 
-async function sha256Hex(s: string): Promise<string> {
-  const enc = new TextEncoder().encode(s)
-  const buf = await crypto.subtle.digest("SHA-256", enc)
-  const bytes = new Uint8Array(buf)
-  let out = ""
-  for (let i = 0; i < bytes.length; i++) {
-    out += bytes[i].toString(16).padStart(2, "0")
+  if (neverSynced) {
+    return (
+      <p className="text-[11px] text-muted px-1">{t("remote.syncBreakdownEmpty")}</p>
+    )
   }
-  return out
-}
 
-// ---------------------------------------------------------------------------
-// Relative time helper
-// ---------------------------------------------------------------------------
-
-function relativeTime(isoString: string | null): string {
-  if (!isoString) return "never"
-  const now = Date.now()
-  const then = new Date(isoString + "Z").getTime() // SQLite datetime is UTC
-  const diff = now - then
-  if (diff < 0) return "just now"
-  const secs = Math.floor(diff / 1000)
-  if (secs < 60) return "just now"
-  const mins = Math.floor(secs / 60)
-  if (mins < 60) return `${mins}m ago`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  return `${days}d ago`
+  return (
+    <div className="flex flex-col gap-2 pt-1 border-t border-border/60">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-medium text-muted">
+          {t("remote.syncBreakdownTitle")}
+        </span>
+        <div className="flex items-center gap-2">
+          {pushableCount > 0 && (
+            <button
+              type="button"
+              onClick={onPush}
+              className="text-[11px] font-medium text-amber-400 hover:text-amber-300"
+            >
+              {t("remote.syncBreakdownPush", { count: pushableCount })}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onToggle}
+            className="text-[11px] text-muted hover:text-foreground"
+          >
+            {expanded ? t("remote.syncBreakdownHide") : t("remote.syncBreakdownShow")}
+          </button>
+        </div>
+      </div>
+      {!expanded ? (
+        <div className="flex flex-wrap gap-1.5">
+          {groups.map((kind) =>
+            diff.counts[kind] > 0 ? (
+              <span key={kind} className="inline-flex items-center gap-1 text-[10px] text-muted">
+                <SyncStatusBadge kind={kind} />
+                <span className="font-mono">{diff.counts[kind]}</span>
+              </span>
+            ) : null,
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+          {diff.entries.map((entry) => {
+            const sourceEntry = sourceByFolder.get(entry.folderName)
+            return (
+              <div
+                key={`${entry.kind}-${entry.folderName}`}
+                className="flex items-center justify-between gap-2 px-2 py-1 rounded-md bg-background/60"
+              >
+                <span className="text-[11px] text-foreground truncate">
+                  {entry.displayName}
+                </span>
+                <span className="flex items-center gap-1 flex-shrink-0">
+                  {sourceEntry && (
+                    <UpdateStatusBadge
+                      kind={sourceEntry.kind}
+                      source={sourceEntry.source}
+                    />
+                  )}
+                  <SyncStatusBadge kind={entry.kind} />
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -112,6 +184,7 @@ function ServerDialog({
   onClose: () => void
   onSave: (data: ServerFormData) => void
 }) {
+  const { t } = useI18n()
   const [form, setForm] = useState<ServerFormData>(emptyForm)
 
   useEffect(() => {
@@ -149,22 +222,20 @@ function ServerDialog({
       <div className="relative bg-surface border border-border rounded-xl shadow-2xl w-full max-w-md mx-4 animate-slide-down">
         <div className="px-6 py-5 border-b border-border">
           <h3 className="text-base font-semibold text-foreground">
-            {editingServer ? "Edit Server" : "Add Server"}
+            {editingServer ? t("remote.dialogEditTitle") : t("remote.dialogAddTitle")}
           </h3>
-          <p className="text-[11px] text-muted mt-0.5">
-            Configure an SSH connection to discover remote skills.
-          </p>
+          <p className="text-[11px] text-muted mt-0.5">{t("remote.dialogSubtitle")}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-4">
           {/* Label */}
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">
-              Label
+              {t("remote.fieldLabel")}
             </label>
             <input
               type="text"
-              placeholder="e.g. prod-box"
+              placeholder={t("remote.placeholderLabel")}
               value={form.label}
               onChange={(e) => setForm({ ...form, label: e.target.value })}
               className="w-full px-3 py-2 rounded-lg bg-background border border-border text-[12px] text-foreground placeholder:text-muted focus:outline-none focus:border-accent/40 transition-colors"
@@ -175,11 +246,11 @@ function ServerDialog({
           <div className="flex gap-3">
             <div className="flex-1">
               <label className="block text-[12px] font-medium text-foreground mb-1.5">
-                Host
+                {t("remote.fieldHost")}
               </label>
               <input
                 type="text"
-                placeholder="192.168.1.100 or hostname"
+                placeholder={t("remote.placeholderHost")}
                 value={form.host}
                 onChange={(e) => setForm({ ...form, host: e.target.value })}
                 className="w-full px-3 py-2 rounded-lg bg-background border border-border text-[12px] text-foreground placeholder:text-muted focus:outline-none focus:border-accent/40 transition-colors"
@@ -187,11 +258,11 @@ function ServerDialog({
             </div>
             <div className="w-20">
               <label className="block text-[12px] font-medium text-foreground mb-1.5">
-                Port
+                {t("remote.fieldPort")}
               </label>
               <input
                 type="text"
-                placeholder="22"
+                placeholder={t("remote.placeholderPort")}
                 value={form.port}
                 onChange={(e) => setForm({ ...form, port: e.target.value })}
                 className="w-full px-3 py-2 rounded-lg bg-background border border-border text-[12px] text-foreground placeholder:text-muted focus:outline-none focus:border-accent/40 transition-colors"
@@ -202,11 +273,11 @@ function ServerDialog({
           {/* Username */}
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">
-              Username
+              {t("remote.fieldUsername")}
             </label>
             <input
               type="text"
-              placeholder="e.g. sultan"
+              placeholder={t("remote.placeholderUsername")}
               value={form.username}
               onChange={(e) => setForm({ ...form, username: e.target.value })}
               className="w-full px-3 py-2 rounded-lg bg-background border border-border text-[12px] text-foreground placeholder:text-muted focus:outline-none focus:border-accent/40 transition-colors"
@@ -216,11 +287,11 @@ function ServerDialog({
           {/* Skills Base Path */}
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">
-              Skills Base Path
+              {t("remote.fieldSkillsPath")}
             </label>
             <input
               type="text"
-              placeholder="~/.agents/skills"
+              placeholder={t("remote.placeholderSkillsPath")}
               value={form.skillsBasePath}
               onChange={(e) =>
                 setForm({ ...form, skillsBasePath: e.target.value })
@@ -232,12 +303,12 @@ function ServerDialog({
           {/* SSH Key Path */}
           <div>
             <label className="block text-[12px] font-medium text-foreground mb-1.5">
-              SSH Key Path
-              <span className="font-normal text-muted ml-1">(optional)</span>
+              {t("remote.fieldSshKey")}
+              <span className="font-normal text-muted ml-1">{t("common.optional")}</span>
             </label>
             <input
               type="text"
-              placeholder="Auto-discover (id_ed25519, id_rsa, ...)"
+              placeholder={t("remote.placeholderSshKey")}
               value={form.sshKeyPath}
               onChange={(e) =>
                 setForm({ ...form, sshKeyPath: e.target.value })
@@ -253,14 +324,14 @@ function ServerDialog({
               onClick={onClose}
               className="px-4 py-2 rounded-lg text-[12px] font-medium border border-border text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               type="submit"
               disabled={!isValid}
               className="px-4 py-2 rounded-lg text-[12px] font-medium bg-foreground text-background hover:opacity-90 transition-opacity disabled:opacity-40"
             >
-              {editingServer ? "Save Changes" : "Add Server"}
+              {editingServer ? t("remote.saveChanges") : t("remote.addServer")}
             </button>
           </div>
         </form>
@@ -274,6 +345,7 @@ function ServerDialog({
 // ---------------------------------------------------------------------------
 
 export function Servers() {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const [servers, setServers] = useState<RemoteServer[]>([])
   const [loading, setLoading] = useState(true)
@@ -295,9 +367,15 @@ export function Servers() {
   const [manageOpenFor, setManageOpenFor] = useState<string | null>(null)
   const manageAnchorRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const [localSkills, setLocalSkills] = useState<LocalSkillForStatus[]>([])
+  const [sourceByFolder, setSourceByFolder] = useState<
+    Map<string, LocalSkillSourceEntry>
+  >(new Map())
   const [remoteSkillsByServer, setRemoteSkillsByServer] = useState<
     Record<string, RemoteSkillForStatus[]>
   >({})
+  const [expandedBreakdown, setExpandedBreakdown] = useState<Set<string>>(
+    new Set(),
+  )
 
   const loadServers = useCallback(async () => {
     try {
@@ -314,42 +392,30 @@ export function Servers() {
     loadServers()
   }, [loadServers])
 
-  // Load + hash local canonical skills once for status hints.
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const list = (await electronAPI.listInstalled()) as Array<{
-          canonicalPath: string
-          scope: string
-        }>
-        const canonical = list.filter(
-          (s) => s.scope === "global" && s.canonicalPath,
-        )
-        const hashed: LocalSkillForStatus[] = []
-        for (const s of canonical) {
-          try {
-            const content = (await electronAPI.readSkillContent(
-              `${s.canonicalPath}/SKILL.md`,
-            )) as string
-            const folderName =
-              s.canonicalPath.split("/").filter(Boolean).pop() ?? ""
-            if (!folderName) continue
-            const hash = await sha256Hex(content)
-            hashed.push({ folderName, contentHash: hash })
-          } catch {
-            // Skip skills whose SKILL.md can't be read.
-          }
-        }
-        if (!cancelled) setLocalSkills(hashed)
-      } catch {
-        // Non-fatal — status hints will fall back to "in sync".
-      }
-    })()
-    return () => {
-      cancelled = true
+  const reloadLocalSkills = useCallback(async () => {
+    try {
+      const [hashed, sources] = await Promise.all([
+        loadLocalSkillHashes(),
+        loadLocalSkillSourceByFolder(),
+      ])
+      setLocalSkills(hashed)
+      setSourceByFolder(sources)
+    } catch {
+      // Non-fatal — status hints will fall back to "in sync".
     }
   }, [])
+
+  // Load + hash local canonical skills for status hints and per-skill diff.
+  useEffect(() => {
+    void reloadLocalSkills()
+  }, [reloadLocalSkills])
+
+  useEffect(() => {
+    const cleanup = electronAPI.onSkillsUpdated(() => {
+      void reloadLocalSkills()
+    })
+    return cleanup
+  }, [reloadLocalSkills])
 
   // Refresh per-server cached remote skills whenever the server list reloads.
   useEffect(() => {
@@ -455,6 +521,7 @@ export function Servers() {
             },
       }))
       await loadServers()
+      await reloadLocalSkills()
     } catch (err) {
       setSyncResults((prev) => ({
         ...prev,
@@ -485,7 +552,7 @@ export function Servers() {
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-1">
-        <h2 className="text-xl font-bold text-foreground">Remote Servers</h2>
+        <h2 className="text-xl font-bold text-foreground">{t("remote.title")}</h2>
         <button
           onClick={openAdd}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium bg-foreground text-background hover:opacity-90 transition-opacity"
@@ -503,17 +570,15 @@ export function Servers() {
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          Add Server
+          {t("remote.addServer")}
         </button>
       </div>
-      <p className="text-[12px] text-muted mb-6">
-        Connect to remote machines via SSH to discover and sync skills.
-      </p>
+      <p className="text-[12px] text-muted mb-6">{t("remote.subtitle")}</p>
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <p className="text-[12px] text-muted animate-fade-in">
-            Loading servers...
+            {t("remote.loading")}
           </p>
         </div>
       ) : servers.length === 0 ? (
@@ -534,15 +599,13 @@ export function Servers() {
             <line x1="6" y1="6" x2="6.01" y2="6" />
             <line x1="6" y1="18" x2="6.01" y2="18" />
           </svg>
-          <p className="text-sm text-muted">No servers configured.</p>
-          <p className="text-[11px] text-muted mt-1">
-            Add a server to discover skills from remote machines.
-          </p>
+          <p className="text-sm text-muted">{t("remote.emptyTitle")}</p>
+          <p className="text-[11px] text-muted mt-1">{t("remote.emptyHint")}</p>
           <button
             onClick={openAdd}
             className="mt-4 px-4 py-2 rounded-lg text-[12px] font-medium bg-foreground text-background hover:opacity-90 transition-opacity"
           >
-            Add your first server
+            {t("remote.addFirst")}
           </button>
         </div>
       ) : (
@@ -588,18 +651,20 @@ export function Servers() {
                     return (
                       <div className="flex items-center gap-3 mt-0.5">
                         <span className={`text-[11px] ${dotClass[status.dotColor]}`}>
-                          {status.text}
+                          {formatServerStatus(t, status)}
                         </span>
                         <span className="text-[10px] text-muted">
-                          {server.lastSyncAt ? relativeTime(server.lastSyncAt) : ""}
+                          {server.lastSyncAt ? formatRelativeTime(t, server.lastSyncAt) : ""}
                         </span>
                         {testResult && (
                           <span
                             className={`text-[10px] ${testResult.ok ? "text-emerald-400" : "text-red-400"}`}
                           >
                             {testResult.ok
-                              ? "Connection OK"
-                              : `Failed: ${testResult.error}`}
+                              ? t("remote.connectionOk")
+                              : t("remote.connectionFailed", {
+                                  error: testResult.error ?? t("common.unknown"),
+                                })}
                           </span>
                         )}
                       </div>
@@ -611,18 +676,18 @@ export function Servers() {
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => navigate(`/servers/${server.id}/skills`)}
-                    title="Browse skills"
+                    title={t("remote.browseSkills")}
                     className="px-2 py-1.5 rounded-md text-[11px] font-medium text-muted hover:text-foreground hover:bg-background transition-colors"
                   >
-                    Browse
+                    {t("common.browse")}
                   </button>
                   <button
                     onClick={() => handleTest(server.id)}
                     disabled={isTesting}
-                    title="Test connection"
+                    title={t("remote.testConnection")}
                     className="px-2 py-1.5 rounded-md text-[11px] font-medium text-muted hover:text-foreground hover:bg-background transition-colors disabled:opacity-40"
                   >
-                    {isTesting ? "..." : "Test"}
+                    {isTesting ? "..." : t("common.test")}
                   </button>
                   <button
                     ref={(el) => {
@@ -632,24 +697,24 @@ export function Servers() {
                       setManageOpenFor((prev) => (prev === server.id ? null : server.id))
                     }
                     disabled={isSyncing}
-                    title="Manage this server"
+                    title={t("remote.manageServer")}
                     className="px-2.5 py-1 rounded-md text-[11px] font-medium border border-border text-foreground hover:bg-background transition-colors disabled:opacity-40"
                   >
-                    {isSyncing ? "Syncing..." : "Manage ▾"}
+                    {isSyncing ? t("remote.syncing") : t("remote.manageMenu")}
                   </button>
                   <button
                     onClick={() => openEdit(server)}
-                    title="Edit server"
+                    title={t("remote.editServer")}
                     className="px-2 py-1.5 rounded-md text-[11px] font-medium text-muted hover:text-foreground hover:bg-background transition-colors"
                   >
-                    Edit
+                    {t("common.edit")}
                   </button>
                   <button
                     onClick={() => handleDelete(server.id)}
-                    title="Delete server"
+                    title={t("remote.deleteServer")}
                     className="px-2 py-1.5 rounded-md text-[11px] font-medium text-red-400 hover:text-red-300 hover:bg-background transition-colors"
                   >
-                    Delete
+                    {t("common.delete")}
                   </button>
                 </div>
                 </div>
@@ -657,29 +722,60 @@ export function Servers() {
                 {/* Sync result / last error banner */}
                 {syncResult && syncResult.ok && (
                   <div className="flex items-start gap-2 px-3 py-2 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-400">
-                    <span className="font-medium">Sync complete:</span>
+                    <span className="font-medium">{t("remote.syncCompleteLabel")}</span>
                     <span>
-                      {syncResult.added} new, {syncResult.updated} updated,{" "}
-                      {syncResult.removed} removed, {syncResult.unchanged} unchanged
+                      {t("remote.syncCompleteDetail", {
+                        added: syncResult.added,
+                        updated: syncResult.updated,
+                        removed: syncResult.removed,
+                        unchanged: syncResult.unchanged,
+                      })}
                     </span>
                   </div>
                 )}
                 {syncResult && !syncResult.ok && (
                   <div className="flex items-start gap-2 px-3 py-2 rounded-md bg-red-500/10 border border-red-500/20 text-[11px] text-red-400 break-words">
-                    <span className="font-medium flex-shrink-0">Sync failed:</span>
+                    <span className="font-medium flex-shrink-0">{t("remote.syncFailedLabel")}</span>
                     <span className="font-mono break-all">
-                      {syncResult.error || "Unknown error"}
+                      {syncResult.error || t("common.unknown")}
                     </span>
                   </div>
                 )}
                 {!syncResult && server.lastSyncError && (
                   <div className="flex items-start gap-2 px-3 py-2 rounded-md bg-red-500/10 border border-red-500/20 text-[11px] text-red-400 break-words">
-                    <span className="font-medium flex-shrink-0">Last error:</span>
+                    <span className="font-medium flex-shrink-0">{t("remote.lastErrorLabel")}</span>
                     <span className="font-mono break-all">
                       {server.lastSyncError}
                     </span>
                   </div>
                 )}
+                {(() => {
+                  const remoteRows = remoteSkillsByServer[server.id] ?? []
+                  const diff = computeSkillSyncDiff(localSkills, remoteRows)
+                  const pushable =
+                    diff.counts.needsPush + diff.counts.newLocal
+                  return (
+                    <ServerSyncBreakdown
+                      diff={diff}
+                      expanded={expandedBreakdown.has(server.id)}
+                      neverSynced={!server.lastSyncAt}
+                      pushableCount={pushable}
+                      sourceByFolder={sourceByFolder}
+                      onToggle={() =>
+                        setExpandedBreakdown((prev) => {
+                          const next = new Set(prev)
+                          if (next.has(server.id)) next.delete(server.id)
+                          else next.add(server.id)
+                          return next
+                        })
+                      }
+                      onPush={() => {
+                        setPushMode("push")
+                        setPushTarget(server)
+                      }}
+                    />
+                  )
+                })()}
               </div>
             )
           })}
@@ -719,7 +815,8 @@ export function Servers() {
         mode={pushMode}
         onClose={() => {
           setPushTarget(null)
-          loadServers()
+          void loadServers()
+          void reloadLocalSkills()
         }}
       />
     </div>

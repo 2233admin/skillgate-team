@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react"
 import { electronAPI } from "../lib/electron-api"
+import { useI18n } from "../i18n"
 
 export function ScanSources() {
+  const { t } = useI18n()
   const [paths, setPaths] = useState<string[]>([])
   const [newPath, setNewPath] = useState("")
   const [saving, setSaving] = useState(false)
@@ -31,45 +33,49 @@ export function ScanSources() {
     <div className="flex-1 overflow-y-auto px-8 py-6">
       <div className="max-w-4xl">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-foreground mb-1">Sources</h2>
-          <p className="text-[12px] text-muted">
-            Add folders for Skillgate to crawl — direct skill bundles and project-local agent skill directories.
-          </p>
+          <h2 className="text-xl font-semibold text-foreground mb-1">
+            {t("sources.title")}
+          </h2>
+          <p className="text-[12px] text-muted">{t("sources.subtitle")}</p>
         </div>
 
         <div className="rounded-2xl border border-border bg-surface p-5 mb-6">
           <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6">
             <div>
               <h3 className="text-[13px] font-semibold text-foreground mb-2">
-                Bring Your Own Skill Folders
+                {t("sources.bringYourOwn")}
               </h3>
               <p className="text-[12px] text-muted leading-relaxed mb-4">
-                Point Skillgate at places like `~/projects`, `~/workspaces`, or `~/my-skills`. It will discover:
+                {t("sources.pointAt")}
               </p>
               <div className="flex flex-col gap-2 text-[12px] text-foreground">
                 <div className="rounded-lg border border-border bg-background px-3 py-2">
-                  Direct skill folders:
-                  <code className="ml-2 text-muted">~/my-skills/example/SKILL.md</code>
+                  {t("sources.directFolders")}
+                  <code className="ml-2 text-muted">
+                    ~/my-skills/example/SKILL.md
+                  </code>
                 </div>
                 <div className="rounded-lg border border-border bg-background px-3 py-2">
-                  Project-local tool paths:
-                  <code className="ml-2 text-muted">~/projects/app/.claude/skills/foo/SKILL.md</code>
+                  {t("sources.projectLocal")}
+                  <code className="ml-2 text-muted">
+                    ~/projects/app/.claude/skills/foo/SKILL.md
+                  </code>
                 </div>
               </div>
             </div>
             <div className="rounded-xl border border-border bg-background p-4">
               <p className="text-[11px] uppercase tracking-widest text-muted mb-2">
-                Current Coverage
+                {t("sources.currentCoverage")}
               </p>
               <div className="flex flex-col gap-2">
                 <div className="rounded-md border border-border px-3 py-2 text-[12px] text-foreground">
-                  {paths.length} custom scan source{paths.length === 1 ? "" : "s"}
+                  {t("sources.customSources", { count: paths.length })}
                 </div>
                 <div className="rounded-md border border-border px-3 py-2 text-[12px] text-foreground">
-                  Global installs still scanned automatically
+                  {t("sources.globalStillScanned")}
                 </div>
                 <div className="rounded-md border border-border px-3 py-2 text-[12px] text-foreground">
-                  Project-local paths discovered under each root
+                  {t("sources.projectUnderRoot")}
                 </div>
               </div>
             </div>
@@ -80,10 +86,10 @@ export function ScanSources() {
           <div className="flex items-center justify-between gap-3 mb-4">
             <div>
               <h3 className="text-[13px] font-semibold text-foreground">
-                Custom Roots
+                {t("sources.customRoots")}
               </h3>
               <p className="text-[12px] text-muted">
-                Add and remove folders to include in local skill discovery.
+                {t("sources.customRootsDescription")}
               </p>
             </div>
           </div>
@@ -92,7 +98,7 @@ export function ScanSources() {
             <input
               value={newPath}
               onChange={(e) => setNewPath(e.target.value)}
-              placeholder="~/projects or ~/my-skills"
+              placeholder={t("settings.scanPathPlaceholder")}
               className="flex-1 rounded-lg border border-border bg-background px-3 py-2 font-mono text-[12px] text-foreground"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && newPath.trim()) {
@@ -114,16 +120,14 @@ export function ScanSources() {
               disabled={saving}
               className="rounded-lg bg-foreground px-4 py-2 text-[12px] font-medium text-background disabled:opacity-40"
             >
-              Add Root
+              {t("sources.addRoot")}
             </button>
           </div>
 
           <div className="flex flex-col gap-3">
             {paths.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border px-4 py-6 text-center">
-                <p className="text-[12px] text-muted">
-                  No custom roots yet. Add one above to start discovering extra local skills.
-                </p>
+                <p className="text-[12px] text-muted">{t("sources.emptyRoots")}</p>
               </div>
             ) : (
               paths.map((scanPath) => (
@@ -132,16 +136,20 @@ export function ScanSources() {
                   className="flex items-center justify-between gap-4 rounded-xl border border-border bg-background px-4 py-3"
                 >
                   <div>
-                    <code className="block text-[12px] text-foreground">{scanPath}</code>
+                    <code className="block text-[12px] text-foreground">
+                      {scanPath}
+                    </code>
                     <p className="text-[11px] text-muted mt-1">
-                      Direct skills and project-local tool paths under this root will be discovered.
+                      {t("sources.rootHint")}
                     </p>
                   </div>
                   <button
-                    onClick={() => void persist(paths.filter((item) => item !== scanPath))}
+                    onClick={() =>
+                      void persist(paths.filter((item) => item !== scanPath))
+                    }
                     className="rounded-md border border-border px-3 py-1.5 text-[11px] text-red-400 hover:text-red-300 hover:bg-surface"
                   >
-                    Remove
+                    {t("common.remove")}
                   </button>
                 </div>
               ))

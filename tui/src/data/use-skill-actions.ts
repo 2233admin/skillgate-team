@@ -7,7 +7,7 @@ import type { EnrichedSkill, Action } from "../store/types.js"
 
 // CLI core imports -- these share the same Bun runtime
 import { parseSource } from "../../../cli/src/core/source-parser.js"
-import { cleanupTempDir, fetchTreeSha } from "../../../cli/src/core/git.js"
+import { cleanupTempDir, cloneRepo, fetchTreeSha } from "../../../cli/src/core/git.js"
 import { discoverSkills } from "../../../cli/src/core/skill-discovery.js"
 import {
   installSkillForAgent,
@@ -61,7 +61,7 @@ export function useSkillActions(): UseSkillActionsResult {
 
       const source = parseSource(sourceStr)
 
-      // Public skills (owner/repo format): use `npx skills add`
+      // Public GitHub skills (owner/repo): use `npx skills add`
       if (source.type === "github" || isOwnerRepoFormat(sourceStr)) {
         const repo = source.type === "github"
           ? `${source.owner}/${source.repo}`
@@ -94,11 +94,10 @@ export function useSkillActions(): UseSkillActionsResult {
         preferredNames.includes(agent.name),
       )
 
-      // Local path source uses resolved path directly
-      const tmpDir = source.localPath!
+      const isRemoteGit = source.type === "git"
+      const tmpDir = isRemoteGit ? await cloneRepo(source) : source.localPath!
 
       try {
-        // Discover skills in the downloaded directory
         const skills = await discoverSkills(tmpDir, source.subpath)
 
         if (skills.length === 0) {
@@ -160,8 +159,7 @@ export function useSkillActions(): UseSkillActionsResult {
           },
         })
       } finally {
-        // Clean up temp directory (only if it was a temp clone/download)
-        if (source.type !== "local") {
+        if (isRemoteGit) {
           await cleanupTempDir(tmpDir)
         }
       }
@@ -285,7 +283,6 @@ export function useSkillActions(): UseSkillActionsResult {
       const source = parseSource(skill.lock.source)
 
       if (source.type === "github") {
-        // Check if the tree SHA has changed
         const newSha = await fetchTreeSha(source.owner, source.repo, "")
         if (newSha && newSha === skill.lock.skillFolderHash) {
           dispatch({
@@ -295,6 +292,7 @@ export function useSkillActions(): UseSkillActionsResult {
           return
         }
       }
+      // Self-hosted Git: no GitHub tree SHA — always re-install from lock URL
 
       // Re-install (reuses the install flow)
       await installSkill(skill)

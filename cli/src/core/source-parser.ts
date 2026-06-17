@@ -16,6 +16,7 @@ import { ParsedSource } from "../types.js";
  *   https://github.com/owner/repo
  *   https://github.com/owner/repo/tree/branch/path
  *   github.com/owner/repo
+ *   https://gitea.example.com/org/repo  (self-hosted Git — Gitea, GitLab, etc.)
  */
 export function parseSource(source: string): ParsedSource {
   // 1. Try local path (starts with ./, ../, /, or ~/)
@@ -26,7 +27,11 @@ export function parseSource(source: string): ParsedSource {
   const githubUrl = parseGitHubUrl(source);
   if (githubUrl) return githubUrl;
 
-  // 3. Try owner/repo shorthand (with optional @skill filter)
+  // 3. Try other Git hosting URLs (Gitea, GitLab, Codeberg, internal servers, …)
+  const gitHost = parseGitHostUrl(source);
+  if (gitHost) return gitHost;
+
+  // 4. Try owner/repo shorthand (with optional @skill filter) — GitHub
   const shorthand = parseOwnerRepo(source);
   if (shorthand) return shorthand;
 
@@ -39,8 +44,48 @@ export function parseSource(source: string): ParsedSource {
 
   throw new SourceParseError(
     `Could not parse source: "${source}". ` +
-      `Expected: owner/repo, owner/repo@skill, a GitHub URL, or a local path (./path).`,
+      `Expected: owner/repo, owner/repo@skill, a GitHub or Git server URL, or a local path (./path).`,
   );
+}
+
+function parseGitHostUrl(input: string): ParsedSource | null {
+  if (!input.startsWith("http://") && !input.startsWith("https://")) {
+    return null;
+  }
+  if (input.includes("github.com")) return null;
+
+  try {
+    const parsed = new URL(input);
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    if (parts.length > 0 && parts[parts.length - 1].endsWith(".git")) {
+      parts[parts.length - 1] = parts[parts.length - 1].slice(0, -4);
+    }
+    if (parts.length < 2) return null;
+
+    const owner = parts[0];
+    const repo = parts[1];
+    let subpath: string | undefined;
+    let ref: string | undefined;
+
+    if (parts[2] === "tree" && parts.length >= 4) {
+      ref = parts[3];
+      if (parts.length > 4) {
+        subpath = parts.slice(4).join("/");
+      }
+    }
+
+    const base = `${parsed.origin}/${owner}/${repo}`;
+    return {
+      type: "git",
+      url: base,
+      owner,
+      repo,
+      subpath,
+      ref,
+    };
+  } catch {
+    return null;
+  }
 }
 
 function parseGitHubUrl(input: string): ParsedSource | null {
@@ -125,6 +170,7 @@ function isSkillsGateSlug(input: string): boolean {
 
 export function getSourceLabel(source: ParsedSource): string {
   if (source.type === "local") return source.localPath!;
+  if (source.type === "git") return source.url;
   return `${source.owner}/${source.repo}`;
 }
 

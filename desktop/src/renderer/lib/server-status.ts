@@ -2,9 +2,19 @@
 
 export type DotColor = "green" | "amber" | "red" | "grey"
 
+export type ServerStatusKind =
+  | "syncFailed"
+  | "neverSynced"
+  | "pendingPush"
+  | "onlyOnRemote"
+  | "inSync"
+
 export interface ServerStatus {
   dotColor: DotColor
-  text: string
+  kind: ServerStatusKind
+  localCount?: number
+  pendingPush?: number
+  onlyOnRemote?: number
 }
 
 export interface RemoteSkillForStatus {
@@ -15,9 +25,106 @@ export interface RemoteSkillForStatus {
 export interface LocalSkillForStatus {
   folderName: string
   contentHash: string
+  displayName?: string
+}
+
+export type SkillSyncStatusKind =
+  | "newLocal"
+  | "needsPush"
+  | "inSync"
+  | "onlyRemote"
+
+export interface SkillSyncEntry {
+  folderName: string
+  displayName: string
+  kind: SkillSyncStatusKind
+}
+
+export interface SkillSyncDiff {
+  entries: SkillSyncEntry[]
+  counts: Record<SkillSyncStatusKind, number>
 }
 
 type ServerLike = { lastSyncAt: string | null; lastSyncError: string | null }
+
+/** Map remote SKILL.md paths to folder name → content hash. */
+export function remoteSkillsByFolder(
+  remoteSkills: RemoteSkillForStatus[],
+): Map<string, string | null> {
+  const remoteByFolder = new Map<string, string | null>()
+  for (const r of remoteSkills) {
+    if (!r.remotePath.endsWith("/SKILL.md")) continue
+    const skillDir = r.remotePath.slice(0, -"/SKILL.md".length)
+    const folderName = skillDir.split("/").filter(Boolean).pop() ?? ""
+    if (!folderName) continue
+    remoteByFolder.set(folderName, r.contentHash)
+  }
+  return remoteByFolder
+}
+
+/**
+ * Per-skill sync state between local canonical skills and cached remote rows.
+ * Does not contact SSH — uses the same matching rules as aggregate status.
+ */
+export function computeSkillSyncDiff(
+  localSkills: LocalSkillForStatus[],
+  remoteSkills: RemoteSkillForStatus[],
+): SkillSyncDiff {
+  const remoteByFolder = remoteSkillsByFolder(remoteSkills)
+  const localFolders = new Set<string>()
+  const entries: SkillSyncEntry[] = []
+
+  const counts: Record<SkillSyncStatusKind, number> = {
+    newLocal: 0,
+    needsPush: 0,
+    inSync: 0,
+    onlyRemote: 0,
+  }
+
+  for (const local of localSkills) {
+    localFolders.add(local.folderName)
+    const remoteHash = remoteByFolder.get(local.folderName)
+    let kind: SkillSyncStatusKind
+    if (remoteHash === undefined) {
+      kind = "newLocal"
+    } else if (remoteHash !== local.contentHash) {
+      kind = "needsPush"
+    } else {
+      kind = "inSync"
+    }
+    counts[kind]++
+    entries.push({
+      folderName: local.folderName,
+      displayName: local.displayName ?? local.folderName,
+      kind,
+    })
+  }
+
+  for (const folder of remoteByFolder.keys()) {
+    if (!localFolders.has(folder)) {
+      counts.onlyRemote++
+      entries.push({
+        folderName: folder,
+        displayName: folder,
+        kind: "onlyRemote",
+      })
+    }
+  }
+
+  entries.sort((a, b) => {
+    const order: Record<SkillSyncStatusKind, number> = {
+      needsPush: 0,
+      newLocal: 1,
+      onlyRemote: 2,
+      inSync: 3,
+    }
+    const byKind = order[a.kind] - order[b.kind]
+    if (byKind !== 0) return byKind
+    return a.displayName.localeCompare(b.displayName)
+  })
+
+  return { entries, counts }
+}
 
 /**
  * Derive the row-level status hint from cached state. Pure function — no SSH,
@@ -35,21 +142,13 @@ export function computeServerStatus(
   remoteSkills: RemoteSkillForStatus[],
 ): ServerStatus {
   if (server.lastSyncError) {
-    return { dotColor: "red", text: "sync failed" }
+    return { dotColor: "red", kind: "syncFailed" }
   }
   if (!server.lastSyncAt) {
-    return { dotColor: "grey", text: "never synced" }
+    return { dotColor: "grey", kind: "neverSynced" }
   }
 
-  // Match remote skills to folder names
-  const remoteByFolder = new Map<string, string | null>()
-  for (const r of remoteSkills) {
-    if (!r.remotePath.endsWith("/SKILL.md")) continue
-    const skillDir = r.remotePath.slice(0, -"/SKILL.md".length)
-    const folderName = skillDir.split("/").filter(Boolean).pop() ?? ""
-    if (!folderName) continue
-    remoteByFolder.set(folderName, r.contentHash)
-  }
+  const remoteByFolder = remoteSkillsByFolder(remoteSkills)
 
   let pendingPush = 0
   let onlyOnRemote = 0
@@ -74,19 +173,24 @@ export function computeServerStatus(
   if (pendingPush > 0) {
     return {
       dotColor: "amber",
-      text: `${localCount} skill${localCount === 1 ? "" : "s"} · ${pendingPush} not yet pushed`,
+      kind: "pendingPush",
+      localCount,
+      pendingPush,
     }
   }
 
   if (onlyOnRemote > 0) {
     return {
       dotColor: "grey",
-      text: `${localCount} skill${localCount === 1 ? "" : "s"} · ${onlyOnRemote} only on remote`,
+      kind: "onlyOnRemote",
+      localCount,
+      onlyOnRemote,
     }
   }
 
   return {
     dotColor: "green",
-    text: `${localCount} skill${localCount === 1 ? "" : "s"} · in sync`,
+    kind: "inSync",
+    localCount,
   }
 }

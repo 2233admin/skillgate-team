@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { electronAPI } from "../lib/electron-api"
+import { useI18n, type Locale } from "../i18n"
 
 // ---------------------------------------------------------------------------
 // Setting row components
@@ -77,6 +78,7 @@ function SettingToggle({
 // ---------------------------------------------------------------------------
 
 export function Settings() {
+  const { t, locale, setLocale } = useI18n()
   // SQLite-backed settings
   const [installScope, setInstallScope] = useState("global")
   const [installMethod, setInstallMethod] = useState("symlink")
@@ -167,27 +169,43 @@ export function Settings() {
 
   return (
     <div className="p-8">
-      <h2 className="text-xl font-bold text-foreground mb-1">Settings</h2>
-      <p className="text-[12px] text-muted mb-6">
-        Configure your Skillgate Desktop preferences.
-      </p>
+      <h2 className="text-xl font-bold text-foreground mb-1">{t("settings.title")}</h2>
+      <p className="text-[12px] text-muted mb-6">{t("settings.subtitle")}</p>
 
       <div className="flex flex-col gap-6 max-w-lg">
+        <section>
+          <h3 className="text-sm font-semibold text-foreground mb-3">
+            {t("settings.appearance")}
+          </h3>
+          <div className="flex flex-col gap-3">
+            <SettingSelect
+              label={t("settings.language")}
+              description={t("settings.languageDescription")}
+              value={locale}
+              options={[
+                { value: "en", label: t("settings.languageEn") },
+                { value: "zh-CN", label: t("settings.languageZh") },
+              ]}
+              onChange={(v) => setLocale(v as Locale)}
+            />
+          </div>
+        </section>
+
         {/* Install preferences */}
         <section>
           <h3 className="text-sm font-semibold text-foreground mb-3">
-            Installation
+            {t("settings.installation")}
           </h3>
           <div className="flex flex-col gap-3">
             {settingsLoaded ? (
               <>
                 <SettingSelect
-                  label="Default scope"
-                  description="Where skills are installed by default"
+                  label={t("settings.defaultScope")}
+                  description={t("settings.defaultScopeDescription")}
                   value={installScope}
                   options={[
-                    { value: "global", label: "Global" },
-                    { value: "project", label: "Project" },
+                    { value: "global", label: t("settings.scopeGlobal") },
+                    { value: "project", label: t("settings.scopeProject") },
                   ]}
                   onChange={(v) => {
                     setInstallScope(v)
@@ -195,12 +213,12 @@ export function Settings() {
                   }}
                 />
                 <SettingSelect
-                  label="Install method"
-                  description="How skill files are placed in agent directories"
+                  label={t("settings.installMethod")}
+                  description={t("settings.installMethodDescription")}
                   value={installMethod}
                   options={[
-                    { value: "symlink", label: "Symlink" },
-                    { value: "copy", label: "Copy" },
+                    { value: "symlink", label: t("settings.methodSymlink") },
+                    { value: "copy", label: t("settings.methodCopy") },
                   ]}
                   onChange={(v) => {
                     setInstallMethod(v)
@@ -219,17 +237,17 @@ export function Settings() {
         {/* Search preferences */}
         <section>
           <h3 className="text-sm font-semibold text-foreground mb-3">
-            Search
+            {t("settings.search")}
           </h3>
           <div className="flex flex-col gap-3">
             {settingsLoaded && (
               <SettingSelect
-                label="Search preference"
-                description="Preferred search method for discovering skills"
+                label={t("settings.searchPreference")}
+                description={t("settings.searchPreferenceDescription")}
                 value={searchPreference}
                 options={[
-                  { value: "semantic", label: "Semantic" },
-                  { value: "keyword", label: "Keyword" },
+                  { value: "semantic", label: t("settings.searchSemantic") },
+                  { value: "keyword", label: t("settings.searchKeyword") },
                 ]}
                 onChange={(v) => {
                   setSearchPreference(v)
@@ -243,13 +261,13 @@ export function Settings() {
         {/* Privacy */}
         <section>
           <h3 className="text-sm font-semibold text-foreground mb-3">
-            Privacy
+            {t("settings.privacy")}
           </h3>
           <div className="flex flex-col gap-3">
             {settingsLoaded && (
               <SettingToggle
-                label="Telemetry"
-                description="Send anonymous usage data to help improve Skillgate"
+                label={t("settings.telemetry")}
+                description={t("settings.telemetryDescription")}
                 value={telemetryEnabled}
                 onChange={(v) => {
                   setTelemetryEnabled(v)
@@ -263,26 +281,32 @@ export function Settings() {
         {/* Updates */}
         <section>
           <h3 className="text-sm font-semibold text-foreground mb-3">
-            Updates
+            {t("settings.updates")}
           </h3>
           <div className="rounded-lg border border-border bg-surface p-4">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm text-foreground">Desktop app updates</p>
+                <p className="text-sm text-foreground">{t("settings.desktopUpdates")}</p>
                 <p className="text-[11px] text-muted mt-1">
-                  Version {appVersion || "unknown"}
+                  {t("settings.versionLabel", {
+                    version: appVersion || t("common.unknown"),
+                  })}
                 </p>
                 <p className="text-[11px] text-muted mt-2">
-                  {updateState?.message || "Check for updates from GitHub Releases."}
+                  {updateState?.message || t("settings.checkUpdatesHint")}
                 </p>
                 {updateState?.availableVersion && (
                   <p className="text-[11px] text-foreground mt-1">
-                    Latest available: {updateState.availableVersion}
+                    {t("settings.latestAvailable", {
+                      version: updateState.availableVersion,
+                    })}
                   </p>
                 )}
                 {typeof updateState?.progressPercent === "number" && (
                   <p className="text-[11px] text-muted mt-1">
-                    Download progress: {Math.round(updateState.progressPercent)}%
+                    {t("settings.downloadProgress", {
+                      percent: Math.round(updateState.progressPercent),
+                    })}
                   </p>
                 )}
               </div>
@@ -292,14 +316,14 @@ export function Settings() {
                   disabled={checkingUpdates}
                   className="rounded-lg border border-border px-4 py-2 text-[12px] font-medium text-foreground hover:bg-surface-hover disabled:opacity-40"
                 >
-                  {checkingUpdates ? "Checking..." : "Check now"}
+                  {checkingUpdates ? t("common.checking") : t("common.checkNow")}
                 </button>
                 {updateState?.status === "downloaded" && (
                   <button
                     onClick={() => electronAPI.updatesInstall()}
                     className="rounded-lg bg-foreground px-4 py-2 text-[12px] font-medium text-background"
                   >
-                    Restart to install
+                    {t("settings.restartToInstall")}
                   </button>
                 )}
               </div>
@@ -310,20 +334,22 @@ export function Settings() {
         {/* Scan paths */}
         <section>
           <h3 className="text-sm font-semibold text-foreground mb-3">
-            Scan Paths
+            {t("settings.scanPaths")}
           </h3>
           <div className="flex flex-col gap-3">
             <div className="rounded-lg border border-border bg-surface p-3">
-              <p className="text-sm text-foreground mb-1">Custom scan directories</p>
+              <p className="text-sm text-foreground mb-1">
+                {t("settings.customScanDirectories")}
+              </p>
               <p className="text-[11px] text-muted mb-3">
-                Skillgate will scan direct skill folders and project-local tool paths inside these roots.
+                {t("settings.customScanDescription")}
               </p>
               <div className="flex gap-2 mb-3">
                 <input
                   type="text"
                   value={newScanPath}
                   onChange={(e) => setNewScanPath(e.target.value)}
-                  placeholder="~/projects or ~/my-skills"
+                  placeholder={t("settings.scanPathPlaceholder")}
                   className="flex-1 px-3 py-2 rounded-lg bg-background border border-border text-[12px] text-foreground placeholder:text-muted focus:outline-none focus:border-accent/40 transition-colors font-mono"
                 />
                 <button
@@ -337,12 +363,12 @@ export function Settings() {
                   }}
                   className="px-3 py-2 rounded-lg bg-foreground text-background text-[12px] font-medium"
                 >
-                  Add
+                  {t("common.add")}
                 </button>
               </div>
               <div className="flex flex-col gap-2">
                 {customScanPaths.length === 0 ? (
-                  <p className="text-[11px] text-muted">No custom scan paths configured.</p>
+                  <p className="text-[11px] text-muted">{t("settings.noCustomScanPaths")}</p>
                 ) : (
                   customScanPaths.map((scanPath) => (
                     <div key={scanPath} className="flex items-center justify-between rounded-md border border-border px-3 py-2">
@@ -355,7 +381,7 @@ export function Settings() {
                         }}
                         className="text-[11px] text-red-400 hover:text-red-300"
                       >
-                        Remove
+                        {t("common.remove")}
                       </button>
                     </div>
                   ))
@@ -368,12 +394,12 @@ export function Settings() {
         {/* Target defaults */}
         <section>
           <h3 className="text-sm font-semibold text-foreground mb-3">
-            Default Targets
+            {t("settings.defaultTargets")}
           </h3>
           <div className="rounded-lg border border-border bg-surface p-3">
-            <p className="text-sm text-foreground mb-1">Install targets</p>
+            <p className="text-sm text-foreground mb-1">{t("settings.installTargets")}</p>
             <p className="text-[11px] text-muted mb-3">
-              These targets are used for installs and new local skill creation when no explicit target set is chosen.
+              {t("settings.installTargetsDescription")}
             </p>
             <div className="grid grid-cols-2 gap-2">
               {detectedAgents.map((agent) => (
@@ -395,12 +421,12 @@ export function Settings() {
         {/* Sync rules */}
         <section>
           <h3 className="text-sm font-semibold text-foreground mb-3">
-            Sync Rules
+            {t("settings.syncRules")}
           </h3>
           <div className="rounded-lg border border-border bg-surface p-3">
-            <p className="text-sm text-foreground mb-1">Mirror installs to additional targets</p>
+            <p className="text-sm text-foreground mb-1">{t("settings.mirrorInstalls")}</p>
             <p className="text-[11px] text-muted mb-3">
-              Any skill installed or created in the desktop app will also be linked into these targets.
+              {t("settings.mirrorDescription")}
             </p>
             <div className="grid grid-cols-2 gap-2">
               {detectedAgents.map((agent) => (
@@ -421,13 +447,13 @@ export function Settings() {
 
         {/* About */}
         <section>
-          <h3 className="text-sm font-semibold text-foreground mb-3">About</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-3">{t("settings.about")}</h3>
           <div className="p-3 rounded-lg border border-border bg-surface">
             <p className="text-sm text-foreground">
-              Skillgate Desktop v{appVersion || "0.6.0"}
+              {t("settings.aboutVersion", { version: appVersion || "0.6.0" })}
             </p>
             <p className="text-[11px] text-muted mt-1">
-              Manage AI agent skills from your desktop.
+              {t("settings.aboutDescription")}
             </p>
           </div>
         </section>

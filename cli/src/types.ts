@@ -45,7 +45,7 @@ export interface Skill {
 
 // ---------- Source Parsing ----------
 
-export type SourceType = "github" | "local";
+export type SourceType = "github" | "git" | "local";
 
 export interface ParsedSource {
   type: SourceType;

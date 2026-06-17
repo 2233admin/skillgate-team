@@ -1,5 +1,6 @@
 // apps/desktop/src/renderer/routes/push-dialog.tsx
 import { useEffect, useState } from "react"
+import { useI18n } from "../i18n"
 
 interface PushPlanEntry {
   folderName: string
@@ -39,6 +40,7 @@ export function PushDialog({
   mode: PushDialogMode
   onClose: (result?: PushResult) => void
 }) {
+  const { t } = useI18n()
   const [stage, setStage] = useState<
     "previewing" | "review" | "applying" | "done" | "error"
   >("previewing")
@@ -100,10 +102,12 @@ export function PushDialog({
     (preview?.toUpdate.length ?? 0) +
     (preview?.toDelete.length ?? 0)
 
-  const title = isMirror ? `Mirror to ${serverLabel}` : `Push to ${serverLabel}`
+  const title = isMirror
+    ? t("remote.pushTitleMirror", { server: serverLabel })
+    : t("remote.pushTitlePush", { server: serverLabel })
   const subtitle = isMirror
-    ? "Match this server one-to-one with your local skills."
-    : "Send your local skills. Adds new ones, updates changed ones, never deletes."
+    ? t("remote.pushSubtitleMirror")
+    : t("remote.pushSubtitlePush")
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -119,28 +123,32 @@ export function PushDialog({
 
         <div className="px-6 py-5 flex flex-col gap-4 max-h-[60vh] overflow-y-auto">
           {stage === "previewing" && (
-            <p className="text-[12px] text-muted">Computing diff…</p>
+            <p className="text-[12px] text-muted">{t("remote.pushComputingDiff")}</p>
           )}
 
           {stage === "review" && preview && (
             <>
               <div className="text-[12px] text-foreground">
-                <strong>{preview.toAdd.length}</strong> to add,{" "}
-                <strong>{preview.toUpdate.length}</strong> to update,{" "}
-                {isMirror && (
-                  <>
-                    <strong className="text-red-400">
-                      {preview.toDelete.length}
-                    </strong>{" "}
-                    to delete,{" "}
-                  </>
-                )}
-                <strong>{preview.unchanged.length}</strong> unchanged.
+                {isMirror
+                  ? t("remote.pushReviewSummary", {
+                      add: preview.toAdd.length,
+                      update: preview.toUpdate.length,
+                      delete: preview.toDelete.length,
+                      unchanged: preview.unchanged.length,
+                    })
+                  : t("remote.pushReviewSummaryNoDelete", {
+                      add: preview.toAdd.length,
+                      update: preview.toUpdate.length,
+                      unchanged: preview.unchanged.length,
+                    })}
               </div>
               {totalChanges === 0 && (
                 <p className="text-[12px] text-muted">
-                  Nothing to {isMirror ? "mirror" : "push"} — the remote
-                  already matches your local skills.
+                  {t("remote.pushNothingToDo", {
+                    action: isMirror
+                      ? t("remote.pushActionMirror")
+                      : t("remote.pushActionPush"),
+                  })}
                 </p>
               )}
               {(preview.toAdd.length > 0 ||
@@ -172,8 +180,9 @@ export function PushDialog({
               )}
               {isMirror && preview.toDelete.length > 0 && (
                 <p className="text-[11px] text-red-400">
-                  Mirror mode will delete {preview.toDelete.length} skill
-                  {preview.toDelete.length === 1 ? "" : "s"} from the remote.
+                  {t("remote.pushMirrorDeleteWarning", {
+                    count: preview.toDelete.length,
+                  })}
                 </p>
               )}
             </>
@@ -181,15 +190,21 @@ export function PushDialog({
 
           {stage === "applying" && (
             <p className="text-[12px] text-muted">
-              {isMirror ? "Mirroring to remote…" : "Pushing to remote…"}
+              {isMirror
+                ? t("remote.pushApplyingMirror")
+                : t("remote.pushApplyingPush")}
             </p>
           )}
 
           {stage === "done" && result && (
             <div className="text-[12px] text-foreground flex flex-col gap-1">
               <p>
-                {result.added} added, {result.updated} updated,{" "}
-                {result.deleted} deleted, {result.unchanged} unchanged.
+                {t("remote.pushDoneSummary", {
+                  added: result.added,
+                  updated: result.updated,
+                  deleted: result.deleted,
+                  unchanged: result.unchanged,
+                })}
               </p>
               {result.errors.length > 0 && (
                 <ul className="text-red-400 mt-2 flex flex-col gap-0.5">
@@ -205,7 +220,7 @@ export function PushDialog({
 
           {stage === "error" && (
             <p className="text-[12px] text-red-400">
-              {error || "Operation failed"}
+              {error || t("remote.pushOperationFailed")}
             </p>
           )}
         </div>
@@ -216,7 +231,7 @@ export function PushDialog({
               onClick={() => onClose()}
               className="px-3 py-1.5 rounded-lg text-[12px] font-medium text-foreground hover:bg-background transition-colors"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           )}
 
@@ -230,8 +245,10 @@ export function PushDialog({
               }`}
             >
               {isMirror && preview && preview.toDelete.length > 0
-                ? `Mirror (delete ${preview.toDelete.length})`
-                : "Apply"}
+                ? t("remote.pushMirrorConfirm", {
+                    count: preview.toDelete.length,
+                  })
+                : t("common.apply")}
             </button>
           )}
 
@@ -240,7 +257,7 @@ export function PushDialog({
               onClick={() => onClose(result ?? undefined)}
               className="px-3 py-1.5 rounded-lg text-[12px] font-medium bg-foreground text-background hover:opacity-90 transition-opacity"
             >
-              Done
+              {t("common.done")}
             </button>
           )}
         </div>

@@ -993,7 +993,7 @@ function gitClone(
 // ---------------------------------------------------------------------------
 
 interface ParsedSource {
-  type: "github" | "local"
+  type: "github" | "git" | "local"
   owner: string
   repo: string
   url: string
@@ -1013,18 +1013,59 @@ function parseSource(source: string): ParsedSource | null {
       const parsed = new URL(url)
       const parts = parsed.pathname.split("/").filter(Boolean)
       if (parts.length < 2) return null
+      let subpath: string | undefined
+      let ref: string | undefined
+      if (parts[2] === "tree" && parts.length >= 4) {
+        ref = parts[3]
+        if (parts.length > 4) subpath = parts.slice(4).join("/")
+      }
       return {
         type: "github",
         owner: parts[0],
         repo: parts[1],
         url: `https://github.com/${parts[0]}/${parts[1]}`,
+        subpath,
+        ref,
       }
     } catch {
       return null
     }
   }
 
-  // owner/repo shorthand
+  // Self-hosted Git (Gitea, GitLab, Codeberg, internal servers, …)
+  if (source.startsWith("http://") || source.startsWith("https://")) {
+    if (!source.includes("github.com")) {
+      try {
+        const parsed = new URL(source)
+        const parts = parsed.pathname.split("/").filter(Boolean)
+        if (parts.length > 0 && parts[parts.length - 1].endsWith(".git")) {
+          parts[parts.length - 1] = parts[parts.length - 1].slice(0, -4)
+        }
+        if (parts.length >= 2) {
+          let subpath: string | undefined
+          let ref: string | undefined
+          if (parts[2] === "tree" && parts.length >= 4) {
+            ref = parts[3]
+            if (parts.length > 4) subpath = parts.slice(4).join("/")
+          }
+          const owner = parts[0]
+          const repo = parts[1]
+          return {
+            type: "git",
+            owner,
+            repo,
+            url: `${parsed.origin}/${owner}/${repo}`,
+            subpath,
+            ref,
+          }
+        }
+      } catch {
+        // fall through
+      }
+    }
+  }
+
+  // owner/repo shorthand (GitHub)
   const match = source.match(/^([a-zA-Z0-9_.-]+)\/([a-zA-Z0-9_.-]+?)$/)
   if (match) {
     return {
@@ -1457,7 +1498,7 @@ export function registerIpcHandlers(): void {
             skillName: source,
             agent: "unknown",
             success: false,
-            error: `Could not parse source: "${source}". Expected owner/repo, GitHub URL, or local path.`,
+            error: `Could not parse source: "${source}". Expected owner/repo, GitHub/Git server URL, or local path.`,
           },
         ]
       }
@@ -1465,7 +1506,7 @@ export function registerIpcHandlers(): void {
       let sourceDir: string
       let tmpDir: string | null = null
 
-      if (parsed.type === "github") {
+      if (parsed.type === "github" || parsed.type === "git") {
         // Clone repository to temp directory
         tmpDir = path.join(os.tmpdir(), `skillsgate-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`)
         const cloneResult = await gitClone(`${parsed.url}.git`, tmpDir)
@@ -1539,7 +1580,7 @@ export function registerIpcHandlers(): void {
             parsed.type === "github"
               ? `${parsed.owner}/${parsed.repo}`
               : parsed.url,
-          sourceType: parsed.type,
+          sourceType: parsed.type as string,
           originalUrl: source,
           skillFolderHash: "",
           installedAt: existing?.installedAt || now,
@@ -1862,7 +1903,7 @@ Add your skill instructions here.
     let sourceDir: string
     let tmpDir: string | null = null
 
-    if (parsed.type === "github") {
+    if (parsed.type === "github" || parsed.type === "git") {
       tmpDir = path.join(os.tmpdir(), `skillsgate-upd-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`)
       const cloneResult = await gitClone(`${parsed.url}.git`, tmpDir)
       if (!cloneResult.success) {

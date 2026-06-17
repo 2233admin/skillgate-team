@@ -19,6 +19,9 @@
     "gui:dev": "npm run dev --prefix desktop",
     "gui:build": "npm run build --prefix desktop",
     "gui:install": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-gui.ps1",
-    "gui:window": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch-gui.ps1"
+    "gui:window": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch-gui.ps1",
+    "test": "node scripts/run-tests.mjs",
+    "test:desktop": "node scripts/run-tests.mjs desktop",
+    "test:cli": "node scripts/run-tests.mjs cli"
   }
 }

@@ -1,3 +1,5 @@
+import { useI18n } from "../i18n"
+
 interface AppLogoProps {
   size?: number
   className?: string
@@ -45,12 +47,14 @@ export function AppBrand({
   compact?: boolean
   version?: string
 }) {
+  const { t } = useI18n()
+
   if (compact) {
     return (
       <div className="flex flex-col items-center gap-1 py-4">
         <AppLogo size={22} />
         <span className="text-[9px] font-semibold tracking-tight text-foreground leading-none">
-          Skillgate
+          {t("app.name")}
         </span>
       </div>
     )
@@ -62,10 +66,10 @@ export function AppBrand({
         <AppLogo size={22} className="text-foreground flex-shrink-0" />
         <div className="min-w-0">
           <div className="text-[15px] font-semibold tracking-tight text-foreground leading-tight">
-            Skillgate
+            {t("app.name")}
           </div>
           <div className="text-[11px] text-muted leading-tight mt-0.5">
-            Skill Manager
+            {t("app.tagline")}
           </div>
         </div>
       </div>

@@ -2,6 +2,21 @@ import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { marked } from "marked"
 import { electronAPI } from "../lib/electron-api"
+import { loadLocalSkillHashes } from "../lib/load-local-skill-hashes"
+import { loadLocalSkillSourceByFolder } from "../lib/load-local-skill-sources"
+import {
+  computeSkillSyncDiff,
+  type SkillSyncStatusKind,
+} from "../lib/server-status"
+import type { SkillSourceKind } from "../lib/skill-source"
+import { SyncStatusBadge, UpdateStatusBadge } from "../components/sync-status-badge"
+import { useI18n } from "../i18n"
+
+function folderNameFromRemotePath(remotePath: string): string {
+  if (!remotePath.endsWith("/SKILL.md")) return ""
+  const skillDir = remotePath.slice(0, -"/SKILL.md".length)
+  return skillDir.split("/").filter(Boolean).pop() ?? ""
+}
 
 // Configure marked for synchronous rendering
 marked.setOptions({
@@ -37,6 +52,7 @@ function renderMarkdown(raw: string): string {
 }
 
 export function ServerSkills() {
+  const { t } = useI18n()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [skills, setSkills] = useState<RemoteSkill[]>([])
@@ -46,15 +62,35 @@ export function ServerSkills() {
   const [editMode, setEditMode] = useState(false)
   const [editContent, setEditContent] = useState("")
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle")
+  const [syncByFolder, setSyncByFolder] = useState<
+    Map<string, SkillSyncStatusKind>
+  >(new Map())
+  const [sourceByFolder, setSourceByFolder] = useState<
+    Map<string, { kind: SkillSourceKind; source?: string }>
+  >(new Map())
 
   useEffect(() => {
     async function load() {
       if (!id) return
       try {
-        const [skillsList, serversList] = await Promise.all([
-          electronAPI.serversSkills(id),
-          electronAPI.serversList(),
-        ])
+        const [skillsList, serversList, localHashes, localSources] =
+          await Promise.all([
+            electronAPI.serversSkills(id),
+            electronAPI.serversList(),
+            loadLocalSkillHashes(),
+            loadLocalSkillSourceByFolder(),
+          ])
+        const remoteRows = skillsList.map((r) => ({
+          remotePath: r.remotePath,
+          contentHash: r.contentHash,
+        }))
+        const diff = computeSkillSyncDiff(localHashes, remoteRows)
+        const byFolder = new Map<string, SkillSyncStatusKind>()
+        for (const entry of diff.entries) {
+          byFolder.set(entry.folderName, entry.kind)
+        }
+        setSyncByFolder(byFolder)
+        setSourceByFolder(localSources)
         setSkills(skillsList)
         setServers(serversList)
         setSelectedSkill((current) =>
@@ -72,7 +108,7 @@ export function ServerSkills() {
   }, [id])
 
   const server = servers.find((s) => s.id === id)
-  const serverLabel = server?.label ?? "Server"
+  const serverLabel = server?.label ?? t("remote.defaultServerLabel")
 
   useEffect(() => {
     setEditMode(false)
@@ -125,13 +161,13 @@ export function ServerSkills() {
             >
               <polyline points="15 18 9 12 15 6" />
             </svg>
-            Back to Servers
+            {t("remote.browseBack")}
           </button>
           <h3 className="text-sm font-semibold text-foreground">
             {serverLabel}
           </h3>
           <p className="text-[10px] text-muted mt-0.5">
-            {skills.length} remote skill{skills.length !== 1 ? "s" : ""}
+            {t("remote.browseRemoteSkillCount", { count: skills.length })}
           </p>
         </div>
 
@@ -140,7 +176,7 @@ export function ServerSkills() {
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <p className="text-[12px] text-muted animate-fade-in">
-                Loading skills...
+                {t("remote.browseLoading")}
               </p>
             </div>
           ) : skills.length === 0 ? (
@@ -159,34 +195,50 @@ export function ServerSkills() {
                 <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
               </svg>
               <p className="text-[12px] text-muted">
-                No skills found on this server.
+                {t("remote.browseEmptyTitle")}
               </p>
               <p className="text-[11px] text-muted mt-1">
-                Try syncing the server to discover skills.
+                {t("remote.browseEmptyHint")}
               </p>
             </div>
           ) : (
             <div className="flex flex-col gap-0.5">
-              {skills.map((skill) => (
-                <button
-                  key={skill.id}
-                  onClick={() => setSelectedSkill(skill)}
-                  className={`flex flex-col items-start w-full px-3 py-2.5 rounded-md text-left transition-colors ${
-                    selectedSkill?.id === skill.id
-                      ? "bg-surface-hover text-foreground"
-                      : "text-muted hover:text-foreground hover:bg-surface-hover"
-                  }`}
-                >
-                  <span className="text-[12px] font-medium truncate w-full">
-                    {skill.name}
-                  </span>
-                  {skill.description && (
-                    <span className="text-[10px] text-muted truncate w-full mt-0.5">
-                      {skill.description}
-                    </span>
-                  )}
-                </button>
-              ))}
+              {skills.map((skill) => {
+                const folder = folderNameFromRemotePath(skill.remotePath)
+                const syncKind = folder ? syncByFolder.get(folder) : undefined
+                const sourceEntry = folder ? sourceByFolder.get(folder) : undefined
+                return (
+                  <button
+                    key={skill.id}
+                    onClick={() => setSelectedSkill(skill)}
+                    className={`flex flex-col items-start w-full px-3 py-2.5 rounded-md text-left transition-colors ${
+                      selectedSkill?.id === skill.id
+                        ? "bg-surface-hover text-foreground"
+                        : "text-muted hover:text-foreground hover:bg-surface-hover"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 w-full min-w-0">
+                      <span className="text-[12px] font-medium truncate flex-1">
+                        {skill.name}
+                      </span>
+                      <span className="flex items-center gap-1 flex-shrink-0">
+                        {sourceEntry && (
+                          <UpdateStatusBadge
+                            kind={sourceEntry.kind}
+                            source={sourceEntry.source}
+                          />
+                        )}
+                        {syncKind && <SyncStatusBadge kind={syncKind} />}
+                      </span>
+                    </div>
+                    {skill.description && (
+                      <span className="text-[10px] text-muted truncate w-full mt-0.5">
+                        {skill.description}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
@@ -211,7 +263,7 @@ export function ServerSkills() {
                 <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
               </svg>
               <p className="text-muted text-sm mt-3">
-                Select a skill to view details
+                {t("remote.browseSelectSkill")}
               </p>
             </div>
           </div>
@@ -225,7 +277,7 @@ export function ServerSkills() {
                   {selectedSkill.name}
                 </h1>
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-surface-hover text-muted border border-border">
-                  remote
+                  {t("remote.browseRemoteBadge")}
                 </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -233,7 +285,7 @@ export function ServerSkills() {
                     onClick={() => setEditMode((value) => !value)}
                     className="rounded-md border border-border px-3 py-1.5 text-[12px] text-foreground hover:bg-surface-hover transition-colors"
                   >
-                    {editMode ? "View" : "Edit"}
+                    {editMode ? t("home.view") : t("common.edit")}
                   </button>
                   {editMode && (
                     <button
@@ -241,7 +293,9 @@ export function ServerSkills() {
                       disabled={saveState === "saving"}
                       className="rounded-md bg-foreground px-3 py-1.5 text-[12px] text-background disabled:opacity-50"
                     >
-                      {saveState === "saving" ? "Saving..." : "Save"}
+                      {saveState === "saving"
+                        ? t("remote.browseSaving")
+                        : t("remote.browseSave")}
                     </button>
                   )}
                 </div>
@@ -268,10 +322,14 @@ export function ServerSkills() {
                   spellCheck={false}
                 />
                 {saveState === "saved" && (
-                  <p className="text-[12px] text-green-500">Saved</p>
+                  <p className="text-[12px] text-green-500">
+                    {t("remote.browseSaved")}
+                  </p>
                 )}
                 {saveState === "error" && (
-                  <p className="text-[12px] text-red-500">Save failed</p>
+                  <p className="text-[12px] text-red-500">
+                    {t("remote.browseSaveFailed")}
+                  </p>
                 )}
               </div>
             ) : selectedSkill.content ? (
@@ -283,7 +341,7 @@ export function ServerSkills() {
               />
             ) : (
               <p className="text-sm text-muted">
-                Skill content not cached. Sync the server to fetch content.
+                {t("remote.browseContentUnavailable")}
               </p>
             )}
           </div>

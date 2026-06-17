@@ -13,6 +13,19 @@ import { electronAPI } from "../lib/electron-api"
 import { SkillEditor, type SkillEditorHandle } from "../components/skill-editor"
 import { AgentLogo, AgentLogoRow } from "../components/agent-logo"
 import { AppLogo } from "../components/app-logo"
+import { UpdateStatusBadge } from "../components/sync-status-badge"
+import {
+  getSkillSourceKind,
+  isUpdatableFromSource,
+} from "../lib/skill-source"
+import { useI18n, formatSkillListCount, formatRelativeTime } from "../i18n"
+
+type LibraryFilter =
+  | "all"
+  | "favorites"
+  | "github"
+  | "git"
+  | "localOnly"
 
 // Map display names to registry keys
 const DISPLAY_NAME_TO_KEY: Record<string, string> = {
@@ -78,19 +91,15 @@ function SearchIcon({ size = 16 }: { size?: number }) {
   )
 }
 
-function SourceBadge({ sourceType }: { sourceType?: string }) {
-  if (!sourceType) return null
-  const label =
-    sourceType === "github"
-      ? "github"
-      : sourceType === "skillsgate" || sourceType === "skillgate"
-        ? "skillgate"
-        : "local"
-  return (
-    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-surface-hover text-muted border border-border">
-      {label}
-    </span>
-  )
+function SourceBadge({
+  sourceType,
+  source,
+}: {
+  sourceType?: string
+  source?: string
+}) {
+  const kind = getSkillSourceKind({ source, sourceType })
+  return <UpdateStatusBadge kind={kind} source={source} />
 }
 
 // Configure marked for synchronous rendering
@@ -154,8 +163,11 @@ interface LeftSidebarProps {
   agentSkillCounts: Record<string, number>
   selectedAgent: string | null
   onSelectAgent: (agent: string | null) => void
-  activeFilter: "all" | "favorites"
-  onFilterChange: (filter: "all" | "favorites") => void
+  activeFilter: LibraryFilter
+  githubCount: number
+  gitCount: number
+  localOnlyCount: number
+  onFilterChange: (filter: LibraryFilter) => void
   collections: Record<string, string[]>
   collectionCounts: Record<string, number>
   selectedCollection: string | null
@@ -191,11 +203,16 @@ function LeftSidebar({
   onDragEnterTarget,
   onDropOnAgent,
   onDropOnCollection,
+  githubCount,
+  gitCount,
+  localOnlyCount,
 }: LeftSidebarProps) {
+  const { t } = useI18n()
+
   return (
     <aside className="w-44 flex-shrink-0 flex flex-col bg-surface border-r border-border overflow-y-auto">
       <div className="px-3 pt-3 pb-2">
-        <h3 className="section-label mb-2 px-2">Views</h3>
+        <h3 className="section-label mb-2 px-2">{t("home.views")}</h3>
         <nav className="flex flex-col gap-0.5">
           <button
             onClick={() => {
@@ -208,7 +225,7 @@ function LeftSidebar({
                 : "text-muted list-row-hover"
             }`}
           >
-            <span>All Skills</span>
+            <span>{t("home.allSkills")}</span>
             <span
               className={`text-[10px] font-mono ${
                 activeFilter === "all" && selectedAgent === null
@@ -227,7 +244,7 @@ function LeftSidebar({
                 : "text-muted list-row-hover"
             }`}
           >
-            <span>Favorites</span>
+            <span>{t("home.favorites")}</span>
             <span
               className={`text-[10px] font-mono ${
                 activeFilter === "favorites" ? "text-foreground" : "text-muted"
@@ -239,10 +256,79 @@ function LeftSidebar({
         </nav>
       </div>
 
+      <div className="px-3 pt-1 pb-2 border-t border-border/60">
+        <h3 className="section-label mb-2 px-2">{t("home.filterSources")}</h3>
+        <nav className="flex flex-col gap-0.5">
+          <button
+            onClick={() => {
+              onFilterChange("github")
+              onSelectAgent(null)
+            }}
+            title={t("home.filterGithubHint")}
+            className={`flex items-center justify-between px-2 py-1.5 rounded-md text-[12px] font-medium transition-colors text-left ${
+              activeFilter === "github"
+                ? "list-row-active"
+                : "text-muted list-row-hover"
+            }`}
+          >
+            <span>{t("home.filterGithub")}</span>
+            <span
+              className={`text-[10px] font-mono ${
+                activeFilter === "github" ? "text-foreground" : "text-muted"
+              }`}
+            >
+              {githubCount}
+            </span>
+          </button>
+          <button
+            onClick={() => {
+              onFilterChange("git")
+              onSelectAgent(null)
+            }}
+            title={t("home.filterGitHint")}
+            className={`flex items-center justify-between px-2 py-1.5 rounded-md text-[12px] font-medium transition-colors text-left ${
+              activeFilter === "git"
+                ? "list-row-active"
+                : "text-muted list-row-hover"
+            }`}
+          >
+            <span>{t("home.filterGit")}</span>
+            <span
+              className={`text-[10px] font-mono ${
+                activeFilter === "git" ? "text-foreground" : "text-muted"
+              }`}
+            >
+              {gitCount}
+            </span>
+          </button>
+          <button
+            onClick={() => {
+              onFilterChange("localOnly")
+              onSelectAgent(null)
+            }}
+            title={t("home.filterLocalOnlyHint")}
+            className={`flex items-center justify-between px-2 py-1.5 rounded-md text-[12px] font-medium transition-colors text-left ${
+              activeFilter === "localOnly"
+                ? "list-row-active"
+                : "text-muted list-row-hover"
+            }`}
+          >
+            <span>{t("home.filterLocalOnly")}</span>
+            <span
+              className={`text-[10px] font-mono ${
+                activeFilter === "localOnly" ? "text-foreground" : "text-muted"
+              }`}
+            >
+              {localOnlyCount}
+            </span>
+          </button>
+        </nav>
+      </div>
+
       {/* Tools / Agents section */}
       {agentsWithSkills.length > 0 && (
         <div className="px-3 pt-3 pb-2">
-          <h3 className="section-label mb-2 px-2">Agents</h3>
+          <h3 className="section-label mb-2 px-2">{t("home.agents")}</h3>
           <nav className="flex flex-col gap-0.5">
             {agentsWithSkills.map((agent) => (
               <button
@@ -295,18 +381,18 @@ function LeftSidebar({
 
       <div className="px-3 pt-3 pb-2">
         <div className="flex items-center justify-between px-2 mb-2">
-          <h3 className="section-label">Collections</h3>
+          <h3 className="section-label">{t("home.collections")}</h3>
           <button
             onClick={onCreateCollection}
             className="text-[11px] text-muted hover:text-foreground"
-            title="Create collection"
+            title={t("home.createCollection")}
           >
             +
           </button>
         </div>
         <nav className="flex flex-col gap-0.5">
           {Object.keys(collections).length === 0 ? (
-            <p className="text-[11px] text-muted px-2 italic">None yet</p>
+            <p className="text-[11px] text-muted px-2 italic">{t("common.noneYet")}</p>
           ) : (
             Object.keys(collections)
               .sort()
@@ -345,14 +431,14 @@ function LeftSidebar({
                   <button
                     onClick={() => onRenameCollection(name)}
                     className="hidden group-hover:inline text-[10px] text-muted hover:text-foreground"
-                    title="Rename collection"
+                    title={t("home.renameCollection")}
                   >
                     ✎
                   </button>
                   <button
                     onClick={() => onDeleteCollection(name)}
                     className="hidden group-hover:inline text-[10px] text-muted hover:text-red-400"
-                    title="Delete collection"
+                    title={t("home.deleteCollection")}
                   >
                     ×
                   </button>
@@ -363,9 +449,9 @@ function LeftSidebar({
       </div>
       <div className="px-3 pt-3 pb-4 mt-auto">
         <h3 className="text-[10px] uppercase tracking-widest font-semibold text-muted mb-2 px-2">
-          Servers
+          {t("nav.remote")}
         </h3>
-        <p className="text-[11px] text-muted px-2 italic">None configured</p>
+        <p className="text-[11px] text-muted px-2 italic">{t("home.serversNoneConfigured")}</p>
       </div>
     </aside>
   )
@@ -408,10 +494,15 @@ const SkillListRow = memo(function SkillListRow({
   onDragSkillStart,
   onDragSkillEnd,
 }: SkillRowProps) {
+  const { t } = useI18n()
   const skill = skills[index]
   if (!skill) return null
   const isMultiChecked = multiSelected.has(skill.canonicalPath)
   const isFavorited = favorites.has(skill.name)
+  const favoriteLabel = isFavorited
+    ? t("home.removeFromFavorites")
+    : t("home.addToFavorites")
+  const updateKind = getSkillSourceKind(skill)
 
   return (
     <div style={style} className="px-0.5">
@@ -463,12 +554,13 @@ const SkillListRow = memo(function SkillListRow({
         <span className="text-[12px] font-medium truncate flex-1 min-w-0">
           {skill.name}
         </span>
+        <UpdateStatusBadge kind={updateKind} source={skill.source} />
         <span
           role="button"
           tabIndex={0}
-          aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+          aria-label={favoriteLabel}
           aria-pressed={isFavorited}
-          title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+          title={favoriteLabel}
           onClick={(e) => onToggleFavorite(skill, e)}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
@@ -506,7 +598,8 @@ interface MiddlePanelProps {
   onSelectSkill: (skill: InstalledSkill) => void
   selectedAgent: string | null
   selectedCollection: string | null
-  activeFilter: "all" | "favorites"
+  activeFilter: LibraryFilter
+  updateSummary: string | null
   onClearFilters: () => void
   onCreateSkill: () => void
   dragSkill: DragSkillPayload | null
@@ -536,6 +629,7 @@ function MiddlePanel({
   selectedAgent,
   selectedCollection,
   activeFilter,
+  updateSummary,
   onClearFilters,
   onCreateSkill,
   dragSkill,
@@ -553,9 +647,14 @@ function MiddlePanel({
   onBulkDelete,
   listRef,
 }: MiddlePanelProps) {
+  const { t } = useI18n()
   const [showCollectionDropdown, setShowCollectionDropdown] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const isMultiSelectActive = multiSelected.size > 0
+  const listTarget = [selectedAgent, selectedCollection].filter(Boolean).join(" · ") || null
+  const listCountLabel = loading
+    ? t("home.scanning")
+    : formatSkillListCount(t, filteredSkills.length, listTarget)
   const rowProps = useMemo(
     () => ({
       skills: filteredSkills,
@@ -602,14 +701,19 @@ function MiddlePanel({
       <div className="p-3 border-b border-border">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold text-foreground leading-tight">Skills</p>
-            <p className="text-[10px] text-muted">Installed on this machine</p>
+            <p className="text-[13px] font-semibold text-foreground leading-tight">
+              {t("home.skills")}
+            </p>
+            <p className="text-[10px] text-muted">{t("home.installedOnMachine")}</p>
+            {updateSummary && (
+              <p className="text-[10px] text-muted mt-0.5">{updateSummary}</p>
+            )}
           </div>
           <button
             onClick={onCreateSkill}
             className="rounded-md bg-accent px-2 py-1 text-[11px] font-medium text-white hover:opacity-90 shrink-0"
           >
-            New
+            {t("common.new")}
           </button>
         </div>
         <div className="relative">
@@ -618,7 +722,7 @@ function MiddlePanel({
           </div>
           <input
             type="text"
-            placeholder="Search skills..."
+            placeholder={t("home.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full pl-8 pr-8 py-1.5 rounded-md bg-surface border border-border text-[12px] text-foreground placeholder:text-muted focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/25 transition-colors"
@@ -648,17 +752,13 @@ function MiddlePanel({
 
       {/* Results count and select all toggle */}
       <div className="px-3 py-2 flex items-center justify-between">
-        <span className="section-label">
-          {loading
-            ? "Scanning..."
-            : `${filteredSkills.length} skill${filteredSkills.length !== 1 ? "s" : ""}${selectedAgent ? ` in ${selectedAgent}` : ""}${selectedCollection ? ` in ${selectedCollection}` : ""}`}
-        </span>
+        <span className="section-label">{listCountLabel}</span>
         {!loading && filteredSkills.length > 0 && (
           <button
             onClick={isMultiSelectActive ? onMultiSelectClear : onMultiSelectAll}
             className="text-[10px] text-muted hover:text-foreground transition-colors"
           >
-            {isMultiSelectActive ? "Deselect All" : "Select All"}
+            {isMultiSelectActive ? t("common.deselectAll") : t("common.selectAll")}
           </button>
         )}
       </div>
@@ -668,7 +768,7 @@ function MiddlePanel({
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <p className="text-[12px] text-muted animate-fade-in">
-              Scanning for installed skills...
+              {t("home.scanningDetail")}
             </p>
           </div>
         ) : filteredSkills.length === 0 ? (
@@ -676,30 +776,45 @@ function MiddlePanel({
             {skills.length === 0 ? (
               <>
                 <AppLogo size={40} className="text-muted opacity-60" />
-                <p className="text-muted text-[12px] mt-3">
-                  No skills installed yet.
-                </p>
-                <p className="text-muted text-[11px] mt-1">
-                  Open Explore to browse and install skills.
-                </p>
+                <p className="text-muted text-[12px] mt-3">{t("home.emptyNone")}</p>
+                <p className="text-muted text-[11px] mt-1">{t("home.emptyNoneHint")}</p>
               </>
             ) : activeFilter === "favorites" ? (
               <>
-                <p className="text-muted text-[12px]">No favorites yet.</p>
+                <p className="text-muted text-[12px]">{t("home.emptyFavorites")}</p>
                 <p className="text-muted text-[11px] mt-1">
-                  Click the star on any skill to save it here.
+                  {t("home.emptyFavoritesHint")}
+                </p>
+              </>
+            ) : activeFilter === "github" ? (
+              <>
+                <p className="text-muted text-[12px]">{t("home.emptyGithub")}</p>
+                <p className="text-muted text-[11px] mt-1">
+                  {t("home.emptyGithubHint")}
+                </p>
+              </>
+            ) : activeFilter === "git" ? (
+              <>
+                <p className="text-muted text-[12px]">{t("home.emptyGit")}</p>
+                <p className="text-muted text-[11px] mt-1">
+                  {t("home.emptyGitHint")}
+                </p>
+              </>
+            ) : activeFilter === "localOnly" ? (
+              <>
+                <p className="text-muted text-[12px]">{t("home.emptyLocalOnly")}</p>
+                <p className="text-muted text-[11px] mt-1">
+                  {t("home.emptyLocalOnlyHint")}
                 </p>
               </>
             ) : (
               <>
-                <p className="text-muted text-[12px]">
-                  No skills match your search.
-                </p>
+                <p className="text-muted text-[12px]">{t("home.emptySearch")}</p>
                 <button
                   onClick={onClearFilters}
                   className="text-accent text-[11px] mt-2 hover:text-foreground transition-colors"
                 >
-                  Clear filters
+                  {t("home.clearFilters")}
                 </button>
               </>
             )}
@@ -720,7 +835,7 @@ function MiddlePanel({
         <div className="absolute bottom-0 left-0 right-0 bg-surface border-t border-border px-3 py-2.5 shadow-[0_-4px_12px_rgba(0,0,0,0.25)]">
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-foreground font-medium whitespace-nowrap">
-              {multiSelected.size} selected
+              {t("home.selected", { count: multiSelected.size })}
             </span>
             <div className="flex-1" />
             {/* Add to Collection */}
@@ -729,7 +844,7 @@ function MiddlePanel({
                 onClick={() => setShowCollectionDropdown(!showCollectionDropdown)}
                 className="rounded-md border border-border px-2 py-1 text-[11px] text-foreground hover:bg-surface-hover transition-colors flex items-center gap-1"
               >
-                <span>Collection</span>
+                <span>{t("home.collection")}</span>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
@@ -760,7 +875,7 @@ function MiddlePanel({
                     }}
                     className="w-full text-left px-3 py-1.5 text-[12px] text-accent hover:bg-surface-hover transition-colors"
                   >
-                    + New Collection
+                    {t("home.newCollection")}
                   </button>
                 </div>
               )}
@@ -770,14 +885,14 @@ function MiddlePanel({
               onClick={onBulkDelete}
               className="rounded-md border border-red-500/30 bg-red-500/10 px-2 py-1 text-[11px] text-red-400 hover:bg-red-500/20 transition-colors"
             >
-              Delete
+              {t("common.delete")}
             </button>
             {/* Cancel */}
             <button
               onClick={onMultiSelectClear}
               className="rounded-md px-2 py-1 text-[11px] text-muted hover:text-foreground transition-colors"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </div>
@@ -805,25 +920,31 @@ function BulkDeleteDialog({
   onRemoveFromAgent: () => void
   onCancel: () => void
 }) {
+  const { t } = useI18n()
+
+  const title = selectedAgent
+    ? t("home.bulkDeleteTitleFromAgent", { count, agent: selectedAgent })
+    : t("home.bulkDeleteTitleDelete", { count })
+
+  const body = selectedAgent
+    ? count === 1
+      ? t("home.bulkDeleteBodyFromAgentOne", { agent: selectedAgent })
+      : t("home.bulkDeleteBodyFromAgentMany", { count, agent: selectedAgent })
+    : count === 1
+      ? t("home.bulkDeleteBodyDeleteOne")
+      : t("home.bulkDeleteBodyDeleteMany", { count })
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-surface border border-border rounded-xl shadow-lg w-full max-w-sm mx-4 p-5 animate-slide-down">
-        <h2 className="text-[14px] font-semibold text-foreground mb-1">
-          {selectedAgent
-            ? `Remove ${count} skill${count !== 1 ? "s" : ""} from ${selectedAgent}?`
-            : `Delete ${count} skill${count !== 1 ? "s" : ""}?`}
-        </h2>
-        <p className="text-[12px] text-muted mb-5">
-          {selectedAgent
-            ? `This will remove ${count === 1 ? "this skill" : `${count} selected skills`} from ${selectedAgent} only. The skill files will remain on disk.`
-            : `This will remove ${count === 1 ? "this skill" : `all ${count} selected skills`} from every agent where ${count === 1 ? "it is" : "they are"} installed. This action cannot be undone.`}
-        </p>
+        <h2 className="text-[14px] font-semibold text-foreground mb-1">{title}</h2>
+        <p className="text-[12px] text-muted mb-5">{body}</p>
         <div className="flex items-center gap-2 justify-end">
           <button
             onClick={onCancel}
             className="text-muted text-[12px] px-4 py-1.5 hover:text-foreground transition-colors"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           {selectedAgent ? (
             <>
@@ -831,13 +952,13 @@ function BulkDeleteDialog({
                 onClick={onRemoveFromAgent}
                 className="bg-red-600 text-white text-[12px] px-4 py-1.5 rounded-lg hover:bg-red-700 transition-colors"
               >
-                Remove from {selectedAgent}
+                {t("home.removeFromAgent", { agent: selectedAgent })}
               </button>
               <button
                 onClick={onConfirm}
                 className="text-red-400 text-[12px] px-4 py-1.5 hover:text-red-300 transition-colors"
               >
-                Remove from all
+                {t("home.removeFromAll")}
               </button>
             </>
           ) : (
@@ -845,7 +966,7 @@ function BulkDeleteDialog({
               onClick={onConfirm}
               className="bg-red-600 text-white text-[12px] px-4 py-1.5 rounded-lg hover:bg-red-700 transition-colors"
             >
-              Delete {count} skill{count !== 1 ? "s" : ""}
+              {t("home.deleteSkills", { count })}
             </button>
           )}
         </div>
@@ -887,6 +1008,7 @@ interface RemoveSkillDialogProps {
 }
 
 function RemoveSkillDialog({ skill, onClose, onRemoveFromAgents, onRemoveAll }: RemoveSkillDialogProps) {
+  const { t } = useI18n()
   const [checked, setChecked] = useState<Record<string, boolean>>({})
 
   const toggleAgent = (displayName: string) => {
@@ -899,10 +1021,10 @@ function RemoveSkillDialog({ skill, onClose, onRemoveFromAgents, onRemoveAll }: 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-surface border border-border rounded-xl shadow-lg w-full max-w-sm mx-4 p-5 animate-slide-down">
         <h2 className="text-[14px] font-semibold text-foreground mb-1">
-          Remove "{skill.name}"
+          {t("home.removeSkillTitle", { name: skill.name })}
         </h2>
         <p className="text-[12px] text-muted mb-4">
-          This skill is installed in {skill.agents.length} agent{skill.agents.length !== 1 ? "s" : ""}:
+          {t("home.installedInAgents", { count: skill.agents.length })}
         </p>
 
         <div className="flex flex-col gap-2 mb-5">
@@ -928,7 +1050,7 @@ function RemoveSkillDialog({ skill, onClose, onRemoveFromAgents, onRemoveAll }: 
             onClick={onClose}
             className="text-muted text-[12px] px-4 py-1.5 hover:text-foreground transition-colors"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             onClick={() => {
@@ -937,13 +1059,13 @@ function RemoveSkillDialog({ skill, onClose, onRemoveFromAgents, onRemoveAll }: 
             disabled={selectedAgents.length === 0}
             className="text-[12px] px-4 py-1.5 rounded-lg border border-border text-foreground hover:bg-surface-hover transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            Remove selected
+            {t("home.removeSelected")}
           </button>
           <button
             onClick={onRemoveAll}
             className="bg-red-600 text-white text-[12px] px-4 py-1.5 rounded-lg hover:bg-red-700 transition-colors"
           >
-            Remove all
+            {t("home.removeAll")}
           </button>
         </div>
       </div>
@@ -978,7 +1100,11 @@ function RightPanel({
   onToggleCollection,
   onCreateCollection,
 }: RightPanelProps) {
+  const { t } = useI18n()
   const [editMode, setEditMode] = useState(false)
+  const [sourceUpdateState, setSourceUpdateState] = useState<
+    "idle" | "updating" | "error"
+  >("idle")
   const [supportingPreview, setSupportingPreview] = useState("")
   const [selectedSupportingFile, setSelectedSupportingFile] = useState<string | null>(null)
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
@@ -992,7 +1118,23 @@ function RightPanel({
     setSelectedSupportingFile(null)
     setSaveStatus("idle")
     setShowRemoveDialog(false)
+    setSourceUpdateState("idle")
   }, [skill?.canonicalPath])
+
+  const updateKind = skill ? getSkillSourceKind(skill) : "localOnly"
+  const canUpdateFromSource = isUpdatableFromSource(updateKind)
+
+  const handleUpdateFromSource = async () => {
+    if (!skill || !canUpdateFromSource) return
+    setSourceUpdateState("updating")
+    try {
+      await electronAPI.updateSkill(skill.name)
+      setSourceUpdateState("idle")
+    } catch (err) {
+      console.error("Failed to update skill from source:", err)
+      setSourceUpdateState("error")
+    }
+  }
 
   useEffect(() => {
     if (!skill?.path || supportingFiles.length === 0) {
@@ -1015,7 +1157,7 @@ function RightPanel({
       })
       .catch(() => {
         if (!cancelled) {
-          setSupportingPreview("Preview unavailable.")
+          setSupportingPreview(t("home.previewUnavailable"))
         }
       })
 
@@ -1078,7 +1220,7 @@ function RightPanel({
       setSupportingPreview(value)
     } catch (err) {
       console.error("Failed to read supporting file:", err)
-      setSupportingPreview("Preview unavailable.")
+      setSupportingPreview(t("home.previewUnavailable"))
     }
   }
 
@@ -1117,7 +1259,7 @@ function RightPanel({
         <div className="text-center">
           <AppLogo size={40} className="text-muted opacity-60 mx-auto" />
           <p className="text-muted text-[13px] mt-3">
-            Select a skill to view details
+            {t("home.selectSkillToView")}
           </p>
         </div>
       </div>
@@ -1131,31 +1273,31 @@ function RightPanel({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="truncate text-xl font-bold text-foreground">{skill.name}</h1>
-              <SourceBadge sourceType={skill.sourceType} />
+              <SourceBadge sourceType={skill.sourceType} source={skill.source} />
             </div>
             <p className="mt-1 text-[12px] text-muted">
-              Editing raw `SKILL.md`
+              {t("home.editingSkillMd")}
             </p>
           </div>
           <div className="flex items-center gap-2">
             {saveStatus === "saved" && (
-              <span className="text-[12px] text-green-500">Saved</span>
+              <span className="text-[12px] text-green-500">{t("common.saved")}</span>
             )}
             {saveStatus === "error" && (
-              <span className="text-[12px] text-red-500">Save failed</span>
+              <span className="text-[12px] text-red-500">{t("common.saveFailed")}</span>
             )}
             <button
               onClick={handleCancel}
               className="rounded-lg border border-border px-4 py-2 text-[12px] text-muted transition-colors hover:text-foreground"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               onClick={() => handleSave()}
               disabled={saveStatus === "saving"}
               className="rounded-lg bg-foreground px-4 py-2 text-[12px] text-background transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              {saveStatus === "saving" ? "Saving..." : "Save"}
+              {saveStatus === "saving" ? t("common.saving") : t("common.save")}
             </button>
           </div>
         </div>
@@ -1180,11 +1322,27 @@ function RightPanel({
             <div className="flex items-start justify-between gap-3 mb-2">
               <div className="flex items-center gap-2 min-w-0">
                 <h1 className="text-xl font-bold text-foreground truncate">{skill.name}</h1>
-                <SourceBadge sourceType={skill.sourceType} />
+              <SourceBadge sourceType={skill.sourceType} source={skill.source} />
               </div>
 
               {/* Action buttons */}
               <div className="flex items-center gap-1.5 flex-shrink-0">
+                {canUpdateFromSource && (
+                  <button
+                    onClick={handleUpdateFromSource}
+                    disabled={sourceUpdateState === "updating"}
+                    title={
+                      updateKind === "git"
+                        ? t("home.updateFromSourceHintGit")
+                        : t("home.updateFromSourceHintGithub")
+                    }
+                    className="rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-[12px] font-medium text-violet-200 transition-colors hover:bg-violet-500/20 disabled:opacity-50"
+                  >
+                    {sourceUpdateState === "updating"
+                      ? t("home.updatingFromSource")
+                      : t("home.updateFromSource")}
+                  </button>
+                )}
                 {/* View/Edit toggle */}
                 {isLocalSkill && content && (
                   <div className="flex items-center rounded-lg border border-border bg-surface overflow-hidden text-[12px]">
@@ -1192,13 +1350,13 @@ function RightPanel({
                       onClick={() => { if (editMode) handleCancel() }}
                       className={`px-3 py-1.5 transition-colors ${!editMode ? "bg-surface-hover text-foreground font-medium" : "text-muted hover:text-foreground"}`}
                     >
-                      View
+                      {t("home.view")}
                     </button>
                     <button
                       onClick={() => { if (!editMode) handleEditToggle() }}
                       className={`px-3 py-1.5 transition-colors ${editMode ? "bg-surface-hover text-foreground font-medium" : "text-muted hover:text-foreground"}`}
                     >
-                      Edit
+                      {t("home.edit")}
                     </button>
                   </div>
                 )}
@@ -1207,7 +1365,7 @@ function RightPanel({
                 {isLocalSkill && (
                   <button
                     onClick={handleOpenInFinder}
-                    title="Show in Finder"
+                    title={t("home.revealInFileManager")}
                     className="p-1.5 rounded-md text-muted hover:text-foreground hover:bg-surface-hover transition-colors"
                   >
                     <FolderIcon />
@@ -1218,7 +1376,7 @@ function RightPanel({
                 {isLocalSkill && (
                   <button
                     onClick={handleDeleteClick}
-                    title="Remove skill"
+                    title={t("home.removeSkill")}
                     className="p-1.5 rounded-md text-muted hover:text-red-500 hover:bg-surface-hover transition-colors"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1249,9 +1407,32 @@ function RightPanel({
                 supporting files: {supportingFiles.length}
               </span>
             </div>
+            <p className="text-[11px] text-muted mt-2">
+              {updateKind === "github"
+                ? t("home.updateFromSourceHintGithub")
+                : updateKind === "git"
+                  ? t("home.updateFromSourceHintGit")
+                  : t("home.localOnlyHint")}
+            </p>
+            {sourceUpdateState === "error" && (
+              <p className="text-[11px] text-red-400 mt-1">
+                {t("common.saveFailed")}
+              </p>
+            )}
             {skill.source && (
               <p className="text-[11px] text-muted font-mono mt-2">
                 {skill.source}
+              </p>
+            )}
+            {(skill.updatedAt || skill.installedAt) && (
+              <p className="text-[11px] text-muted mt-1">
+                {skill.updatedAt
+                  ? t("home.lastUpdated", {
+                      time: formatRelativeTime(t, skill.updatedAt),
+                    })
+                  : t("home.installedAt", {
+                      time: formatRelativeTime(t, skill.installedAt!),
+                    })}
               </p>
             )}
             <p className="text-[11px] text-muted font-mono mt-2 break-all">
@@ -1259,7 +1440,9 @@ function RightPanel({
             </p>
             <div className="mt-3">
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-[10px] uppercase tracking-widest text-muted">Collections</p>
+                <p className="text-[10px] uppercase tracking-widest text-muted">
+                  {t("home.collections")}
+                </p>
                 <button
                   onClick={onCreateCollection}
                   className="text-[11px] text-muted hover:text-foreground"
@@ -1269,7 +1452,7 @@ function RightPanel({
               </div>
               <div className="flex flex-wrap gap-2">
                 {Object.keys(collections).length === 0 ? (
-                  <span className="text-[11px] text-muted">No collections yet.</span>
+                  <span className="text-[11px] text-muted">{t("home.noCollectionsYet")}</span>
                 ) : (
                   Object.entries(collections).map(([name, items]) => {
                     const included = items.includes(skill.canonicalPath)
@@ -1297,13 +1480,13 @@ function RightPanel({
 
           {/* Content: View or Edit mode */}
           {contentLoading ? (
-            <p className="text-sm text-muted animate-fade-in">Loading content...</p>
+            <p className="text-sm text-muted animate-fade-in">
+              {t("home.loadingContent")}
+            </p>
           ) : content ? (
             <MemoizedMarkdown content={content} />
           ) : (
-            <p className="text-sm text-muted">
-              Skill content not available. This skill may not have a SKILL.md file.
-            </p>
+            <p className="text-sm text-muted">{t("home.contentUnavailable")}</p>
           )}
 
           {supportingFiles.length > 0 && !editMode && (
@@ -1312,7 +1495,7 @@ function RightPanel({
               <div className="grid grid-cols-[220px_1fr] gap-4">
                 <div>
                   <h2 className="text-[12px] uppercase tracking-widest text-muted mb-3">
-                    Supporting Files
+                    {t("home.supportingFiles")}
                   </h2>
                   <div className="flex flex-col gap-1">
                     {supportingFiles.map((file) => (
@@ -1333,10 +1516,10 @@ function RightPanel({
                 </div>
                 <div>
                   <h2 className="text-[12px] uppercase tracking-widest text-muted mb-3">
-                    Preview
+                    {t("home.preview")}
                   </h2>
                   <pre className="min-h-[220px] overflow-x-auto rounded-lg border border-border bg-surface p-4 text-[12px] text-foreground whitespace-pre-wrap">
-                    {supportingPreview || "Select a supporting file to preview it."}
+                    {supportingPreview || t("home.selectSupportingFile")}
                   </pre>
                 </div>
               </div>
@@ -1373,6 +1556,7 @@ function CreateSkillDialog({
   defaultTargets: string[]
   onCreate: (data: { name: string; description: string; content: string; targets: string[] }) => void
 }) {
+  const { t } = useI18n()
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [content, setContent] = useState("")
@@ -1396,19 +1580,21 @@ function CreateSkillDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-lg rounded-xl border border-border bg-surface p-5 shadow-lg">
-        <h2 className="text-[15px] font-semibold text-foreground mb-1">New Skill</h2>
-        <p className="text-[12px] text-muted mb-4">Create a local skill and install it into one or more targets.</p>
+        <h2 className="text-[15px] font-semibold text-foreground mb-1">
+          {t("home.newSkill")}
+        </h2>
+        <p className="text-[12px] text-muted mb-4">{t("home.createSkillHint")}</p>
         <div className="flex flex-col gap-3">
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Skill name"
+            placeholder={t("home.skillName")}
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[12px] text-foreground"
           />
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Short description"
+            placeholder={t("home.shortDescription")}
             className="min-h-[90px] w-full rounded-lg border border-border bg-background px-3 py-2 text-[12px] text-foreground"
           />
           <textarea
@@ -1427,7 +1613,9 @@ Add your skill instructions here.`}
             className="min-h-[220px] w-full rounded-lg border border-border bg-background px-3 py-2 font-mono text-[12px] text-foreground"
           />
           <div>
-            <p className="text-[12px] font-medium text-foreground mb-2">Targets</p>
+            <p className="text-[12px] font-medium text-foreground mb-2">
+              {t("home.targets")}
+            </p>
             <div className="grid grid-cols-2 gap-2">
               {agents.map((agent) => (
                 <label key={agent.name} className="flex items-center gap-2 rounded-md border border-border px-3 py-2 text-[12px] text-foreground">
@@ -1442,13 +1630,15 @@ Add your skill instructions here.`}
             </div>
           </div>
           <div className="flex items-center justify-end gap-2">
-            <button onClick={onClose} className="px-4 py-2 text-[12px] text-muted">Cancel</button>
+            <button onClick={onClose} className="px-4 py-2 text-[12px] text-muted">
+              {t("common.cancel")}
+            </button>
             <button
               onClick={() => onCreate({ name: name.trim(), description: description.trim(), content, targets })}
               disabled={!name.trim()}
               className="rounded-lg bg-foreground px-4 py-2 text-[12px] text-background disabled:opacity-40"
             >
-              Create
+              {t("common.create")}
             </button>
           </div>
         </div>
@@ -1470,6 +1660,7 @@ function CollectionDialog({
   onClose: () => void
   onSubmit: (name: string) => void
 }) {
+  const { t } = useI18n()
   const [name, setName] = useState(initialName)
 
   useEffect(() => {
@@ -1484,19 +1675,21 @@ function CollectionDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-5 shadow-lg">
         <h2 className="text-[15px] font-semibold text-foreground mb-1">
-          {mode === "create" ? "New Collection" : "Rename Collection"}
+          {mode === "create"
+            ? t("home.collectionDialogCreate")
+            : t("home.collectionDialogRename")}
         </h2>
         <p className="text-[12px] text-muted mb-4">
           {mode === "create"
-            ? "Create a collection for grouping local skills."
-            : "Choose a new name for this collection."}
+            ? t("home.collectionDialogCreateHint")
+            : t("home.collectionDialogRenameHint")}
         </p>
         <div className="flex flex-col gap-3">
           <input
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Collection name"
+            placeholder={t("home.collectionName")}
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-[12px] text-foreground"
             onKeyDown={(e) => {
               if (e.key === "Enter" && name.trim()) {
@@ -1506,14 +1699,14 @@ function CollectionDialog({
           />
           <div className="flex items-center justify-end gap-2">
             <button onClick={onClose} className="px-4 py-2 text-[12px] text-muted">
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               onClick={() => onSubmit(name.trim())}
               disabled={!name.trim()}
               className="rounded-lg bg-foreground px-4 py-2 text-[12px] text-background disabled:opacity-40"
             >
-              {mode === "create" ? "Create" : "Save"}
+              {mode === "create" ? t("common.create") : t("common.save")}
             </button>
           </div>
         </div>
@@ -1533,7 +1726,7 @@ export function Home() {
   const [searchQuery, setSearchQuery] = useState("")
   const deferredSearchQuery = useDeferredValue(searchQuery)
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null)
-  const [activeFilter, setActiveFilter] = useState<"all" | "favorites">("all")
+  const [activeFilter, setActiveFilter] = useState<LibraryFilter>("all")
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [selectedSkillPath, setSelectedSkillPath] = useState<string | null>(null)
   const [skillContent, setSkillContent] = useState<string | null>(null)
@@ -1704,6 +1897,16 @@ export function Home() {
       result = result.filter((s) => favorites.has(s.name))
     }
 
+    if (
+      activeFilter === "github" ||
+      activeFilter === "git" ||
+      activeFilter === "localOnly"
+    ) {
+      result = result.filter(
+        (s) => getSkillSourceKind(s) === activeFilter,
+      )
+    }
+
     if (selectedCollection) {
       const ids = new Set(collections[selectedCollection] || [])
       result = result.filter((s) => ids.has(s.canonicalPath))
@@ -1759,6 +1962,34 @@ export function Home() {
   const installedFavoritesCount = useMemo(
     () => skills.reduce((n, s) => (favorites.has(s.name) ? n + 1 : n), 0),
     [skills, favorites],
+  )
+
+  const githubCount = useMemo(
+    () => skills.filter((s) => getSkillSourceKind(s) === "github").length,
+    [skills],
+  )
+
+  const gitCount = useMemo(
+    () => skills.filter((s) => getSkillSourceKind(s) === "git").length,
+    [skills],
+  )
+
+  const localOnlyCount = useMemo(
+    () => skills.filter((s) => getSkillSourceKind(s) === "localOnly").length,
+    [skills],
+  )
+
+  const { t } = useI18n()
+  const updateSummary = useMemo(
+    () =>
+      skills.length > 0
+        ? t("home.updateSummary", {
+            github: githubCount,
+            git: gitCount,
+            localOnly: localOnlyCount,
+          })
+        : null,
+    [skills.length, githubCount, gitCount, localOnlyCount, t],
   )
 
   const handleSelectSkill = useCallback((skill: InstalledSkill) => {
@@ -2185,6 +2416,9 @@ export function Home() {
       <MemoizedLeftSidebar
         totalSkillCount={skills.length}
         favoritesCount={installedFavoritesCount}
+        githubCount={githubCount}
+        gitCount={gitCount}
+        localOnlyCount={localOnlyCount}
         agentsWithSkills={agentsWithSkills}
         agentSkillCounts={agentSkillCounts}
         selectedAgent={selectedAgent}
@@ -2217,6 +2451,7 @@ export function Home() {
         selectedAgent={selectedAgent}
         selectedCollection={selectedCollection}
         activeFilter={activeFilter}
+        updateSummary={updateSummary}
         onClearFilters={handleClearFilters}
         onCreateSkill={handleOpenCreateSkill}
         dragSkill={dragSkill}

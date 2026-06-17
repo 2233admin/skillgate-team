@@ -2,19 +2,21 @@ import { NavLink, useLocation } from "react-router-dom"
 import { useEffect, useMemo, useState } from "react"
 import { ThemeToggle } from "@skillgate/ui"
 import { electronAPI } from "../lib/electron-api"
+import { useI18n } from "../i18n"
 import { AppBrand } from "./app-logo"
 
 interface NavItem {
   to: string
-  label: string
+  labelKey: "nav.library" | "nav.explore" | "nav.remote" | "nav.sources"
   icon: React.ReactNode
   badge?: number
+  label?: string
 }
 
-const navItems: NavItem[] = [
+const navItemDefs: Omit<NavItem, "label">[] = [
   {
     to: "/",
-    label: "Library",
+    labelKey: "nav.library",
     icon: (
       <svg
         width="16"
@@ -33,7 +35,7 @@ const navItems: NavItem[] = [
   },
   {
     to: "/discover",
-    label: "Explore",
+    labelKey: "nav.explore",
     icon: (
       <svg
         width="16"
@@ -52,7 +54,7 @@ const navItems: NavItem[] = [
   },
   {
     to: "/servers",
-    label: "Remote",
+    labelKey: "nav.remote",
     icon: (
       <svg
         width="16"
@@ -73,7 +75,7 @@ const navItems: NavItem[] = [
   },
   {
     to: "/scan-sources",
-    label: "Sources",
+    labelKey: "nav.sources",
     icon: (
       <svg
         width="16"
@@ -102,7 +104,7 @@ function navClass(isActive: boolean, compact: boolean) {
     : `${base} text-muted hover:text-foreground list-row-hover`
 }
 
-function CompactNavButton({ to, label, icon, badge }: NavItem) {
+function CompactNavButton({ to, label = "", icon, badge }: NavItem) {
   return (
     <NavLink to={to} end={to === "/"} title={label} className={({ isActive }) => navClass(isActive, true)}>
       {icon}
@@ -128,6 +130,7 @@ function FullNavButton({ to, label, icon, badge }: NavItem) {
 }
 
 export function Sidebar() {
+  const { t } = useI18n()
   const location = useLocation()
   const isHome = location.pathname === "/"
   const [serverCount, setServerCount] = useState(0)
@@ -140,10 +143,12 @@ export function Sidebar() {
 
   const enrichedNavItems = useMemo(
     () =>
-      navItems.map((item) =>
-        item.to === "/servers" ? { ...item, badge: serverCount } : item,
-      ),
-    [serverCount],
+      navItemDefs.map((item) => ({
+        ...item,
+        label: t(item.labelKey),
+        badge: item.to === "/servers" ? serverCount : undefined,
+      })),
+    [serverCount, t],
   )
 
   if (isHome) {
@@ -160,7 +165,7 @@ export function Sidebar() {
         <div className="mt-auto pb-3 flex flex-col items-center gap-0.5 px-1">
           <NavLink
             to="/settings"
-            title="Settings"
+            title={t("nav.settings")}
             className={({ isActive }) => navClass(isActive, true)}
           >
             <svg
@@ -210,10 +215,10 @@ export function Sidebar() {
             <circle cx="12" cy="12" r="3" />
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
           </svg>
-          Settings
+          {t("nav.settings")}
         </NavLink>
         <div className="flex items-center justify-between px-2.5 py-1.5">
-          <span className="text-[11px] text-muted">Theme</span>
+          <span className="text-[11px] text-muted">{t("nav.theme")}</span>
           <ThemeToggle />
         </div>
       </div>
