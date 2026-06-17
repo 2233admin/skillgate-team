@@ -80,6 +80,111 @@ declare global {
     remoteHash?: string
   }
 
+  type TeamProfileSource =
+    | "explicit"
+    | "linked_project"
+    | "settings"
+    | "cwd"
+    | "default"
+
+  interface TeamContext {
+    teamRoot: string
+    linkedProject?: string
+    effectiveProfile: string
+    profileSource: TeamProfileSource
+  }
+
+  interface TeamError {
+    code: string
+    message: string
+    details?: unknown
+  }
+
+  type TeamResult<T> =
+    | { ok: true; data: T }
+    | { ok: false; error: TeamError }
+
+  interface TeamProfileSummary {
+    name: string
+    description?: string
+    skillCount: number
+    agents?: string[]
+  }
+
+  interface TeamDriftItem {
+    skill: string
+    kind: string
+    expected?: string
+    actual?: string
+    path?: string
+    agent?: string
+  }
+
+  interface TeamDoctorResult {
+    ok: boolean
+    profile: string
+    drifts: TeamDriftItem[]
+    agentCount: number
+    teamRoot: string
+  }
+
+  interface TeamLockMismatch {
+    skill: string
+    lockHash: string | null
+    diskHash: string
+  }
+
+  interface TeamLockVerifyResult {
+    ok: boolean
+    mismatches: TeamLockMismatch[]
+    mismatchCount: number
+    updated: boolean
+  }
+
+  interface TeamApplySkillResult {
+    skill: string
+    agent: string
+    success: boolean
+    error?: string
+  }
+
+  interface TeamApplyResult {
+    profile: string
+    installed: number
+    failed: number
+    skipped: string[]
+    method: string
+    agents: string[]
+    results: TeamApplySkillResult[]
+    lockUpdated: boolean
+  }
+
+  interface TeamCatalogDriftResult {
+    status: "ok" | "behind" | "unknown"
+    fromCache: boolean
+    localVersion?: string
+    remoteVersion?: string
+    message?: string
+  }
+
+  interface TeamDriftState {
+    status: "ok" | "behind" | "unknown"
+    fromCache: boolean
+    localVersion?: string
+    remoteVersion?: string
+    message?: string
+    error?: string
+  }
+
+  interface TeamLastApplyState {
+    appliedAt: string
+    profile: string
+    revision: number
+    teamRoot: string
+    method: string
+    agents: string[]
+  }
+
   interface UpdateState {
     status:
       | "idle"
@@ -217,6 +322,50 @@ declare global {
       callback: (skills: InstalledSkill[]) => void,
     ) => () => void
     onUpdateState: (callback: (state: UpdateState) => void) => () => void
+
+    teamGetContext: (input?: {
+      teamRoot?: string
+      linkedProject?: string
+      profile?: string
+    }) => Promise<TeamResult<TeamContext>>
+    teamListProfiles: (input?: {
+      teamRoot?: string
+      linkedProject?: string
+      profile?: string
+    }) => Promise<TeamResult<string[]>>
+    teamGetProfileSummary: (
+      profile: string,
+      input?: { teamRoot?: string; linkedProject?: string; profile?: string },
+    ) => Promise<TeamResult<TeamProfileSummary>>
+    teamApply: (options?: {
+      profile?: string
+      upgrade?: boolean
+      writeLock?: boolean
+      dryRun?: boolean
+      teamRoot?: string
+      linkedProject?: string
+    }) => Promise<TeamResult<TeamApplyResult>>
+    teamDoctor: (options?: {
+      profile?: string
+      teamRoot?: string
+      linkedProject?: string
+    }) => Promise<TeamResult<TeamDoctorResult>>
+    teamLockVerify: (options?: {
+      write?: boolean
+      teamRoot?: string
+      linkedProject?: string
+      profile?: string
+    }) => Promise<TeamResult<TeamLockVerifyResult>>
+    teamCatalogDrift: (options?: {
+      force?: boolean
+      teamRoot?: string
+      linkedProject?: string
+      profile?: string
+    }) => Promise<TeamResult<TeamCatalogDriftResult>>
+    teamGetDriftState: () => Promise<TeamDriftState | null>
+    teamGetLastApplyState: () => Promise<TeamResult<TeamLastApplyState | null>>
+    teamSetLastProfile: (profile: string) => Promise<void>
+    onTeamDriftState: (callback: (state: TeamDriftState) => void) => () => void
   }
 
   interface Window {

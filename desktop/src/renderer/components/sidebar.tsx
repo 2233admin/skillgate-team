@@ -7,9 +7,10 @@ import { AppBrand } from "./app-logo"
 
 interface NavItem {
   to: string
-  labelKey: "nav.library" | "nav.explore" | "nav.remote" | "nav.sources"
+  labelKey: "nav.library" | "nav.explore" | "nav.remote" | "nav.sources" | "nav.team"
   icon: React.ReactNode
   badge?: number
+  showDotBadge?: boolean
   label?: string
 }
 
@@ -74,6 +75,27 @@ const navItemDefs: Omit<NavItem, "label">[] = [
     ),
   },
   {
+    to: "/team",
+    labelKey: "nav.team",
+    icon: (
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+  },
+  {
     to: "/scan-sources",
     labelKey: "nav.sources",
     icon: (
@@ -104,10 +126,13 @@ function navClass(isActive: boolean, compact: boolean) {
     : `${base} text-muted hover:text-foreground list-row-hover`
 }
 
-function CompactNavButton({ to, label = "", icon, badge }: NavItem) {
+function CompactNavButton({ to, label = "", icon, badge, showDotBadge }: NavItem) {
   return (
     <NavLink to={to} end={to === "/"} title={label} className={({ isActive }) => navClass(isActive, true)}>
       {icon}
+      {showDotBadge && (
+        <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-400" />
+      )}
       {badge !== undefined && badge > 0 && (
         <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-accent text-[8px] font-semibold text-white px-0.5">
           {badge}
@@ -117,11 +142,14 @@ function CompactNavButton({ to, label = "", icon, badge }: NavItem) {
   )
 }
 
-function FullNavButton({ to, label, icon, badge }: NavItem) {
+function FullNavButton({ to, label, icon, badge, showDotBadge }: NavItem) {
   return (
     <NavLink to={to} end={to === "/"} className={({ isActive }) => navClass(isActive, false)}>
       {icon}
       <span className="flex-1">{label}</span>
+      {showDotBadge && (
+        <span className="h-2 w-2 rounded-full bg-amber-400" title={label} />
+      )}
       {badge !== undefined && badge > 0 && (
         <span className="text-[10px] font-mono text-muted tabular-nums">{badge}</span>
       )}
@@ -135,10 +163,19 @@ export function Sidebar() {
   const isHome = location.pathname === "/"
   const [serverCount, setServerCount] = useState(0)
   const [appVersion, setAppVersion] = useState("")
+  const [teamDriftBehind, setTeamDriftBehind] = useState(false)
 
   useEffect(() => {
     electronAPI.serversCount().then(setServerCount).catch(() => {})
     electronAPI.appGetVersion().then(setAppVersion).catch(() => {})
+    electronAPI
+      .teamGetDriftState()
+      .then((state) => setTeamDriftBehind(state?.status === "behind"))
+      .catch(() => {})
+    const cleanup = electronAPI.onTeamDriftState((state) => {
+      setTeamDriftBehind(state.status === "behind")
+    })
+    return cleanup
   }, [])
 
   const enrichedNavItems = useMemo(
@@ -147,8 +184,9 @@ export function Sidebar() {
         ...item,
         label: t(item.labelKey),
         badge: item.to === "/servers" ? serverCount : undefined,
+        showDotBadge: item.to === "/team" ? teamDriftBehind : undefined,
       })),
-    [serverCount, t],
+    [serverCount, teamDriftBehind, t],
   )
 
   if (isHome) {

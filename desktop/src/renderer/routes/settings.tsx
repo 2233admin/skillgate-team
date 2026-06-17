@@ -40,6 +40,39 @@ function SettingSelect({
   )
 }
 
+function SettingTextInput({
+  label,
+  description,
+  value,
+  placeholder,
+  error,
+  onChange,
+}: {
+  label: string
+  description: string
+  value: string
+  placeholder?: string
+  error?: string | null
+  onChange: (value: string) => void
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-surface p-3">
+      <p className="text-sm text-foreground">{label}</p>
+      <p className="text-[11px] text-muted mb-2">{description}</p>
+      <input
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className={`w-full rounded-lg border bg-background px-3 py-2 text-[12px] font-mono text-foreground placeholder:text-muted focus:outline-none focus:border-accent/40 transition-colors ${
+          error ? "border-red-500/50" : "border-border"
+        }`}
+      />
+      {error && <p className="mt-1 text-[11px] text-red-400">{error}</p>}
+    </div>
+  )
+}
+
 function SettingToggle({
   label,
   description,
@@ -93,6 +126,10 @@ export function Settings() {
   const [updateState, setUpdateState] = useState<UpdateState | null>(null)
   const [checkingUpdates, setCheckingUpdates] = useState(false)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
+  const [teamRoot, setTeamRoot] = useState("")
+  const [linkedProject, setLinkedProject] = useState("")
+  const [teamRootError, setTeamRootError] = useState<string | null>(null)
+  const [linkedProjectError, setLinkedProjectError] = useState<string | null>(null)
 
   const loadSettings = useCallback(async () => {
     try {
@@ -112,6 +149,9 @@ export function Settings() {
         setDefaultAgents(all["install.defaultAgents"] as string[])
       if (Array.isArray(all["sync.mirrorAgents"]))
         setMirrorAgents(all["sync.mirrorAgents"] as string[])
+      if (typeof all["team.root"] === "string") setTeamRoot(all["team.root"] as string)
+      if (typeof all["team.linkedProject"] === "string")
+        setLinkedProject(all["team.linkedProject"] as string)
     } catch (err) {
       console.error("Failed to load settings:", err)
     } finally {
@@ -139,6 +179,38 @@ export function Settings() {
       await electronAPI.settingsSet(key, value)
     } catch (err) {
       console.error("Failed to save setting:", err)
+    }
+  }
+
+  async function validatePathSetting(
+    value: string,
+    required: boolean,
+  ): Promise<string | null> {
+    const trimmed = value.trim()
+    if (!trimmed) {
+      return required ? t("settings.teamPathRequired") : null
+    }
+    if (trimmed.includes("\0")) {
+      return t("settings.teamPathInvalid")
+    }
+    return null
+  }
+
+  async function handleTeamRootChange(value: string) {
+    setTeamRoot(value)
+    const error = await validatePathSetting(value, false)
+    setTeamRootError(error)
+    if (!error) {
+      await saveSetting("team.root", value.trim())
+    }
+  }
+
+  async function handleLinkedProjectChange(value: string) {
+    setLinkedProject(value)
+    const error = await validatePathSetting(value, false)
+    setLinkedProjectError(error)
+    if (!error) {
+      await saveSetting("team.linkedProject", value.trim())
     }
   }
 
@@ -188,6 +260,39 @@ export function Settings() {
               ]}
               onChange={(v) => setLocale(v as Locale)}
             />
+          </div>
+        </section>
+
+        {/* Team workflows */}
+        <section>
+          <h3 className="text-sm font-semibold text-foreground mb-3">
+            {t("settings.team")}
+          </h3>
+          <div className="flex flex-col gap-3">
+            {settingsLoaded ? (
+              <>
+                <SettingTextInput
+                  label={t("settings.teamRoot")}
+                  description={t("settings.teamRootDescription")}
+                  value={teamRoot}
+                  placeholder={t("settings.teamRootPlaceholder")}
+                  error={teamRootError}
+                  onChange={(v) => void handleTeamRootChange(v)}
+                />
+                <SettingTextInput
+                  label={t("settings.linkedProject")}
+                  description={t("settings.linkedProjectDescription")}
+                  value={linkedProject}
+                  placeholder={t("settings.linkedProjectPlaceholder")}
+                  error={linkedProjectError}
+                  onChange={(v) => void handleLinkedProjectChange(v)}
+                />
+              </>
+            ) : (
+              <div className="p-3 rounded-lg border border-border bg-surface">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-foreground" />
+              </div>
+            )}
           </div>
         </section>
 

@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog, shell, nativeImage } from "electron"
 import path from "node:path"
 import { registerIpcHandlers, setMainWindow } from "./ipc-handlers"
+import { runStartupCatalogDriftCheck, setTeamMainWindow } from "./team-ipc"
 import { SkillsFileWatcher } from "./file-watcher"
 import { closeDb } from "./db/index"
 import { initAutoUpdater } from "./auto-updater"
@@ -82,6 +83,7 @@ function createWindow(): void {
   // Give the IPC handlers a reference to the window so rescanAndCache
   // can push skills:updated events to the renderer.
   setMainWindow(mainWindow)
+  setTeamMainWindow(mainWindow)
 
   // Start the file watcher once the window is created
   fileWatcher = new SkillsFileWatcher(mainWindow)
@@ -94,6 +96,7 @@ function createWindow(): void {
     fileWatcher?.stop()
     fileWatcher = null
     mainWindow = null
+    setTeamMainWindow(null)
   })
 
   // Load the renderer
@@ -121,6 +124,10 @@ app.whenReady().then(() => {
   }
 
   createWindow()
+
+  runStartupCatalogDriftCheck().catch((err) => {
+    console.error("[team] startup catalog drift check failed:", err)
+  })
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {

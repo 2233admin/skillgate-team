@@ -24,6 +24,7 @@
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.41.0",
     "@skillgate/ui": "*",
+    "skillgate": "*",
     "better-sqlite3": "12.8.0",
     "electron-updater": "6.6.2",
 

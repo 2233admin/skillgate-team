@@ -24,6 +24,9 @@ const ScanSources = lazy(() =>
     default: module.ScanSources,
   })),
 )
+const Team = lazy(() =>
+  import("./routes/team").then((module) => ({ default: module.Team })),
+)
 
 function RouteFallback() {
   const { t } = useI18n()
@@ -48,6 +51,7 @@ export function App() {
               <Route path="/servers" element={<div className="flex-1 overflow-y-auto"><Servers /></div>} />
               <Route path="/servers/:id/skills" element={<ServerSkills />} />
               <Route path="/scan-sources" element={<ScanSources />} />
+              <Route path="/team" element={<div className="flex-1 overflow-y-auto"><Team /></div>} />
               <Route path="/settings" element={<div className="flex-1 overflow-y-auto"><Settings /></div>} />
             </Routes>
           </Suspense>

@@ -122,4 +122,52 @@ contextBridge.exposeInMainWorld("electronAPI", {
   onUpdateState: (callback: (state: unknown) => void) => {
     return subscribe("updates:state", callback)
   },
+
+  // Team workflows
+  teamGetContext: (input?: {
+    teamRoot?: string
+    linkedProject?: string
+    profile?: string
+  }) => ipcRenderer.invoke("team:getContext", input),
+  teamListProfiles: (input?: {
+    teamRoot?: string
+    linkedProject?: string
+    profile?: string
+  }) => ipcRenderer.invoke("team:listProfiles", input),
+  teamGetProfileSummary: (
+    profile: string,
+    input?: { teamRoot?: string; linkedProject?: string; profile?: string },
+  ) => ipcRenderer.invoke("team:getProfileSummary", profile, input),
+  teamApply: (options?: {
+    profile?: string
+    upgrade?: boolean
+    writeLock?: boolean
+    dryRun?: boolean
+    teamRoot?: string
+    linkedProject?: string
+  }) => ipcRenderer.invoke("team:apply", options),
+  teamDoctor: (options?: {
+    profile?: string
+    teamRoot?: string
+    linkedProject?: string
+  }) => ipcRenderer.invoke("team:doctor", options),
+  teamLockVerify: (options?: {
+    write?: boolean
+    teamRoot?: string
+    linkedProject?: string
+    profile?: string
+  }) => ipcRenderer.invoke("team:lockVerify", options),
+  teamCatalogDrift: (options?: {
+    force?: boolean
+    teamRoot?: string
+    linkedProject?: string
+    profile?: string
+  }) => ipcRenderer.invoke("team:catalogDrift", options),
+  teamGetDriftState: () => ipcRenderer.invoke("team:getDriftState"),
+  teamGetLastApplyState: () => ipcRenderer.invoke("team:getLastApplyState"),
+  teamSetLastProfile: (profile: string) =>
+    ipcRenderer.invoke("team:setLastProfile", profile),
+  onTeamDriftState: (callback: (state: unknown) => void) => {
+    return subscribe("team:drift-state", callback)
+  },
 })

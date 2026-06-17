@@ -20,6 +20,7 @@ import { testConnection, syncRemoteServer, readRemoteFile, writeRemoteFile } fro
 import { planPush, applyPush } from "./db/push"
 import type { PushPreview } from "./db/push"
 import { checkForAppUpdates, getUpdateState, quitAndInstallUpdate } from "./auto-updater"
+import { registerTeamIpcHandlers } from "./team-ipc"
 
 // ---------------------------------------------------------------------------
 // Agent registry (mirrored from packages/cli/src/core/agents.ts)
@@ -2171,6 +2172,8 @@ Add your skill instructions here.
       }
     },
   )
+
+  registerTeamIpcHandlers(settingsStore)
 }
 
 // Export for use by file-watcher and main process
