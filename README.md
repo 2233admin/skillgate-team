@@ -18,6 +18,8 @@
 
 </div>
 
+**目录：** [一句话说明](#一句话说明) · [架构](#架构一览) · [界面预览](#界面预览) · [核心能力](#核心能力) · [快速开始](#快速开始-3-步) · [FAQ](#常见问题) · [开发](#开发)
+
 ---
 
 ## 一句话说明
@@ -49,6 +51,8 @@ skillgate-team/          profiles/quant.yaml        ~/.claude/skills/
 
 ## 界面预览
 
+> 以下为 **界面示意图**（与真实 Desktop / TUI 布局一致）。维护者可用 `skillgate gui` 截屏替换为实拍，见 [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md)。
+
 <table>
 <tr>
 <td width="58%">
@@ -58,7 +62,7 @@ skillgate-team/          profiles/quant.yaml        ~/.claude/skills/
 设置好目录根路径后：选 profile → 应用 → Doctor 自检。
 
 <p align="center">
-  <img src="docs/images/desktop-team-preview.jpg" alt="Skillgate Desktop Team 页面预览" width="100%" />
+  <img src="docs/images/desktop-team-preview.svg" alt="Skillgate Desktop Team 页面示意" width="100%" />
 </p>
 
 </td>

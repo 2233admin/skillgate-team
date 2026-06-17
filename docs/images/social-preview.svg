@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" role="img" aria-label="Skillgate Team social preview">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#172554"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="640" fill="url(#g)"/>
+  <circle cx="1080" cy="120" r="220" fill="#3b82f6" fill-opacity="0.12"/>
+  <circle cx="180" cy="520" r="180" fill="#22c55e" fill-opacity="0.08"/>
+  <text x="80" y="120" fill="#f8fafc" font-family="Segoe UI, system-ui, sans-serif" font-size="56" font-weight="700">Skillgate Team</text>
+  <text x="80" y="190" fill="#cbd5e1" font-family="Segoe UI, system-ui, sans-serif" font-size="28">团队 AI 技能目录 · Git 锁定 · 一键 Apply</text>
+  <text x="80" y="250" fill="#94a3b8" font-family="Segoe UI, system-ui, sans-serif" font-size="20">CLI · TUI · Desktop · Claude / Codex / Cursor / Grok</text>
+  <rect x="80" y="300" width="520" height="220" rx="16" fill="#1e293b" stroke="#334155"/>
+  <text x="110" y="350" fill="#e2e8f0" font-family="Consolas, monospace" font-size="18">profiles/quant.yaml</text>
+  <text x="110" y="385" fill="#94a3b8" font-family="Consolas, monospace" font-size="16">skills.lock.yaml</text>
+  <text x="110" y="420" fill="#94a3b8" font-family="Consolas, monospace" font-size="16">skillgate apply · doctor · drift</text>
+  <rect x="110" y="450" width="180" height="44" rx="8" fill="#3b82f6"/>
+  <text x="200" y="478" text-anchor="middle" fill="#fff" font-family="Segoe UI, system-ui, sans-serif" font-size="16" font-weight="600">npm 式团队技能管理</text>
+  <rect x="640" y="300" width="560" height="220" rx="16" fill="#0b1220" stroke="#3b82f6" stroke-opacity="0.5"/>
+  <text x="670" y="350" fill="#93c5fd" font-family="Segoe UI, system-ui, sans-serif" font-size="18" font-weight="600">三端一致</text>
+  <text x="670" y="390" fill="#bfdbfe" font-family="Segoe UI, system-ui, sans-serif" font-size="16">Desktop GUI → 新手友好</text>
+  <text x="670" y="425" fill="#bfdbfe" font-family="Segoe UI, system-ui, sans-serif" font-size="16">TUI → 全键盘</text>
+  <text x="670" y="460" fill="#bfdbfe" font-family="Segoe UI, system-ui, sans-serif" font-size="16">CLI → CI / 脚本</text>
+  <text x="80" y="580" fill="#64748b" font-family="Segoe UI, system-ui, sans-serif" font-size="16">github.com/2233admin/skillgate-team</text>
+</svg>
