@@ -14,10 +14,12 @@ import { ServersView } from "../views/servers.js"
 import { AddServerView } from "../views/add-server.js"
 import { ServerSkillsView } from "../views/server-skills.js"
 import { SettingsView } from "../views/settings.js"
+import { TeamView } from "../views/team.js"
+import { useCatalogDriftBadge } from "../data/use-team.js"
 import { colors } from "../utils/colors.js"
 import type { ViewName } from "../store/types.js"
 
-function getTabOptions(serverCount: number) {
+function getTabOptions(serverCount: number, driftBehind: boolean) {
   return [
     { name: "Installed", description: "Locally installed skills", value: "home" },
     { name: "Discover", description: "Search the registry", value: "discover" },
@@ -25,6 +27,11 @@ function getTabOptions(serverCount: number) {
       name: serverCount > 0 ? `Servers (${serverCount})` : "Servers",
       description: "Remote SSH servers",
       value: "servers",
+    },
+    {
+      name: driftBehind ? "Team *" : "Team",
+      description: "Team profiles, apply, doctor",
+      value: "team",
     },
   ]
 }
@@ -35,6 +42,7 @@ export function Layout() {
   const { width, height } = useTerminalDimensions()
   const { servers } = useDb()
   const [serverCount, setServerCount] = useState(() => servers.list().length)
+  const driftBehind = useCatalogDriftBadge()
 
   // Load agent + skill data on mount
   useDetectedAgents()
@@ -97,9 +105,10 @@ export function Layout() {
         setServerCount(servers.list().length)
         dispatch({ type: "NAVIGATE", view: "servers" })
       }
+      if (key.name === "4") dispatch({ type: "NAVIGATE", view: "team" })
     }
 
-    // "s" to open settings (only from home/servers views)
+    // "s" to open settings (not from discover/detail/form views)
     if (key.name === "s" && state.activeView !== "discover" && state.activeView !== "detail"
       && !inFormView) {
       dispatch({ type: "NAVIGATE", view: "settings" })
@@ -154,7 +163,7 @@ export function Layout() {
     }
   })
 
-  const TAB_OPTIONS = getTabOptions(serverCount)
+  const TAB_OPTIONS = getTabOptions(serverCount, driftBehind)
 
   const activeTabIndex = TAB_OPTIONS.findIndex(
     (t) => t.value === state.activeView
@@ -223,6 +232,7 @@ export function Layout() {
               <ServerSkillsView serverId={state.selectedServerId} />
             )}
             {state.activeView === "settings" && <SettingsView />}
+            {state.activeView === "team" && <TeamView />}
             {state.activeView === "detail" && state.selectedSkill && (
               <SkillDetailView />
             )}

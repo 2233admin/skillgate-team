@@ -7,12 +7,27 @@ import { colors } from "../utils/colors.js"
 interface SettingDef {
   key: string
   label: string
-  type: "select" | "toggle"
+  type: "select" | "toggle" | "text"
   options?: string[]
   defaultValue: string | boolean
+  placeholder?: string
 }
 
 const SETTING_DEFS: SettingDef[] = [
+  {
+    key: "team.root",
+    label: "Team catalog root",
+    type: "text",
+    defaultValue: "",
+    placeholder: "Override SKILLGATE_ROOT (optional)",
+  },
+  {
+    key: "team.linkedProject",
+    label: "Linked project path",
+    type: "text",
+    defaultValue: "",
+    placeholder: "Project with .skillgate/profile",
+  },
   {
     key: "install.scope",
     label: "Default install scope",
@@ -44,7 +59,7 @@ const SETTING_DEFS: SettingDef[] = [
 
 /**
  * Settings view: displays a list of key-value settings from SQLite.
- * Navigate with j/k, press Enter to toggle/cycle values.
+ * Navigate with j/k, press Enter to toggle/cycle values or edit text.
  * Changes are saved immediately.
  */
 export function SettingsView() {
@@ -53,8 +68,9 @@ export function SettingsView() {
   const { settings } = useDb()
 
   const [selectedIndex, setSelectedIndex] = useState(0)
-  // Force re-render after changes
   const [version, setVersion] = useState(0)
+  const [editingKey, setEditingKey] = useState<string | null>(null)
+  const [draftValue, setDraftValue] = useState("")
 
   const currentValues = SETTING_DEFS.map((def) => {
     const stored = settings.get(def.key, def.defaultValue)
@@ -84,11 +100,22 @@ export function SettingsView() {
     }
   }, [settings, dispatch])
 
+  const startTextEdit = useCallback((def: SettingDef, currentValue: unknown) => {
+    setEditingKey(def.key)
+    setDraftValue(String(currentValue ?? ""))
+  }, [])
+
   useKeyboard((key) => {
     if (state.activeView !== "settings") return
     if (state.showHelp) return
 
-    // j/k or arrow keys
+    if (editingKey) {
+      if (key.name === "escape") {
+        setEditingKey(null)
+      }
+      return
+    }
+
     if (key.name === "up" || (key.name === "k" && !key.ctrl)) {
       setSelectedIndex((i) => Math.max(0, i - 1))
     }
@@ -96,20 +123,22 @@ export function SettingsView() {
       setSelectedIndex((i) => Math.min(SETTING_DEFS.length - 1, i + 1))
     }
 
-    // Enter to toggle/cycle
     if (key.name === "return") {
       const def = SETTING_DEFS[selectedIndex]
       if (def) {
-        handleToggle(def, currentValues[selectedIndex])
+        if (def.type === "text") {
+          startTextEdit(def, currentValues[selectedIndex])
+        } else {
+          handleToggle(def, currentValues[selectedIndex])
+        }
       }
     }
-
-    // Esc handled by layout
   })
+
+  const editingDef = SETTING_DEFS.find((def) => def.key === editingKey)
 
   return (
     <box style={{ flexDirection: "column", width: "100%", flexGrow: 1 }}>
-      {/* Header */}
       <box
         style={{
           height: 1,
@@ -123,6 +152,65 @@ export function SettingsView() {
         </text>
       </box>
 
+      {editingDef ? (
+        <box
+          style={{
+            position: "absolute",
+            width: "100%",
+            height: "100%",
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: colors.bg,
+          }}
+        >
+          <box
+            style={{
+              width: 72,
+              border: true,
+              borderColor: colors.primary,
+              backgroundColor: "#1a1a2e",
+              flexDirection: "column",
+              paddingLeft: 1,
+              paddingRight: 1,
+              paddingTop: 1,
+              paddingBottom: 1,
+            }}
+            title={editingDef.label}
+          >
+            <text fg={colors.textDim}>{editingDef.placeholder ?? "Enter value"}</text>
+            <box
+              style={{
+                height: 3,
+                width: "100%",
+                border: true,
+                borderColor: colors.primary,
+                paddingLeft: 1,
+                paddingRight: 1,
+              }}
+            >
+              <input
+                placeholder={editingDef.placeholder ?? ""}
+                focused={true}
+                onInput={(value: string) => setDraftValue(value)}
+                onSubmit={((value: string) => {
+                  settings.set(editingDef.key, value.trim())
+                  setVersion((v) => v + 1)
+                  setEditingKey(null)
+                  dispatch({
+                    type: "SHOW_NOTIFICATION",
+                    notification: {
+                      type: "info",
+                      message: `${editingDef.label} updated`,
+                    },
+                  })
+                }) as any}
+              />
+            </box>
+            <text fg={colors.textDim}>Enter=save  Esc=cancel</text>
+          </box>
+        </box>
+      ) : null}
+
       <box style={{ flexDirection: "column", paddingLeft: 1, paddingRight: 1, paddingTop: 1 }}>
         {SETTING_DEFS.map((def, i) => {
           const val = currentValues[i]
@@ -131,6 +219,8 @@ export function SettingsView() {
 
           if (def.type === "toggle") {
             displayValue = val ? "ON" : "OFF"
+          } else if (def.type === "text") {
+            displayValue = String(val || "(empty)")
           } else {
             displayValue = String(val)
           }
@@ -144,7 +234,7 @@ export function SettingsView() {
               key={def.key}
               style={{
                 width: "100%",
-                height: 1,
+                minHeight: 1,
                 flexDirection: "row",
                 paddingLeft: 1,
                 backgroundColor: isSelected ? colors.bgAlt : "transparent",
@@ -164,6 +254,11 @@ export function SettingsView() {
               {isSelected && def.type === "toggle" ? (
                 <text fg={colors.textDim}>
                   {"  "}(Enter to toggle)
+                </text>
+              ) : null}
+              {isSelected && def.type === "text" ? (
+                <text fg={colors.textDim}>
+                  {"  "}(Enter to edit)
                 </text>
               ) : null}
             </box>

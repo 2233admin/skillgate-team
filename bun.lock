@@ -50,6 +50,7 @@
         "react-dom": "19.1.5",
         "react-router-dom": "7.18.0",
         "react-window": "^2.2.7",
+        "skillgate": "*",
       },
       "devDependencies": {
         "@tailwindcss/postcss": "4.2.2",
@@ -78,6 +79,7 @@
         "@opentui/core": "0.1.90",
         "@opentui/react": "0.1.90",
         "react": "19.1.5",
+        "skillgate": "*",
         "yaml": "2.9.0",
       },
     },

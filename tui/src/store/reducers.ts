@@ -25,7 +25,7 @@ export const initialState: AppState = {
 export function appReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case "NAVIGATE": {
-      const listFirstViews = new Set(["home", "discover", "servers"])
+      const listFirstViews = new Set(["home", "discover", "servers", "team"])
       return {
         ...state,
         previousView: state.activeView,

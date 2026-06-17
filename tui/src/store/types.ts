@@ -6,6 +6,7 @@ export type ViewName =
   | "home"
   | "discover"
   | "servers"
+  | "team"
   | "server-skills"
   | "add-server"
   | "edit-server"

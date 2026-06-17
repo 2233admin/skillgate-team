@@ -20,7 +20,7 @@ const SHORTCUTS_LEFT: ShortcutEntry[] = [
 ]
 
 const SHORTCUTS_RIGHT: ShortcutEntry[] = [
-  { key: "1/2/3", description: "Switch tabs" },
+  { key: "1/2/3/4", description: "Switch tabs" },
   { key: "s", description: "Open settings" },
   { key: "r", description: "Refresh installed skills" },
   { key: "i", description: "Install selected skill" },
@@ -35,6 +35,12 @@ const SHORTCUTS_RIGHT: ShortcutEntry[] = [
   { key: "a", description: "Add new server" },
   { key: "e", description: "Edit server" },
   { key: "t", description: "Test connection" },
+  { key: "", description: "" },
+  { key: "-- Team View --", description: "" },
+  { key: "a", description: "Apply selected profile" },
+  { key: "d", description: "Run doctor" },
+  { key: "l", description: "Lock verify" },
+  { key: "r", description: "Refresh catalog drift" },
   { key: "", description: "" },
   { key: "-- Detail View --", description: "" },
   { key: "q/Esc", description: "Go back" },
