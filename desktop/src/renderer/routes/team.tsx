@@ -293,9 +293,19 @@ export function Team() {
                   {t("nav.settings")}
                 </Link>
               </p>
+              <p className="mt-3 whitespace-pre-wrap text-[11px] text-muted">
+                {t("team.contextErrorSteps")}
+              </p>
             </div>
           ) : context ? (
             <>
+              {!lastApply && !doctorResult && !applyResult ? (
+                <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">
+                  <p className="text-sm font-medium text-foreground">{t("team.onboardingTitle")}</p>
+                  <p className="mt-1 text-[12px] text-muted">{t("team.onboardingSteps")}</p>
+                </div>
+              ) : null}
+
               <section className="rounded-lg border border-border bg-surface p-4">
                 <h3 className="mb-3 text-sm font-semibold text-foreground">
                   {t("team.contextTitle")}

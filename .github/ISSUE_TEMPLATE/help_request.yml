@@ -1,0 +1,56 @@
+name: 求助 / 使用问题
+description: 安装、配置、Team 页报错 — 不知道怎么继续时用这个
+title: "[Help] "
+labels: ["question", "documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        新手友好区。先对照 [入门指南](https://github.com/2233admin/skillgate-team/blob/master/docs/GETTING_STARTED.md)。
+
+        发帖前请确认：**Team catalog root** 是否指向你 `git clone` 的仓库路径。
+  - type: dropdown
+    id: experience
+    attributes:
+      label: 你的情况
+      options:
+        - 第一次安装，还没跑通
+        - 以前能用，现在突然不行
+        - 想绑定业务项目（.skillgate/profile）
+        - 维护者：更新技能 / lock
+        - 其他
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: 你在用
+      options:
+        - 只看文档，还没装
+        - CLI
+        - TUI
+        - Desktop
+    validations:
+      required: true
+  - type: input
+    id: team_root
+    attributes:
+      label: Team catalog root（或 SKILLGATE_ROOT）
+      placeholder: D:\skillgate-team 或 ~/.skillgate-team
+  - type: textarea
+    id: tried
+    attributes:
+      label: 已经试过什么？
+      placeholder: |
+        - bun install --ignore-scripts
+        - bun run gui:install
+        - 设置里填了 ...
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: 报错原文或截图说明
+      render: shell
+    validations:
+      required: true

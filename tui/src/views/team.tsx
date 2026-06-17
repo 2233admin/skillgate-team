@@ -162,6 +162,10 @@ export function TeamView() {
         <text fg={colors.textDim}>
           Configure team.root in Settings (s) or set SKILLGATE_ROOT.
         </text>
+        <text>{" "}</text>
+        <text fg={colors.textDim}>
+          1) git clone this repo  2) Settings → team.root  3) Tab 4 → a to apply
+        </text>
       </box>
     )
   }
@@ -169,8 +173,30 @@ export function TeamView() {
   const ctx = team.context!
   const summary = team.profileSummaries[selectedProfileName]
 
+  const showOnboarding = !team.lastApply && !team.lastDoctor && !team.lastApplyResult
+
   return (
     <box style={{ flexDirection: "column", width: "100%", flexGrow: 1 }}>
+      {showOnboarding ? (
+        <box
+          style={{
+            width: "100%",
+            paddingLeft: 1,
+            paddingRight: 1,
+            paddingTop: 1,
+            backgroundColor: colors.bgAlt,
+          }}
+        >
+          <text fg={colors.primary}>
+            <strong>Quick start</strong>
+            {" "}
+            <span fg={colors.textDim}>
+              j/k pick profile → a apply → d doctor (? for all keys)
+            </span>
+          </text>
+        </box>
+      ) : null}
+
       {/* Drift banner */}
       {team.driftBehind ? (
         <box

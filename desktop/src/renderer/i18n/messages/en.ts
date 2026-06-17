@@ -108,6 +108,11 @@ export const en = {
     loading: "Loading team context...",
     contextErrorTitle: "Team catalog unavailable",
     contextErrorHint: "Configure the team root in",
+    contextErrorSteps:
+      "1. Clone this repo to a fixed folder (e.g. ~/.skillgate-team)\n2. Settings → Team catalog root → paste that path\n3. Return here and pick a profile → Apply",
+    onboardingTitle: "Quick start",
+    onboardingSteps:
+      "Pick a profile (e.g. quant) → Apply profile → Run doctor. If skills look stale after a git pull, Apply again. See docs/GETTING_STARTED.md in the repo.",
     contextTitle: "Context",
     teamRoot: "Team root",
     linkedProject: "Linked project",

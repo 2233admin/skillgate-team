@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 入门指南（推荐先看）
+    url: https://github.com/2233admin/skillgate-team/blob/master/docs/GETTING_STARTED.md
+    about: 5 分钟上手 · CLI / TUI / Desktop 三种路径
+  - name: README 快速开始
+    url: https://github.com/2233admin/skillgate-team#5-分钟上手
+    about: 克隆、安装、Apply quant profile

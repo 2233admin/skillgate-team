@@ -1,0 +1,66 @@
+name: Bug 报告
+description: 可复现的错误、崩溃或行为不符合预期
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请尽量写清复现步骤。开发前可先跑 `bun run smoke-test` / `bun run smoke-team` 对比。
+  - type: dropdown
+    id: surface
+    attributes:
+      label: 出问题的入口
+      options:
+        - CLI（skillgate 命令）
+        - TUI（skillgate tui）
+        - Desktop（skillgate gui）
+        - 团队目录 / profile / lock
+        - 其他
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: 版本
+      description: 仓库 VERSION 或 `skillgate --version`（如有）
+      placeholder: "0.1.0"
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境
+      description: OS、Node、Bun 版本；Windows 请注明是否运行过 gui:install
+      placeholder: |
+        Windows 11 · Node 25.9.0 · Bun 1.3.14
+        SKILLGATE_ROOT=D:\skillgate-team
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. bun run gui
+        2. 设置 Team catalog root 为 ...
+        3. Team → Apply quant
+        4. 出现报错 ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志 / 截图
+      description: 终端完整输出或截图（可打码路径中的用户名）
+      render: shell
