@@ -79,111 +79,124 @@ export async function runApply(args: string[]): Promise<void> {
     process.exit(1);
   }
 
-  const profileName =
-    options.profile ?? (await readProjectProfile()) ?? "quant";
-  const lock = await readTeamLock(teamRoot);
-  const profile = await readTeamProfile(profileName, teamRoot);
-  const protect = await readProtectList(teamRoot);
+  try {
+    const profileName =
+      options.profile ?? (await readProjectProfile()) ?? "quant";
+    const lock = await readTeamLock(teamRoot);
+    const profile = await readTeamProfile(profileName, teamRoot);
+    const protect = await readProtectList(teamRoot);
 
-  p.intro(pc.bold(`skillgate apply — profile ${profileName}`));
-
-  const detected = await detectInstalledAgents();
-  let targetAgents = detected.filter((a) => a.name !== "universal");
-  if (profile.agents?.length) {
-    const allowed = new Set(profile.agents);
-    targetAgents = targetAgents.filter((a) => allowed.has(a.name));
-  }
-  if (options.agent?.length) {
-    const allowed = new Set(options.agent);
-    targetAgents = targetAgents.filter((a) => allowed.has(a.name));
-  }
-
-  if (targetAgents.length === 0) {
-    p.log.warn("No target agents detected.");
-    process.exit(1);
-  }
-
-  const method: InstallMethod = options.copy ? "copy" : "symlink";
-  const spinner = p.spinner();
-  let installed = 0;
-  let failed = 0;
-
-  for (const skillName of profile.skills) {
-    if (protect.has(skillName.toLowerCase())) {
-      p.log.warn(`Skipping protected skill: ${skillName}`);
-      continue;
+    if (!options.yes) {
+      p.intro(pc.bold(`skillgate apply: profile ${profileName}`));
     }
 
-    const entry = lock.skills[skillName];
-    if (!entry) {
-      p.log.warn(`No lock entry for skill: ${skillName}`);
-      failed++;
-      continue;
+    const detected = await detectInstalledAgents();
+    let targetAgents = detected.filter((a) => a.name !== "universal");
+    if (profile.agents?.length) {
+      const allowed = new Set(profile.agents);
+      targetAgents = targetAgents.filter((a) => allowed.has(a.name));
+    }
+    if (options.agent?.length) {
+      const allowed = new Set(options.agent);
+      targetAgents = targetAgents.filter((a) => allowed.has(a.name));
     }
 
-    if (entry.source !== "vendored") {
-      p.log.warn(`Unsupported source for ${skillName}: ${entry.source} (MVP: vendored only)`);
-      failed++;
-      continue;
+    if (targetAgents.length === 0) {
+      p.log.warn("No target agents detected.");
+      process.exit(1);
     }
 
-    const skillDir = resolveVendoredSkillDir(entry, teamRoot);
-    const dirHash = await hashDirectory(skillDir);
+    const method: InstallMethod = options.copy ? "copy" : "symlink";
+    const spinner = p.spinner();
+    let installed = 0;
+    let failed = 0;
+
+    for (const skillName of profile.skills) {
+      if (protect.has(skillName.toLowerCase())) {
+        p.log.warn(`Skipping protected skill: ${skillName}`);
+        continue;
+      }
+
+      const entry = lock.skills[skillName];
+      if (!entry) {
+        p.log.warn(`No lock entry for skill: ${skillName}`);
+        failed++;
+        continue;
+      }
+
+      if (entry.source !== "vendored") {
+        p.log.warn(`Unsupported source for ${skillName}: ${entry.source} (MVP: vendored only)`);
+        failed++;
+        continue;
+      }
+
+      const skillDir = resolveVendoredSkillDir(entry, teamRoot);
+      const dirHash = await hashDirectory(skillDir);
+
+      if (options.writeLock) {
+        lock.skills[skillName] = { ...entry, contentHash: dirHash };
+      } else if (entry.contentHash && entry.contentHash !== dirHash) {
+        p.log.warn(
+          `${skillName}: lock hash mismatch (expected ${entry.contentHash}, got ${dirHash})`,
+        );
+      }
+
+      spinner.start(`Installing ${skillName}...`);
+      const skills = await discoverSkills(skillDir);
+      if (skills.length === 0) {
+        spinner.stop(pc.red(`No SKILL.md in ${skillDir}`));
+        failed++;
+        continue;
+      }
+
+      const skill = skills[0];
+      for (const agent of targetAgents) {
+        const result = await installSkillForAgent(
+          skill,
+          agent as AgentConfig,
+          "global",
+          method,
+        );
+        if (!result.success) {
+          failed++;
+          p.log.error(`${skillName} -> ${agent.displayName}: ${result.error}`);
+        } else {
+          installed++;
+        }
+      }
+      spinner.stop(`${skillName} -> ${targetAgents.length} agent(s)`);
+    }
 
     if (options.writeLock) {
-      lock.skills[skillName] = { ...entry, contentHash: dirHash };
-    } else if (entry.contentHash && entry.contentHash !== dirHash) {
-      p.log.warn(
-        `${skillName}: lock hash mismatch (expected ${entry.contentHash}, got ${dirHash})`,
-      );
+      lock.revision = (lock.revision ?? 0) + 1;
+      await writeTeamLock(lock, teamRoot);
+      p.log.success(`Updated ${getTeamSkillsRoot()}/skills.lock.yaml`);
     }
 
-    spinner.start(`Installing ${skillName}...`);
-    const skills = await discoverSkills(skillDir);
-    if (skills.length === 0) {
-      spinner.stop(pc.red(`No SKILL.md in ${skillDir}`));
-      failed++;
-      continue;
+    await saveApplyState({
+      appliedAt: new Date().toISOString(),
+      profile: profileName,
+      revision: lock.revision,
+      teamRoot,
+      method,
+      agents: targetAgents.map((a) => a.name),
+    });
+
+    const summary = pc.green(
+      `Done. ${installed} installs, ${failed} failures.`,
+    );
+    if (options.yes) {
+      console.log(summary);
+    } else {
+      p.outro(summary);
     }
 
-    const skill = skills[0];
-    for (const agent of targetAgents) {
-      const result = await installSkillForAgent(
-        skill,
-        agent as AgentConfig,
-        "global",
-        method,
-      );
-      if (!result.success) {
-        failed++;
-        p.log.error(`${skillName} → ${agent.displayName}: ${result.error}`);
-      } else {
-        installed++;
-      }
+    if (failed > 0) {
+      process.exit(1);
     }
-    spinner.stop(`${skillName} → ${targetAgents.length} agent(s)`);
-  }
-
-  if (options.writeLock) {
-    lock.revision = (lock.revision ?? 0) + 1;
-    await writeTeamLock(lock, teamRoot);
-    p.log.success(`Updated ${getTeamSkillsRoot()}/skills.lock.yaml`);
-  }
-
-  await saveApplyState({
-    appliedAt: new Date().toISOString(),
-    profile: profileName,
-    revision: lock.revision,
-    teamRoot,
-    method,
-    agents: targetAgents.map((a) => a.name),
-  });
-
-  p.outro(
-    pc.green(`Done. ${installed} installs, ${failed} failures.`),
-  );
-
-  if (failed > 0) {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(pc.red(message));
     process.exit(1);
   }
 }

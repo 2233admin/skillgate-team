@@ -55,6 +55,8 @@ async function main(): Promise<void> {
     restArgs.includes("--quiet") ||
     process.env.SKILLGATE_QUIET === "1";
 
+  const yesFlag = restArgs.includes("-y") || restArgs.includes("--yes");
+
   const nonInteractive = new Set([
     "smoke-test",
     "update-check",
@@ -64,11 +66,57 @@ async function main(): Promise<void> {
     "lock",
   ]);
 
-  // Show logo for interactive commands (skip in quiet / hook / automation mode)
+  if (yesFlag) {
+    nonInteractive.add("apply");
+  }
+
+  if (command === "setup" && restArgs.includes("--team")) {
+    nonInteractive.add("setup");
+  }
+
+  const knownCommands = new Set([
+    "add",
+    "a",
+    "install",
+    "i",
+    "remove",
+    "rm",
+    "r",
+    "uninstall",
+    "list",
+    "ls",
+    "update",
+    "up",
+    "sync",
+    "login",
+    "logout",
+    "whoami",
+    "publish",
+    "p",
+    "pub",
+    "scan",
+    "audit",
+    "setup",
+    "apply",
+    "doctor",
+    "lock",
+    "install-global",
+    "team-init",
+    "smoke-test",
+    "update-check",
+    "tui",
+    "--version",
+    "-v",
+    "--help",
+    "-h",
+  ]);
+
+  // Show logo for known interactive commands only (skip help/unknown/quiet/automation)
   if (
     command &&
     !command.startsWith("-") &&
     !quiet &&
+    knownCommands.has(command) &&
     !nonInteractive.has(command)
   ) {
     printLogo();
@@ -240,19 +288,19 @@ function printHelp(): void {
   console.log(`    tui                Launch terminal UI (requires @skillsgate/tui)`);
   console.log();
   console.log(`  ${BOLD("Examples:")}`);
-  console.log(`    skillsgate add @username/audit-website ${DIM("# install from SkillsGate")}`);
-  console.log(`    skillsgate add vercel-labs/agent-skills`);
-  console.log(`    skillsgate add vercel-labs/agent-skills@my-skill`);
-  console.log(`    skillsgate add https://github.com/owner/repo`);
-  console.log(`    skillsgate add ./local/skills`);
-  console.log(`    skillsgate scan @username/audit-website ${DIM("# scan a SkillsGate skill")}`);
-  console.log(`    skillsgate scan owner/repo              ${DIM("# scan a GitHub repo")}`);
-  console.log(`    skillsgate scan owner/repo@skill-name   ${DIM("# scan a specific skill in a repo")}`);
-  console.log(`    skillsgate scan ./local/skill            ${DIM("# scan a local path")}`);
-  console.log(`    skillsgate remove my-skill`);
-  console.log(`    skillsgate list -g`);
-  console.log(`    skillsgate update`);
-  console.log(`    skillsgate sync`);
+  console.log(`    skillgate add @username/audit-website ${DIM("# install from SkillsGate")}`);
+  console.log(`    skillgate add vercel-labs/agent-skills`);
+  console.log(`    skillgate add vercel-labs/agent-skills@my-skill`);
+  console.log(`    skillgate add https://github.com/owner/repo`);
+  console.log(`    skillgate add ./local/skills`);
+  console.log(`    skillgate scan @username/audit-website ${DIM("# scan a SkillsGate skill")}`);
+  console.log(`    skillgate scan owner/repo              ${DIM("# scan a GitHub repo")}`);
+  console.log(`    skillgate scan owner/repo@skill-name   ${DIM("# scan a specific skill in a repo")}`);
+  console.log(`    skillgate scan ./local/skill            ${DIM("# scan a local path")}`);
+  console.log(`    skillgate remove my-skill`);
+  console.log(`    skillgate list -g`);
+  console.log(`    skillgate update`);
+  console.log(`    skillgate sync`);
   console.log();
   console.log(`  ${BOLD("Options:")}`);
   console.log(

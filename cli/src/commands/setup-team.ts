@@ -33,14 +33,24 @@ export async function runSetupTeam(args: string[]): Promise<void> {
       ? `export SKILLGATE_ROOT="${root.replace(/\\/g, "/")}"`
       : `$env:SKILLGATE_ROOT = "${root}"`;
 
+  const teamCliDir = path.join(root, "cli").replace(/\\/g, "/");
+
   p.note(
     [
       "Add to your shell profile:",
       profileHint,
       "",
+      "Install CLI globally (from team repo):",
+      `  cd ${teamCliDir} && npm install && npm run build`,
+      "  node bin/skillgate.mjs install-global",
+      "  Open a new terminal so PATH picks up skillgate.",
+      "",
       "Then run:",
       "  skillgate apply --profile quant",
       "  skillgate doctor --profile quant",
+      "",
+      "For application repos:",
+      "  skillgate team-init --mode required",
     ].join("\n"),
     "Next steps",
   );

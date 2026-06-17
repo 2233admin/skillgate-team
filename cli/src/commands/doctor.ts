@@ -51,7 +51,11 @@ export async function runDoctor(args: string[]): Promise<void> {
   try {
     await fs.access(teamRoot);
   } catch {
-    if (!options.quiet) {
+    if (options.quiet) {
+      console.error(
+        `SKILLGATE_TEAM_MISSING: ${teamRoot} (clone skillgate-team or set SKILLGATE_ROOT)`,
+      );
+    } else {
       console.error(pc.red(`Team skills root not found: ${teamRoot}`));
     }
     process.exit(1);
@@ -152,11 +156,11 @@ export async function runDoctor(args: string[]): Promise<void> {
       ),
     );
   } else if (!options.quiet) {
-    console.log(pc.bold(`skillgate doctor — profile ${profileName}`));
+    console.log(pc.bold(`skillgate doctor - profile ${profileName}`));
     console.log(pc.dim(`team root: ${teamRoot}`));
     console.log(pc.dim(`agents detected: ${agentCount}`));
     if (drifts.length === 0) {
-      console.log(pc.green("OK — no drift detected."));
+      console.log(pc.green("OK - no drift detected."));
     } else {
       for (const d of drifts) {
         console.log(
@@ -166,6 +170,10 @@ export async function runDoctor(args: string[]): Promise<void> {
         );
       }
     }
+  } else if (options.quiet && drifts.length > 0) {
+    console.error(
+      `SKILLGATE_DRIFT: ${drifts.length} issue(s) (run skillgate doctor --profile ${profileName} for details)`,
+    );
   }
 
   process.exit(drifts.length === 0 ? 0 : 1);
