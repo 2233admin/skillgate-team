@@ -58,6 +58,7 @@ async function main(): Promise<void> {
   const nonInteractive = new Set([
     "smoke-test",
     "update-check",
+    "install-global",
     "doctor",
     "lock",
   ]);

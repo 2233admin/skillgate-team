@@ -3,26 +3,10 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import pc from "picocolors";
-import { fileURLToPath } from "node:url";
+import { cliEntryPath } from "../core/cli-package-root.js";
 import { getTeamSkillsRoot } from "../core/team-config.js";
 
 const LOGO_BLOCK = "███████╗";
-
-function cliPackageRoot(): string {
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  // Bundled entry is dist/cli.js; dev/tests may load dist/commands/*.js
-  if (path.basename(here) === "dist") {
-    return path.dirname(here);
-  }
-  if (path.basename(here) === "commands") {
-    return path.resolve(here, "..", "..");
-  }
-  return path.resolve(here, "..", "..");
-}
-
-function cliEntryPath(): string {
-  return path.join(cliPackageRoot(), "bin", "skillgate.mjs");
-}
 
 function parseArgs(args: string[]): { profile: string; skipApply: boolean } {
   let profile = "quant";
@@ -41,7 +25,7 @@ function runCli(
   argv: string[],
   env: NodeJS.ProcessEnv,
 ): { code: number; stdout: string; stderr: string } {
-  const entry = cliEntryPath();
+  const entry = cliEntryPath(import.meta.url);
   const result = spawnSync(process.execPath, [entry, ...argv], {
     env: { ...process.env, ...env },
     encoding: "utf-8",
@@ -89,14 +73,25 @@ export async function runSmokeTest(args: string[]): Promise<void> {
 
   console.log(pc.bold("=== smoke: global shim ==="));
   const shim = path.join(os.homedir(), ".skillgate", "bin", "skillgate.mjs");
+  const repoCli = path.join(os.homedir(), ".skillgate", "repo", "dist", "cli.js");
   try {
     await fs.access(shim);
+    try {
+      await fs.access(repoCli);
+    } catch {
+      console.log(
+        pc.red(`FAIL: junction repo missing dist/cli.js at ${repoCli}`),
+      );
+      failed++;
+    }
     const shimRun = spawnSync(
       process.execPath,
       [shim, "doctor", "--profile", profile, "-q"],
       { env: { ...process.env, SKILLGATE_ROOT: teamRoot }, encoding: "utf-8" },
     );
     if ((shimRun.status ?? 1) !== 0) {
+      console.log(pc.red(`FAIL: global shim doctor exit ${shimRun.status}`));
+      if (shimRun.stderr) console.log(shimRun.stderr.trim());
       failed++;
     }
   } catch {
