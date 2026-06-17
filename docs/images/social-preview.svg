@@ -1,77 +1,39 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" role="img" aria-label="Skillgate Team">
-  <defs>
-    <pattern id="sg" width="32" height="32" patternUnits="userSpaceOnUse">
-      <path d="M32 0H0V32" fill="none" stroke="#FFFFFF" stroke-opacity="0.05" stroke-width="0.5"/>
-    </pattern>
-    <linearGradient id="beam" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#2EC4B6" stop-opacity="0"/>
-      <stop offset="50%" stop-color="#2EC4B6" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#2EC4B6" stop-opacity="0"/>
-    </linearGradient>
-    <clipPath id="cover">
-      <polygon points="0,0 1000,0 900,640 0,640"/>
-    </clipPath>
-  </defs>
+  <rect width="1280" height="640" fill="#F9F9FB"/>
+  <rect x="0" y="0" width="1280" height="1" fill="#E6E6E8"/>
+  <rect x="80" y="80" width="48" height="48" rx="12" fill="#FFFFFF" stroke="#E6E6E8"/>
+  <path fill="none" stroke="#2EC4B6" stroke-width="1" stroke-opacity="0.4" d="M116 116 L128 116 L128 128"/>
+  <path fill="none" stroke="#1C1917" stroke-width="2" stroke-linecap="round" d="M92 92 L98 92 C99 92 100 93 100 94 L100 114 C100 115 99 116 98 116 L92 116"/>
+  <path fill="none" stroke="#1C1917" stroke-width="2" stroke-linecap="round" d="M108 92 L114 92 C115 92 116 93 116 94 L116 114 C116 115 115 116 114 116 L108 116"/>
+  <path fill="none" stroke="#1C1917" stroke-width="2" stroke-linecap="round" d="M92 92 L114 92"/>
+  <circle cx="103" cy="100" r="2.5" fill="#D4A054"/>
+  <circle cx="103" cy="106" r="2.5" fill="#2EC4B6"/>
+  <circle cx="103" cy="112" r="2.5" fill="#D4A054"/>
 
-  <rect width="1280" height="640" fill="#0A0A0C"/>
-  <rect width="1280" height="640" fill="url(#sg)"/>
+  <text x="144" y="108" fill="#0C0C0D" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="52" font-weight="600" letter-spacing="-0.02em">Skillgate Team</text>
+  <text x="80" y="168" fill="#6B6F76" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="26" font-weight="400">One Git catalog. Same skills on every agent.</text>
+  <text x="80" y="210" fill="#9CA0A8" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="18">profiles · lock · apply · doctor · CLI / TUI / Desktop</text>
 
-  <polygon points="0,0 420,0 300,640 0,640" fill="#C41E3A" fill-opacity="0.9"/>
-  <polygon points="900,0 1280,0 1280 120 1040,0" fill="#F5A524" fill-opacity="0.2"/>
+  <rect x="80" y="260" width="540" height="280" rx="10" fill="#FFFFFF" stroke="#E6E6E8"/>
+  <line x1="80" y1="260" x2="200" y2="260" stroke="#D4A054" stroke-width="2" stroke-opacity="0.65"/>
+  <text x="108" y="300" fill="#9CA0A8" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="12" font-weight="500" letter-spacing="0.04em">CATALOG</text>
+  <text x="108" y="336" fill="#0C0C0D" font-family="ui-monospace, Consolas, monospace" font-size="17">profiles/quant.yaml</text>
+  <text x="108" y="368" fill="#6B6F76" font-family="ui-monospace, Consolas, monospace" font-size="15">skills.lock.yaml</text>
+  <text x="108" y="400" fill="#6B6F76" font-family="ui-monospace, Consolas, monospace" font-size="15">protect.yaml</text>
+  <line x1="108" y1="420" x2="592" y2="420" stroke="#E6E6E8"/>
+  <text x="108" y="448" fill="#6B6F76" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="14">12 skills · 4 agents · hash-pinned</text>
+  <rect x="108" y="468" width="132" height="40" rx="8" fill="#1C1917"/>
+  <text x="174" y="494" text-anchor="middle" fill="#F9F9FB" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="14" font-weight="500">Apply profile</text>
 
-  <g clip-path="url(#cover)">
-    <rect x="-200" y="0" width="400" height="640" fill="url(#beam)">
-      <animate attributeName="x" values="-200;1280;-200" dur="6s" repeatCount="indefinite"/>
-    </rect>
-  </g>
+  <rect x="660" y="260" width="540" height="280" rx="10" fill="#FFFFFF" stroke="#E6E6E8"/>
+  <text x="688" y="300" fill="#9CA0A8" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="12" font-weight="500" letter-spacing="0.04em">FLOW</text>
+  <circle cx="704" cy="340" r="4" fill="#2EC4B6"/>
+  <text x="720" y="346" fill="#0C0C0D" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="16" font-weight="500">git pull — team updates catalog</text>
+  <circle cx="704" cy="384" r="4" fill="#D4A054"/>
+  <text x="720" y="390" fill="#0C0C0D" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="16" font-weight="500">skillgate apply — link to local paths</text>
+  <circle cx="704" cy="428" r="4" fill="#2EC4B6"/>
+  <text x="720" y="434" fill="#0C0C0D" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="16" font-weight="500">doctor — prove drift is zero</text>
+  <text x="688" y="500" fill="#9CA0A8" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="14">Claude · Codex · Cursor · Grok</text>
 
-  <!-- Logo -->
-  <g transform="translate(80, 120)">
-    <path fill="none" stroke="#E7E5E4" stroke-width="4" stroke-linecap="square" d="M10 6 L2 6 L2 100 L10 100"/>
-    <path fill="none" stroke="#E7E5E4" stroke-width="4" stroke-linecap="square" d="M70 6 L78 6 L78 100 L70 100"/>
-    <path fill="none" stroke="#E7E5E4" stroke-width="4" d="M10 6 L70 6"/>
-    <circle cx="44" cy="32" r="6" fill="#2EC4B6">
-      <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="44" cy="56" r="6" fill="#F5A524">
-      <animate attributeName="opacity" values="0.3;1;0.3" dur="1.5s" repeatCount="indefinite"/>
-    </circle>
-    <circle cx="44" cy="80" r="6" fill="#2EC4B6">
-      <animate attributeName="opacity" values="1;0.3;1" dur="1.5s" begin="0.35s" repeatCount="indefinite"/>
-    </circle>
-  </g>
-
-  <text x="200" y="168" fill="#E7E5E4" font-family="Segoe UI, system-ui, sans-serif" font-size="64" font-weight="700" letter-spacing="-0.03em">Skillgate</text>
-  <text x="202" y="212" fill="#F5A524" font-family="ui-monospace, Consolas, monospace" font-size="18" font-weight="700" letter-spacing="0.32em">TEAM OPS</text>
-  <text x="200" y="260" fill="#A8A29E" font-family="Segoe UI, system-ui, sans-serif" font-size="24">One Git catalog · Same skills on every agent</text>
-  <text x="200" y="300" fill="#57534E" font-family="ui-monospace, Consolas, monospace" font-size="16" letter-spacing="0.06em">profiles · lock · apply · doctor · CLI / TUI / Desktop</text>
-
-  <!-- HUD panels -->
-  <g transform="translate(200, 340)">
-    <polygon points="0,0 380,0 364,200 0,200" fill="#141418" stroke="#2EC4B6" stroke-width="1.5"/>
-    <text x="20" y="36" fill="#2EC4B6" font-family="ui-monospace, Consolas, monospace" font-size="12" letter-spacing="0.18em">CATALOG</text>
-    <text x="20" y="72" fill="#E7E5E4" font-family="ui-monospace, Consolas, monospace" font-size="18">profiles/quant.yaml</text>
-    <text x="20" y="102" fill="#78716C" font-family="ui-monospace, Consolas, monospace" font-size="16">skills.lock.yaml</text>
-    <text x="20" y="132" fill="#78716C" font-family="ui-monospace, Consolas, monospace" font-size="16">protect.yaml</text>
-    <polygon points="20,152 200,160 188,188 20,180" fill="#F5A524"/>
-    <text x="110" y="176" text-anchor="middle" fill="#0A0A0C" font-family="ui-monospace, Consolas, monospace" font-size="13" font-weight="700">APPLY</text>
-    <text x="20" y="196" fill="#57534E" font-family="ui-monospace, Consolas, monospace" font-size="12">12 skills · 4 agents · hash-pinned</text>
-  </g>
-
-  <g transform="translate(620, 340)">
-    <polygon points="12,0 400,0 400,200 0,200" fill="#141418" stroke="#F5A524" stroke-width="1"/>
-    <text x="32" y="36" fill="#F5A524" font-family="ui-monospace, Consolas, monospace" font-size="12" letter-spacing="0.18em">FLOW</text>
-    <circle cx="36" cy="68" r="5" fill="#2EC4B6">
-      <animate attributeName="opacity" values="1;0.2;1" dur="1.2s" repeatCount="indefinite"/>
-    </circle>
-    <text x="52" y="74" fill="#E7E5E4" font-family="Segoe UI, system-ui, sans-serif" font-size="17">git pull — team updates catalog</text>
-    <circle cx="36" cy="108" r="5" fill="#F5A524"/>
-    <text x="52" y="114" fill="#E7E5E4" font-family="Segoe UI, system-ui, sans-serif" font-size="17">skillgate apply — link local paths</text>
-    <circle cx="36" cy="148" r="5" fill="#2EC4B6"/>
-    <text x="52" y="154" fill="#E7E5E4" font-family="Segoe UI, system-ui, sans-serif" font-size="17">doctor — prove drift is zero</text>
-    <text x="32" y="188" fill="#57534E" font-family="ui-monospace, Consolas, monospace" font-size="13">Claude · Codex · Cursor · Grok</text>
-  </g>
-
-  <text x="80" y="600" fill="#57534E" font-family="ui-monospace, Consolas, monospace" font-size="15" letter-spacing="0.04em">github.com/2233admin/skillgate-team</text>
-  <path d="M1180 560 L1280 560 L1280 640" fill="none" stroke="#2EC4B6" stroke-width="2"/>
+  <text x="80" y="580" fill="#9CA0A8" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="15">github.com/2233admin/skillgate-team</text>
 </svg>

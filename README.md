@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/images/hero.svg" width="920" alt="Skillgate Team — 团队技能作战面板" />
+<img src="docs/images/logo.svg" width="72" height="72" alt="Skillgate logo" />
 
 # Skillgate Team
 
@@ -198,7 +198,7 @@ Page Object、CI 接入、产物、 flaky 处理——端到端别只跑 happy p
 | [`cli/`](cli/) | `skillgate` CLI + `team-api` |
 | [`desktop/`](desktop/) | Electron 桌面应用 |
 | [`tui/`](tui/) | OpenTUI 终端 UI |
-| [`docs/DESIGN.md`](docs/DESIGN.md) | 视觉系统（工业 HUD / 解构构图） |
+| [`docs/DESIGN.md`](docs/DESIGN.md) | 视觉系统（克制工程风 + 配色约束） |
 | [`docs/images/`](docs/images/) | README 配图 |
 
 ---

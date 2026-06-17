@@ -1,55 +1,43 @@
 # Skillgate Team — 视觉系统
 
-**气质**：明日方舟式工业 HUD × 解构主义构图 × 苏联前卫几何（构成主义 / 罗德岛终端感）。
+**气质**：克制、干净、偏工程工具的高级感。明日方舟只作**点缀**（琥珀 + 青绿双强调），不做作战面板、不做斜切堆砌。
 
-不是 SaaS 浅色营销页，也不是 Linear 紫。是**作战面板**：暗底、斜切、网格、双强调色、会动的扫描线。
+## 原则
 
-## 第一性原理
-
-| 本质 | 视觉表达 |
-|------|----------|
-| 单一事实源 | 一条硬连线：CATALOG → DISPATCH → LOCAL |
-| 可验证 | 等宽数据行、状态灯、LOCK / DRIFT 标签 |
-| 团队同步 | Logo 三门 + 三点脉冲 = 对齐节拍 |
-
-装饰必须像「系统 UI」，不能像贴纸。
+| 要做 | 不做 |
+|------|------|
+| 浅底文档图 + 深底应用示意，信息清晰 | 大红楔、满屏网格、扫描线动画 |
+| Logo 三门 + 三点（琥珀 / 青 / 琥珀） | 动效 SVG、横幅 hero |
+| 强调色只出现在边框、节点、角标 | 解构平行四边形、全大写战术标签 |
 
 ## 色板
 
 | Token | 值 | 用途 |
 |-------|-----|------|
-| `bg-void` | `#0A0A0C` | 主背景 |
-| `bg-panel` | `#141418` | 面板 |
-| `grid` | `#FFFFFF0A` | 战术网格 |
-| `text-primary` | `#E7E5E4` | 主文案 |
-| `text-muted` | `#78716C` | 次要 |
-| `ops-orange` | `#F5A524` | 主强调 / 告警 / 选中 |
-| `sync-cyan` | `#2EC4B6` | 次强调 / 链路 / 在线 |
-| `soviet-red` | `#C41E3A` | 斜切色块、构成主义楔 |
-| `border` | `#2A2A30` | 1px 硬边 |
+| `bg-doc` | `#F9F9FB` | README 架构图、社交封面底 |
+| `bg-app` | `#0C0C0D` / `#141516` | Desktop / TUI 示意 |
+| `text` | `#0C0C0D` / `#F7F8F8` | 主文案 |
+| `text-muted` | `#6B6F76` / `#8A8F98` | 次要 |
+| `accent-amber` | `#D4A054` | 明日方舟式暖强调（顶栏告警、节点、细线） |
+| `accent-cyan` | `#2EC4B6` | 链路 / 选中 / 标签 |
+| `border` | `#E6E6E8` / `#2E2E32` | 分割 |
 
-## 构图规则（解构 + 前卫）
-
-- **斜切**：面板用 `polygon` 或平行四边形裁切，禁止圆角卡片堆叠
-- **叠层**：色块可压在网格上，信息块允许 2–4° 视觉错位
-- **标签**：全大写 + 字间距（`OPERATION` `SYNC` `CATALOG`）
-- **动效**（README SVG）：扫描线、节点脉冲、网格呼吸——用 SMIL，GitHub 可播
+主按钮用 `#1C1917` 深底白字，不用高饱和色块。
 
 ## 资产
 
 | 文件 | 说明 |
 |------|------|
-| `hero.svg` | README 顶栏动效横幅 |
-| `logo.svg` | 图标 / 小尺寸 |
-| `architecture.svg` | 解构数据流 |
-| `social-preview.svg` | 1280×640 社交封面 |
-| `desktop-team-preview.svg` | Desktop HUD 示意 |
-| `tui-team-preview.svg` | 终端战术视图 |
+| `logo.svg` | README 顶栏 72px，静态 |
+| `architecture.svg` | 三栏流程，浅底 |
+| `social-preview.svg` | 1280×640 |
+| `desktop-team-preview.svg` | 深底 Desktop |
+| `tui-team-preview.svg` | 深底 TUI |
 
 实拍替换：[SCREENSHOTS.md](./SCREENSHOTS.md)
 
 ## 禁止
 
-- README 里写「借鉴 XX」「遵循 XX 审美」的致谢式 blockquote
-- 浅灰 SaaS 底 + 单一品牌紫
-- 无意义的渐变光晕 blob
+- README 致谢式 blockquote（借鉴 XX 审美）
+- 动效横幅、SMIL 脉冲、苏联构成主义大色块
+- 单一品牌紫（旧 Linear 色）

@@ -1,13 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Skillgate">
-  <rect width="64" height="64" fill="#0A0A0C"/>
-  <path fill="#C41E3A" fill-opacity="0.85" d="M0 0 H28 L18 64 H0 Z"/>
-  <path fill="none" stroke="#E7E5E4" stroke-width="2.2" stroke-linecap="square" d="M30 10 L24 10 L24 54 L30 54"/>
-  <path fill="none" stroke="#E7E5E4" stroke-width="2.2" stroke-linecap="square" d="M46 10 L52 10 L52 54 L46 54"/>
-  <path fill="none" stroke="#E7E5E4" stroke-width="2.2" d="M30 10 L46 10"/>
-  <circle cx="38" cy="24" r="3" fill="#2EC4B6">
-    <animate attributeName="opacity" values="1;0.4;1" dur="1.8s" repeatCount="indefinite"/>
-  </circle>
-  <circle cx="38" cy="38" r="3" fill="#F5A524">
-    <animate attributeName="opacity" values="0.4;1;0.4" dur="1.8s" repeatCount="indefinite"/>
-  </circle>
+  <rect width="64" height="64" rx="14" fill="#F9F9FB"/>
+  <path fill="none" stroke="#2EC4B6" stroke-width="1.25" stroke-opacity="0.45" d="M50 50 L64 50 L64 64"/>
+  <g transform="translate(10, 10)">
+    <path fill="none" stroke="#1C1917" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M14 2 L3 2 C1.5 2 1 3.5 1 5 L1 39 C1 40.5 1.5 42 3 42 L14 42"/>
+    <path fill="none" stroke="#1C1917" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M30 2 L41 2 C42.5 2 43 3.5 43 5 L43 39 C43 40.5 42.5 42 41 42 L30 42"/>
+    <path fill="none" stroke="#1C1917" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M14 2 L30 2"/>
+    <circle cx="22" cy="14" r="3" fill="#D4A054"/>
+    <circle cx="22" cy="22" r="3" fill="#2EC4B6"/>
+    <circle cx="22" cy="30" r="3" fill="#D4A054"/>
+  </g>
 </svg>
