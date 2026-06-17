@@ -13,6 +13,6 @@
     "smoke-test": "node cli/bin/skillgate.mjs smoke-test",
     "tui": "npm run start --prefix tui",
     "tui:dev": "npm run dev --prefix tui",
-    "tui:window": "powershell -NoExit -ExecutionPolicy Bypass -File scripts/launch-tui.ps1"
+    "tui:window": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch-tui-window.ps1"
   }
 }
