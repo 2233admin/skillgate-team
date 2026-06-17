@@ -1,0 +1,10 @@
+{
+  "name": "skillgate-team",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Team skill catalog + skillgate CLI",
+  "scripts": {
+    "build": "npm run build --prefix cli",
+    "install-global": "pwsh -NoProfile -File bin/skillgate-install.ps1"
+  }
+}

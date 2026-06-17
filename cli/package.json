@@ -1,0 +1,49 @@
+{
+  "name": "skillgate",
+  "version": "0.1.0",
+  "description": "Team skill distribution CLI (fork of skillsgate installer)",
+  "type": "module",
+  "bin": {
+    "skillgate": "./bin/skillgate.mjs"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build",
+    "install-global": "node -e \"require('child_process').execSync(process.platform==='win32'?'pwsh -NoProfile -File ../bin/skillgate-install.ps1':'bash ../bin/skillgate-install.sh',{stdio:'inherit',cwd:process.cwd()})\""
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "skills",
+    "team",
+    "claude",
+    "cursor",
+    "codex",
+    "grok"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@clack/prompts": "0.10.1",
+    "@modelcontextprotocol/sdk": "1.12.1",
+    "gray-matter": "4.0.3",
+    "open": "10.1.2",
+    "picocolors": "1.1.1",
+    "simple-git": "3.32.3",
+    "yaml": "2.8.0",
+    "zod": "3.25.67"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.11",
+    "tsup": "8.5.1",
+    "typescript": "5.9.3"
+  }
+}

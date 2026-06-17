@@ -1,0 +1,4 @@
+cli/node_modules/
+cli/dist/
+*.log
+.DS_Store

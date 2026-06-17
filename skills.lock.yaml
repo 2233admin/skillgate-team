@@ -1,0 +1,51 @@
+version: 1
+revision: 3
+skills:
+  coding-standards:
+    source: vendored
+    path: skills/coding-standards
+    contentHash: 9973612189e4e443
+  security-review:
+    source: vendored
+    path: skills/security-review
+    contentHash: 2ee10b7955cab7d4
+  frontend-patterns:
+    source: vendored
+    path: skills/frontend-patterns
+    contentHash: e2af8f73a6e19528
+  nextjs-turbopack:
+    source: vendored
+    path: skills/nextjs-turbopack
+    contentHash: 4cb9cf719c68312a
+  backend-patterns:
+    source: vendored
+    path: skills/backend-patterns
+    contentHash: 5a422e343693f73d
+  api-design:
+    source: vendored
+    path: skills/api-design
+    contentHash: 25e417a1409c43c2
+  tdd-workflow:
+    source: vendored
+    path: skills/tdd-workflow
+    contentHash: 3a5861d9f29b0b81
+  verification-loop:
+    source: vendored
+    path: skills/verification-loop
+    contentHash: 9591213a72de2291
+  documentation-lookup:
+    source: vendored
+    path: skills/documentation-lookup
+    contentHash: e1bc15b7aa07df6a
+  deep-research:
+    source: vendored
+    path: skills/deep-research
+    contentHash: 20e48dd7cfb4a536
+  strategic-compact:
+    source: vendored
+    path: skills/strategic-compact
+    contentHash: 5290ed9c03fddd72
+  e2e-testing:
+    source: vendored
+    path: skills/e2e-testing
+    contentHash: adec1725206df12d

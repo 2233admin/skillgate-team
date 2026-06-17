@@ -1,0 +1,20 @@
+name: quant
+description: k-atana and quantitative engineering workflow
+skills:
+  - coding-standards
+  - security-review
+  - frontend-patterns
+  - nextjs-turbopack
+  - backend-patterns
+  - api-design
+  - tdd-workflow
+  - verification-loop
+  - documentation-lookup
+  - deep-research
+  - strategic-compact
+  - e2e-testing
+agents:
+  - claude-code
+  - codex-cli
+  - cursor
+  - grok
