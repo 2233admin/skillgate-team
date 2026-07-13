@@ -43,7 +43,7 @@ Open a **new terminal**, then `skillgate doctor --profile quant`.
 
 ### Desktop installer (no compile)
 
-Download the Windows, macOS, or Linux installer from [Releases](https://github.com/2233admin/skillgate-team/releases), clone this repo to a fixed path, then in the app: **Settings → Team catalog root** → **Team → quant → Apply**.
+Signed Windows, macOS, and Linux installers are published to [Releases](https://github.com/2233admin/skillgate-team/releases) only after the compatibility ledger, signing, and clean-machine gates pass. `0.6.0-team.1` is a Tauri migration preview; use the CLI/TUI or Electron compatibility UI for complete Team, Discover, SSH, and Push workflows until cutover.
 
 ### Manual (maintainers)
 
@@ -207,7 +207,7 @@ Installer users should choose the asset matching their OS and architecture. Sour
 | [`skills.lock.yaml`](skills.lock.yaml) | Content hash lock |
 | [`cli/`](cli/) | `skillgate` CLI + `team-api` |
 | [`desktop-tauri/`](desktop-tauri/) | React + Tauri 2/Rust desktop application |
-| [`desktop/`](desktop/) | Migration-only Electron compatibility reference; no longer released |
+| [`desktop/`](desktop/) | Electron compatibility UI retained until Tauri feature parity |
 | [`tui/`](tui/) | OpenTUI terminal UI |
 | [`docs/DESIGN.md`](docs/DESIGN.md) | Visual system |
 | [`docs/images/`](docs/images/) | README assets |

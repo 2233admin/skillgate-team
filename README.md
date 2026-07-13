@@ -58,7 +58,7 @@ bun run setup
 
 ### 桌面安装包（不用自己编译）
 
-在 [Releases](https://github.com/2233admin/skillgate-team/releases) 下载 Windows、macOS 或 Linux 安装包。装好后：
+正式的 Windows、macOS、Linux 安装包会在兼容性 ledger、三平台签名和干净机器验证全部通过后发布到 [Releases](https://github.com/2233admin/skillgate-team/releases)。`0.6.0-team.1` 是 Tauri 迁移预览版；Team、Discover、SSH/Push 等完整工作流在迁移门禁完成前继续使用 CLI/TUI 或 Electron 兼容界面。
 
 1. 把本仓库 clone 到 `~/.skillgate-team`（或任意固定路径）
 2. 打开 Skillgate → **设置** → **Team catalog root** 填该路径
@@ -228,7 +228,7 @@ Context7 MCP 拉库文档，避免过期 API。
 | [`skills.lock.yaml`](skills.lock.yaml) | 内容哈希锁定 |
 | [`cli/`](cli/) | `skillgate` CLI + `team-api` |
 | [`desktop-tauri/`](desktop-tauri/) | React + Tauri 2/Rust 桌面应用 |
-| [`desktop/`](desktop/) | 迁移期 Electron 只读兼容参考；不再作为发布目标 |
+| [`desktop/`](desktop/) | 迁移期 Electron 兼容界面（Tauri 功能完整前保留） |
 | [`tui/`](tui/) | OpenTUI 终端 UI |
 | [`docs/DESIGN.md`](docs/DESIGN.md) | 视觉系统 |
 | [`docs/images/`](docs/images/) | 配图 |

@@ -28,7 +28,7 @@
 git clone https://github.com/2233admin/skillgate-team.git $HOME\.skillgate-team; cd $HOME\.skillgate-team; bun run bootstrap
 ```
 
-不想自己编译桌面版 → [GitHub Releases](https://github.com/2233admin/skillgate-team/releases) 下载 Windows、macOS 或 Linux 安装包，再按上面步骤 4 绑团队目录。
+正式签名安装包会在迁移 ledger 门禁完成后发布到 [GitHub Releases](https://github.com/2233admin/skillgate-team/releases)。迁移预览期的完整 Team 工作流请使用 CLI/TUI 或 Electron 兼容界面。
 
 **卡住？** 用 [求助模板](https://github.com/2233admin/skillgate-team/issues/new?template=help_request.yml)，附上 `bun -v`、`node -v`、完整报错。
 

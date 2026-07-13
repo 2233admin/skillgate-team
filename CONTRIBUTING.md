@@ -56,7 +56,8 @@ bun run test
 bun run gui:tauri:check
 ```
 
-4. 提交并 push `master`，打与 `VERSION` 完全一致的 tag：
+4. 确认 `docs/migration/` 两份 ledger 的发布门禁与证据全部通过；未通过时只能生成本地/CI 预览产物，不得发布正式 Release。
+5. 提交并 push `master`，打与 `VERSION` 完全一致的 tag：
 
 ```bash
 git tag v0.6.0-team.1

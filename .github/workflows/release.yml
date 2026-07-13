@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing or new release tag matching VERSION (for example v0.6.0-team.1)
+        description: Existing release tag matching VERSION (for example v0.6.0-team.1)
         required: true
 
 permissions:
@@ -26,6 +26,8 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
@@ -47,6 +49,9 @@ jobs:
           cargo clippy --manifest-path desktop-tauri/src-tauri/Cargo.toml --all-targets -- -D warnings
           cargo test --manifest-path desktop-tauri/src-tauri/Cargo.toml
           cargo test --manifest-path crates/skillgate-catalog/Cargo.toml
+          cargo test --manifest-path crates/skillgate-files/Cargo.toml
+          cargo test --manifest-path crates/skillgate-runtime/Cargo.toml
+          cargo test --manifest-path crates/skillgate-store/Cargo.toml
 
   signing-preflight:
     runs-on: ubuntu-22.04
@@ -64,6 +69,8 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
       - name: Fail closed when release signing material is incomplete
         run: node scripts/release-preflight.mjs --tag "$RELEASE_TAG" --require-signing
 
@@ -76,12 +83,15 @@ jobs:
           - platform: windows
             os: windows-latest
             args: --verbose
+            bundle_dir: desktop-tauri/src-tauri/target/release/bundle
           - platform: macos
             os: macos-latest
             args: --target universal-apple-darwin --verbose
+            bundle_dir: desktop-tauri/src-tauri/target/universal-apple-darwin/release/bundle
           - platform: linux
             os: ubuntu-22.04
             args: --verbose
+            bundle_dir: desktop-tauri/src-tauri/target/release/bundle
     runs-on: ${{ matrix.os }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -97,6 +107,8 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
@@ -154,12 +166,12 @@ jobs:
           prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
           args: --config ../.release/tauri.release.conf.json ${{ matrix.args }}
       - name: Validate installers and write checksums
-        run: node scripts/validate-release-artifacts.mjs --platform ${{ matrix.platform }}
+        run: node scripts/validate-release-artifacts.mjs --platform ${{ matrix.platform }} --directory ${{ matrix.bundle_dir }}
       - uses: actions/upload-artifact@v4
         with:
           name: skillgate-${{ env.RELEASE_TAG }}-${{ matrix.platform }}-evidence
           path: |
-            desktop-tauri/src-tauri/target/release/bundle/**
+            ${{ matrix.bundle_dir }}/**
             .release/SHA256SUMS-${{ matrix.platform }}.txt
           if-no-files-found: error
       - name: Attach platform checksums to draft release
@@ -176,6 +188,8 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_TAG }}
       - name: Download and validate updater manifest
         run: |
           mkdir -p release-assets

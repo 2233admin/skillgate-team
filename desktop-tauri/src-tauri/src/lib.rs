@@ -607,6 +607,23 @@ fn runtime_path(location: &PathRef) -> skillgate_runtime::PathRef {
     }
 }
 
+fn derive_agent_cwd(location: &PathRef) -> PathRef {
+    let parts = location
+        .relative_path
+        .split(['/', '\\'])
+        .filter(|part| !part.is_empty())
+        .collect::<Vec<_>>();
+    let config_index = parts
+        .iter()
+        .position(|part| matches!(*part, ".agents" | ".claude" | ".codex" | ".cursor"));
+    PathRef {
+        grant_id: location.grant_id.clone(),
+        relative_path: config_index
+            .map(|index| parts[..index].join("/"))
+            .unwrap_or_default(),
+    }
+}
+
 fn system_time_rfc3339(value: std::time::SystemTime) -> String {
     let seconds = value
         .duration_since(std::time::UNIX_EPOCH)
@@ -1253,9 +1270,16 @@ fn agent_launch_prepare(
         Ok(input) => input,
         Err(error) => return failure(error, &meta),
     };
+    let cwd = derive_agent_cwd(&input.agent.location);
+    if cwd != input.cwd {
+        return failure(
+            invalid_argument("agent cwd must match the host-derived configuration root"),
+            &meta,
+        );
+    }
     let request = AgentLaunchRequest {
         agent: runtime_path(&input.agent.location),
-        cwd: runtime_path(&input.cwd),
+        cwd: runtime_path(&cwd),
         harness: input.harness,
         model: input.model,
         prompt: input.prompt,
@@ -1268,7 +1292,7 @@ fn agent_launch_prepare(
                 "harness": prepared.launch.harness,
                 "model": prepared.launch.model,
                 "normalizedPrompt": prepared.launch.normalized_prompt,
-                "cwd": input.cwd,
+                "cwd": cwd,
                 "executableIdentity": prepared.launch.executable.file_name().map(|value| value.to_string_lossy().into_owned()).unwrap_or_default(),
                 "argv": prepared.launch.argv,
                 "expiresAt": system_time_rfc3339(prepared.expires_at)
@@ -1956,6 +1980,28 @@ mod tests {
         );
         assert_eq!(value["meta"]["requestId"], "request-1");
         assert_eq!(value["meta"]["correlationId"], "correlation-1");
+    }
+
+    #[test]
+    fn agent_working_directory_is_host_derived_from_nearest_config_root() {
+        assert_eq!(
+            derive_agent_cwd(&PathRef {
+                grant_id: "home".to_string(),
+                relative_path: "projects/demo/.codex/agents/reviewer.md".to_string(),
+            }),
+            PathRef {
+                grant_id: "home".to_string(),
+                relative_path: "projects/demo".to_string(),
+            }
+        );
+        assert_eq!(
+            derive_agent_cwd(&PathRef {
+                grant_id: "home".to_string(),
+                relative_path: ".claude/agents/reviewer.md".to_string(),
+            })
+            .relative_path,
+            ""
+        );
     }
 
     #[test]

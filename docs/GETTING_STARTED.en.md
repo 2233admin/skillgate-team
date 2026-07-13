@@ -28,7 +28,7 @@ One-liner:
 git clone https://github.com/2233admin/skillgate-team.git ~/.skillgate-team && cd ~/.skillgate-team && bun run bootstrap
 ```
 
-Prefer an installer? Download the Windows, macOS, or Linux package from [GitHub Releases](https://github.com/2233admin/skillgate-team/releases). Then bind the team catalog in Settings.
+Signed installers are published to [GitHub Releases](https://github.com/2233admin/skillgate-team/releases) after the migration ledger gates pass. During the Tauri preview, use CLI/TUI or the Electron compatibility UI for the complete Team workflow.
 
 ---
 
