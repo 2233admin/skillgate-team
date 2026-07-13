@@ -1,0 +1,32 @@
+[package]
+name = "skillgate-desktop"
+version = "0.6.0-team.1"
+description = "Skillgate desktop host"
+edition = "2021"
+rust-version = "1.85.0"
+
+[lib]
+name = "skillgate_desktop_lib"
+crate-type = ["staticlib", "cdylib", "lib"]
+
+[build-dependencies]
+tauri-build = { version = "=2.5.5", features = [] }
+
+[dependencies]
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+skillgate-catalog = { path = "../../crates/skillgate-catalog" }
+tauri = { version = "=2.10.2", features = [] }
+tauri-plugin-dialog = "=2.7.1"
+time = { version = "=0.3.44", features = ["formatting"] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = "thin"
+opt-level = "s"
+strip = true

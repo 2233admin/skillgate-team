@@ -2,12 +2,13 @@
   "name": "skillgate-team",
   "private": true,
   "version": "0.1.0",
-  "description": "Team skill catalog + skillgate CLI + OpenTUI + Electron GUI",
+  "description": "Team skill catalog + skillgate CLI + OpenTUI + desktop apps",
   "packageManager": "bun@1.3.14",
   "workspaces": [
     "cli",
     "ui",
     "desktop",
+    "desktop-tauri",
     "tui"
   ],
   "scripts": {
@@ -26,6 +27,9 @@
     "gui": "nx run @skillgate/desktop:dev",
     "gui:dev": "nx run @skillgate/desktop:dev",
     "gui:build": "nx run @skillgate/desktop:build",
+    "gui:tauri": "nx run @skillgate/desktop-tauri:dev",
+    "gui:tauri:build": "nx run @skillgate/desktop-tauri:build",
+    "gui:tauri:check": "nx run @skillgate/desktop-tauri:check",
     "gui:install": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-gui.ps1",
     "gui:window": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/launch-gui.ps1",
     "test": "nx run-many -t test",

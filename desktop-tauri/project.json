@@ -1,0 +1,33 @@
+{
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "name": "@skillgate/desktop-tauri",
+  "projectType": "application",
+  "sourceRoot": "desktop-tauri/src",
+  "targets": {
+    "build": {
+      "executor": "nx:run-script",
+      "options": { "script": "build" },
+      "cache": false
+    },
+    "build-web": {
+      "executor": "nx:run-script",
+      "options": { "script": "build:web" },
+      "cache": true,
+      "outputs": ["{projectRoot}/dist"]
+    },
+    "check": {
+      "executor": "nx:run-script",
+      "options": { "script": "check" },
+      "cache": true
+    },
+    "test": {
+      "executor": "nx:run-script",
+      "options": { "script": "test" },
+      "cache": true
+    },
+    "dev": {
+      "executor": "nx:run-script",
+      "options": { "script": "dev" }
+    }
+  }
+}
