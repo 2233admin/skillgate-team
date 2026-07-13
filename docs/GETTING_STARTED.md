@@ -16,7 +16,7 @@
 
 | 步骤 | 做什么 |
 |------|--------|
-| 0 | 装 [Bun](https://bun.sh) + [Git](https://git-scm.com/downloads)（桌面版再加 [Node 22](https://nodejs.org)） |
+| 0 | 装 [Bun](https://bun.sh) + [Git](https://git-scm.com/downloads)（源码开发桌面版再加 [Node 22](https://nodejs.org) 与 [Rust](https://rustup.rs)） |
 | 1 | Clone 仓库到 `~/.skillgate-team` |
 | 2 | 在仓库根目录执行 **`bun run bootstrap`**（桌面版：`bun run bootstrap:desktop`） |
 | 3 | **新开终端** → `skillgate doctor --profile quant` |
@@ -28,7 +28,7 @@
 git clone https://github.com/2233admin/skillgate-team.git $HOME\.skillgate-team; cd $HOME\.skillgate-team; bun run bootstrap
 ```
 
-不想自己编译桌面版 → [GitHub Releases](https://github.com/2233admin/skillgate-team/releases) 下 Windows 安装包，再按上面步骤 4 绑团队目录。
+不想自己编译桌面版 → [GitHub Releases](https://github.com/2233admin/skillgate-team/releases) 下载 Windows、macOS 或 Linux 安装包，再按上面步骤 4 绑团队目录。
 
 **卡住？** 用 [求助模板](https://github.com/2233admin/skillgate-team/issues/new?template=help_request.yml)，附上 `bun -v`、`node -v`、完整报错。
 
@@ -60,7 +60,7 @@ Clone 到固定路径（避免中文与空格），例如 `~/.skillgate-team` �
 
 ```powershell
 bun run bootstrap:desktop
-# 等价于 bootstrap + install-gui.ps1
+# 等价于 bootstrap + install-tauri-gui.ps1
 ```
 
 ### 打开后

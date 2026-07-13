@@ -10,7 +10,7 @@
 
 **团队 Agent Skills 目录。一个 Git 仓库，同步到 Codex CLI 与全系 Agent。**
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](VERSION)
+[![Version](https://img.shields.io/badge/version-0.6.0--team.1-blue)](VERSION)
 [![Node](https://img.shields.io/badge/node-22--25-339933?logo=node.js&logoColor=white)](package.json)
 [![Bun](https://img.shields.io/badge/bun-1.3.14-black?logo=bun&logoColor=white)](package.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](cli/package.json)
@@ -31,7 +31,7 @@ Skillgate Team 把技能收进**一个 Git 仓库**。维护者改 `profiles/`�
 
 ### 零脑力版（推荐）
 
-**只做一次：** 装 [Bun](https://bun.sh) 和 [Git](https://git-scm.com/downloads)。桌面版再装 [Node 22 LTS](https://nodejs.org)。
+**只做一次：** 装 [Bun](https://bun.sh) 和 [Git](https://git-scm.com/downloads)。从源码开发桌面版还需 [Node 22 LTS](https://nodejs.org) 与 [Rust](https://rustup.rs)。
 
 **Windows（PowerShell，一条命令）：**
 
@@ -58,7 +58,7 @@ bun run setup
 
 ### 桌面安装包（不用自己编译）
 
-在 [Releases](https://github.com/2233admin/skillgate-team/releases) 下载 Windows 安装包。装好后：
+在 [Releases](https://github.com/2233admin/skillgate-team/releases) 下载 Windows、macOS 或 Linux 安装包。装好后：
 
 1. 把本仓库 clone 到 `~/.skillgate-team`（或任意固定路径）
 2. 打开 Skillgate → **设置** → **Team catalog root** 填该路径
@@ -73,7 +73,7 @@ bun install --ignore-scripts && bun run build && bun run install-global
 skillgate apply --profile quant -y
 ```
 
-Windows 桌面开发：`bun run gui:install`（需 Node 22–25）。
+Windows 桌面开发：`bun run gui:install`，然后 `bun run gui`（React + Tauri 2/Rust）。
 
 Codex CLI 技能目录：`~/.codex/skills`（或 `$CODEX_HOME/skills`）。
 
@@ -212,7 +212,7 @@ Context7 MCP 拉库文档，避免过期 API。
 **Team catalog root** 路径错误或不存在；或设置 `SKILLGATE_ROOT`。
 
 **Desktop 起不来？**  
-确认 Node 22–25，`bun run gui:install`。
+安装包用户请在 Release 附件中选择对应系统与架构；源码开发执行 `bun run gui:install`。
 
 **维护者更新了技能？**  
 `git pull` → **Apply**；维护者 `skillgate lock verify --write` 并提交 lock。
@@ -227,7 +227,8 @@ Context7 MCP 拉库文档，避免过期 API。
 | [`profiles/`](profiles/) | Profile 定义 |
 | [`skills.lock.yaml`](skills.lock.yaml) | 内容哈希锁定 |
 | [`cli/`](cli/) | `skillgate` CLI + `team-api` |
-| [`desktop/`](desktop/) | Electron 桌面（默认中文界面，可切英文） |
+| [`desktop-tauri/`](desktop-tauri/) | React + Tauri 2/Rust 桌面应用 |
+| [`desktop/`](desktop/) | 迁移期 Electron 只读兼容参考；不再作为发布目标 |
 | [`tui/`](tui/) | OpenTUI 终端 UI |
 | [`docs/DESIGN.md`](docs/DESIGN.md) | 视觉系统 |
 | [`docs/images/`](docs/images/) | 配图 |
@@ -240,6 +241,8 @@ Context7 MCP 拉库文档，避免过期 API。
 bun install --ignore-scripts
 bun run test
 bun run build
+bun run gui:tauri:check
+node --test scripts/release-tools.test.mjs
 bun run graph
 ```
 

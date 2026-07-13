@@ -442,7 +442,9 @@ fn should_descend(entry: &DirEntry) -> bool {
     !is_noise_directory(entry.path(), &entry.file_name().to_string_lossy())
 }
 
-fn is_noise_directory(path: &Path, name: &str) -> bool {
+/// Returns whether a directory belongs to the canonical AgentDex-compatible
+/// noise table shared by catalog scans and lazy worktree listings.
+pub fn is_noise_directory(path: &Path, name: &str) -> bool {
     if name == "pkg"
         && path
             .parent()

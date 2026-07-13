@@ -10,7 +10,7 @@
 
 **Git-backed team skill catalog. One repo — aligned installs on Codex CLI and every agent.**
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](VERSION)
+[![Version](https://img.shields.io/badge/version-0.6.0--team.1-blue)](VERSION)
 [![Node](https://img.shields.io/badge/node-22--25-339933?logo=node.js&logoColor=white)](package.json)
 [![Bun](https://img.shields.io/badge/bun-1.3.14-black?logo=bun&logoColor=white)](package.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](cli/package.json)
@@ -31,7 +31,7 @@ Skillgate Team is the **single Git catalog** for your squad. Maintainers edit `p
 
 ### Easy path (recommended)
 
-**One-time:** [Bun](https://bun.sh) + [Git](https://git-scm.com/downloads). Desktop: [Node 22 LTS](https://nodejs.org).
+**One-time:** [Bun](https://bun.sh) + [Git](https://git-scm.com/downloads). Desktop source development also needs [Node 22 LTS](https://nodejs.org) and [Rust](https://rustup.rs).
 
 ```bash
 git clone https://github.com/2233admin/skillgate-team.git ~/.skillgate-team && cd ~/.skillgate-team && bun run bootstrap
@@ -43,7 +43,7 @@ Open a **new terminal**, then `skillgate doctor --profile quant`.
 
 ### Desktop installer (no compile)
 
-Download the Windows installer from [Releases](https://github.com/2233admin/skillgate-team/releases), clone this repo to a fixed path, then in the app: **Settings → Team catalog root** → **Team → quant → Apply**.
+Download the Windows, macOS, or Linux installer from [Releases](https://github.com/2233admin/skillgate-team/releases), clone this repo to a fixed path, then in the app: **Settings → Team catalog root** → **Team → quant → Apply**.
 
 ### Manual (maintainers)
 
@@ -191,7 +191,7 @@ Smoke check: `bun run smoke-team` (15 checks). Full paths: [docs/GETTING_STARTED
 Wrong or missing **Team catalog root**, or set `SKILLGATE_ROOT` to the clone.
 
 **Desktop won’t start?**  
-Use Node 22–25 and run `bun run gui:install` from the repo root.
+Installer users should choose the asset matching their OS and architecture. Source developers can run `bun run gui:install` from the repo root.
 
 **Maintainer shipped skill updates?**  
 `git pull` → **Apply**; maintainers run `skillgate lock verify --write` and commit the lock.
@@ -206,7 +206,8 @@ Use Node 22–25 and run `bun run gui:install` from the repo root.
 | [`profiles/`](profiles/) | Profile definitions |
 | [`skills.lock.yaml`](skills.lock.yaml) | Content hash lock |
 | [`cli/`](cli/) | `skillgate` CLI + `team-api` |
-| [`desktop/`](desktop/) | Electron app (en / zh-CN UI) |
+| [`desktop-tauri/`](desktop-tauri/) | React + Tauri 2/Rust desktop application |
+| [`desktop/`](desktop/) | Migration-only Electron compatibility reference; no longer released |
 | [`tui/`](tui/) | OpenTUI terminal UI |
 | [`docs/DESIGN.md`](docs/DESIGN.md) | Visual system |
 | [`docs/images/`](docs/images/) | README assets |
@@ -219,6 +220,8 @@ Use Node 22–25 and run `bun run gui:install` from the repo root.
 bun install --ignore-scripts
 bun run test
 bun run build
+bun run gui:tauri:check
+node --test scripts/release-tools.test.mjs
 bun run graph
 ```
 

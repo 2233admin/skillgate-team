@@ -7,12 +7,17 @@ pub type AppResult<T> = Result<T, AppError>;
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum AppErrorCode {
     InvalidArgument,
+    InvalidState,
     CapabilityUnavailable,
     PathNotGranted,
     PathEscape,
     SymlinkEscape,
     PermissionDenied,
     NotFound,
+    AlreadyExists,
+    RevisionConflict,
+    WriterBusy,
+    ProcessStartFailed,
     Internal,
 }
 
@@ -22,6 +27,7 @@ pub enum AppErrorCategory {
     Validation,
     Unavailable,
     Authorization,
+    Conflict,
     NotFound,
     Internal,
 }

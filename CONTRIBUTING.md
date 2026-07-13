@@ -20,7 +20,7 @@ bun run test
 bun run build
 ```
 
-Windows 桌面开发额外执行 `bun run gui:install`（Node 22–25）。
+Windows 桌面开发额外执行 `bun run gui:install`（Node 22+、Rust 1.85+）。
 
 ## 改技能 / Profile
 
@@ -45,16 +45,25 @@ Windows 桌面开发额外执行 `bun run gui:install`（Node 22–25）。
 
 ## 发版
 
-1. 更新根目录 `VERSION`（与 README badge 一致）
-2. 提交并 push `master`
-3. 打 tag 触发 [`.github/workflows/release.yml`](.github/workflows/release.yml)：
+1. 更新根目录 `VERSION`，并同步 root/CLI/TUI/Desktop package 版本与 Tauri/Cargo 版本。
+2. 配置 GitHub Actions：`TAURI_UPDATER_PUBLIC_KEY` variable，以及 updater 私钥、Windows Authenticode、Apple Developer ID/公证所需 secrets。密钥不得提交到仓库。
+3. 本地运行发布预检与测试：
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+bun run release:check
+node --test scripts/release-tools.test.mjs
+bun run test
+bun run gui:tauri:check
 ```
 
-CI 会跑测试、在 Windows 上打包桌面安装包，并创建 [GitHub Release](https://github.com/2233admin/skillgate-team/releases) 附件。本地可先验证：`bun run bootstrap:desktop` 与 `cd desktop && bun run package:win`。
+4. 提交并 push `master`，打与 `VERSION` 完全一致的 tag：
+
+```bash
+git tag v0.6.0-team.1
+git push origin v0.6.0-team.1
+```
+
+CI 会跑 TypeScript/Rust 测试，在 Windows、macOS、Linux 上构建系统签名安装包与 Tauri 更新签名，生成校验和及 `latest.json`，并创建 **Draft** [GitHub Release](https://github.com/2233admin/skillgate-team/releases)。维护者完成干净机器安装、启动、升级和回滚验证后，才可手动发布 Draft。
 
 ## 行为准则
 

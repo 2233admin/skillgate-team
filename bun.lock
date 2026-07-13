@@ -10,7 +10,7 @@
     },
     "cli": {
       "name": "skillgate",
-      "version": "0.1.0",
+      "version": "0.6.0-team.1",
       "bin": {
         "skillgate": "./bin/skillgate.mjs",
       },
@@ -90,7 +90,7 @@
     },
     "tui": {
       "name": "@skillgate/tui",
-      "version": "0.3.0",
+      "version": "0.6.0-team.1",
       "bin": {
         "skillgate-tui": "bin/skillsgate-tui",
         "skillsgate-tui": "bin/skillsgate-tui",

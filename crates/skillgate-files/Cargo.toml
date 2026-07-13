@@ -1,0 +1,16 @@
+[package]
+name = "skillgate-files"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Capability-scoped filesystem core for Skillgate Desktop"
+
+[dependencies]
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
+serde = { version = "1", features = ["derive"] }
+skillgate-catalog = { path = "../skillgate-catalog" }
+tempfile = "3"
+
+[dev-dependencies]
+serde_json = "1"
+

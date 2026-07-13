@@ -2,15 +2,19 @@ import { useEffect, useState } from "react"
 import { CatalogPage } from "./catalog/catalog-page"
 import { createAppAPI, type AppDescription } from "./lib/app-api"
 import { createCatalogClient, type CatalogClient } from "./lib/catalog-client"
+import { createFilesClient, type FilesClient } from "./lib/files-client"
 import { tauriTransport } from "./lib/tauri-transport"
+import { TerminalController } from "./terminal/terminal-controller"
 
 const appAPI = createAppAPI(tauriTransport)
 const catalogClient = createCatalogClient(appAPI)
+const filesClient = createFilesClient(appAPI)
+const terminalController = new TerminalController(appAPI)
 const requiredCatalogOperations = ["selectRoot", "scan", "list", "search", "getItem"] as const
 
 type BootstrapState =
   | { status: "loading" }
-  | { status: "ready"; client: CatalogClient }
+  | { status: "ready"; client: CatalogClient; files: FilesClient }
   | { status: "incompatible"; message: string }
   | { status: "unavailable"; message: string }
 
@@ -25,7 +29,7 @@ export function validateHostDescription(description: AppDescription): BootstrapS
     const reason = localCatalog?.reason?.message
     return { status: "unavailable", message: reason ?? `catalog.local is unavailable or missing operations: ${missing.join(", ") || "unknown"}.` }
   }
-  return { status: "ready", client: catalogClient }
+  return { status: "ready", client: catalogClient, files: filesClient }
 }
 
 export function App() {
@@ -43,7 +47,10 @@ export function App() {
       }
       setBootstrap(validateHostDescription(result.data))
     })
-    return () => { active = false }
+    return () => {
+      active = false
+      void terminalController.dispose()
+    }
   }, [])
 
   if (bootstrap.status === "loading") {
@@ -55,7 +62,7 @@ export function App() {
   if (bootstrap.status === "unavailable") {
     return <BootstrapStateView title="Local catalog unavailable" detail={bootstrap.message} />
   }
-  return <CatalogPage api={bootstrap.client} />
+  return <CatalogPage api={bootstrap.client} files={bootstrap.files} runtime={{ api: appAPI, terminals: terminalController }} />
 }
 
 function BootstrapStateView({ title, detail }: { title: string; detail: string }) {

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import type {
+  AgentCatalogSelection,
+  AppAPI,
   CatalogItem,
   CatalogKind,
   CatalogPlatform,
@@ -7,7 +9,13 @@ import type {
   CatalogSummary,
   RootGrant,
 } from "../lib/app-api"
+import { AgentLaunchDialog } from "../agent/agent-launch-dialog"
 import type { CatalogClient } from "../lib/catalog-client"
+import type { FilesClient } from "../lib/files-client"
+import { FileDetail, type FileSelection } from "../files/file-detail"
+import { WorktreePanel } from "../files/worktree-panel"
+import type { TerminalController } from "../terminal/terminal-controller"
+import { TerminalWorkspace } from "../terminal/terminal-workspace"
 
 const kinds: CatalogKind[] = ["skill", "agent", "rule", "context"]
 const platforms: CatalogPlatform[] = ["shared", "codex", "claude", "cursor"]
@@ -25,7 +33,15 @@ function toggle<T>(value: T, selected: T[], setSelected: (next: T[]) => void) {
   setSelected(selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value])
 }
 
-export function CatalogPage({ api }: { api: CatalogClient }) {
+export function CatalogPage({
+  api,
+  files,
+  runtime,
+}: {
+  api: CatalogClient
+  files?: FilesClient
+  runtime?: { api: Pick<AppAPI, "agentLaunch">; terminals: TerminalController }
+}) {
   const [grant, setGrant] = useState<RootGrant | null>(null)
   const [items, setItems] = useState<CatalogItem[]>([])
   const [summary, setSummary] = useState(emptySummary)
@@ -35,9 +51,13 @@ export function CatalogPage({ api }: { api: CatalogClient }) {
   const [selectedScopes, setSelectedScopes] = useState<CatalogScope[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selection, setSelection] = useState<FileSelection | null>(null)
+  const [dirty, setDirty] = useState(false)
+  const [launchAgent, setLaunchAgent] = useState<CatalogItem | null>(null)
   const requestGeneration = useRef(0)
 
   async function loadCatalog(force = false, source?: "home" | "picker") {
+    if (source && dirty && !window.confirm("Discard unsaved changes and change the catalog root?")) return
     const generation = ++requestGeneration.current
     setLoading(true)
     setError(null)
@@ -55,12 +75,15 @@ export function CatalogPage({ api }: { api: CatalogClient }) {
       setLoading(false)
       return
     }
+    const rootChanged = nextGrant.grantId !== grant?.grantId
     setGrant(nextGrant)
+    if (rootChanged) setSelection(null)
     const result = await api.scan(nextGrant.grantId, force)
     if (generation !== requestGeneration.current) return
     if (result.ok) {
       setItems(result.data.items)
       setSummary(result.data.summary)
+      if (files && (rootChanged || !selection) && result.data.items[0]) setSelection(toFileSelection(result.data.items[0]))
     } else {
       setError(result.error.message)
     }
@@ -81,6 +104,23 @@ export function CatalogPage({ api }: { api: CatalogClient }) {
       return !needle || `${item.name} ${item.description} ${item.displayPath}`.toLocaleLowerCase().includes(needle)
     })
   }, [items, query, selectedKinds, selectedPlatforms, selectedScopes])
+  const selectedItem = selection
+    ? items.find((item) => item.location.grantId === selection.location.grantId && item.location.relativePath === selection.location.relativePath) ?? null
+    : null
+
+  function chooseSelection(next: FileSelection) {
+    if (dirty && !window.confirm("Discard unsaved changes and open another file?")) return
+    setSelection(next)
+  }
+
+  async function refreshAfterMutation() {
+    if (!grant) return
+    const generation = ++requestGeneration.current
+    const result = await api.scan(grant.grantId, true)
+    if (generation !== requestGeneration.current || !result.ok) return
+    setItems(result.data.items)
+    setSummary(result.data.summary)
+  }
 
   return (
     <main className="catalog-shell">
@@ -120,11 +160,41 @@ export function CatalogPage({ api }: { api: CatalogClient }) {
           {!loading && !error && visibleItems.length === 0 ? <State title="No matching items" detail="Choose another root or clear the filters." /> : null}
           {!loading && !error ? (
             <div className="item-list">
-              {visibleItems.map((item) => <CatalogRow key={item.itemId} item={item} />)}
+              {visibleItems.map((item) => <CatalogRow key={item.itemId} item={item} selected={selection?.location.relativePath === item.location.relativePath} onSelect={() => chooseSelection(toFileSelection(item))} />)}
             </div>
           ) : null}
         </div>
       </section>
+      {files && grant ? (
+        <section className="workspace-layout">
+          <WorktreePanel grant={grant} files={files} onSelect={(entry) => {
+            if (entry.kind === "directory") return
+            const matching = items.find((item) => item.location.grantId === entry.location.grantId && item.location.relativePath === entry.location.relativePath)
+            chooseSelection(matching ? toFileSelection(matching) : { name: entry.name, displayPath: entry.location.relativePath, location: entry.location })
+          }} />
+          <div className="detail-pane">
+            {runtime && selectedItem?.kind === "agent" ? (
+              <div className="agent-actions">
+                <div><strong>{selectedItem.name}</strong><span>Launch in an interactive terminal</span></div>
+                <button onClick={() => setLaunchAgent(selectedItem)}>Start agent</button>
+              </div>
+            ) : null}
+            {selection ? <FileDetail selection={selection} files={files} onDirtyChange={setDirty} onMutation={refreshAfterMutation} /> : <State title="Select a file" detail="Choose a catalog or Worktree file to preview it." />}
+          </div>
+        </section>
+      ) : null}
+      {runtime ? <TerminalWorkspace controller={runtime.terminals} /> : null}
+      {runtime && launchAgent ? (
+        <AgentLaunchDialog
+          open
+          agent={toAgentSelection(launchAgent)}
+          cwd={agentWorkingDirectory(launchAgent)}
+          api={runtime.api}
+          terminals={runtime.terminals}
+          onCancel={() => setLaunchAgent(null)}
+          onStarted={() => setLaunchAgent(null)}
+        />
+      ) : null}
     </main>
   )
 }
@@ -141,14 +211,38 @@ function FilterGroup<T extends string>({ label, values, selected, onToggle }: { 
   )
 }
 
-function CatalogRow({ item }: { item: CatalogItem }) {
+function CatalogRow({ item, selected, onSelect }: { item: CatalogItem; selected: boolean; onSelect: () => void }) {
   return (
-    <article className="catalog-row">
+    <button className={`catalog-row ${selected ? "selected" : ""}`} onClick={onSelect}>
       <span className={`kind kind-${item.kind}`}>{item.kind.slice(0, 1).toUpperCase()}</span>
       <div className="item-copy"><div><strong>{item.name}</strong><span>{item.platform} · {item.scope}</span></div><p>{item.description || "No description"}</p><code>{item.displayPath}</code></div>
       <span className="group-pill">{item.groupLabel}</span>
-    </article>
+    </button>
   )
+}
+
+function toFileSelection(item: CatalogItem): FileSelection {
+  return { name: item.name, displayPath: item.displayPath, location: item.location, description: item.description }
+}
+
+function toAgentSelection(item: CatalogItem): AgentCatalogSelection {
+  return {
+    itemId: item.itemId,
+    canonicalItemId: item.canonicalItemId,
+    name: item.name,
+    slug: item.slug,
+    platform: item.platform,
+    location: item.location,
+  }
+}
+
+function agentWorkingDirectory(item: CatalogItem) {
+  const parts = item.location.relativePath.replaceAll("\\", "/").split("/").filter(Boolean)
+  const configIndex = parts.findIndex((part) => [".agents", ".claude", ".codex", ".cursor"].includes(part))
+  return {
+    grantId: item.location.grantId,
+    relativePath: configIndex < 0 ? "" : parts.slice(0, configIndex).join("/"),
+  }
 }
 
 function State({ title, detail, tone }: { title: string; detail: string; tone?: "error" }) {

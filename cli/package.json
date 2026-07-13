@@ -1,6 +1,6 @@
 {
   "name": "skillgate",
-  "version": "0.1.0",
+  "version": "0.6.0-team.1",
   "description": "Team skill distribution CLI (fork of skillsgate installer)",
   "type": "module",
   "exports": {

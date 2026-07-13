@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core"
-import type { AppResult, AppTransport, RequestMeta } from "./app-api"
+import { listen } from "@tauri-apps/api/event"
+import type { AppEvent, AppResult, AppTransport, EventKind, EventListener, RequestMeta } from "./app-api"
 
 type InvokeHost = <T>(command: string, payload: Record<string, unknown>) => Promise<T>
 
@@ -19,6 +20,15 @@ function unavailable<T>(command: string, meta: RequestMeta): AppResult<T> {
 }
 
 export function createTauriTransport(invokeHost: InvokeHost): AppTransport {
+  const listeners = new Map<string, EventListener<EventKind>>()
+  let listening = false
+  const ensureEventBridge = () => {
+    if (listening) return
+    listening = true
+    void listen<AppEvent<unknown>>("skillgate://app-event", ({ payload }) => {
+      listeners.get(payload.subscriptionId)?.(payload as AppEvent<never>)
+    }).catch(() => { listening = false })
+  }
   return {
     async invoke<T>(command: string, payload: { input: unknown; meta: RequestMeta }): Promise<AppResult<T>> {
       try {
@@ -26,6 +36,10 @@ export function createTauriTransport(invokeHost: InvokeHost): AppTransport {
       } catch {
         return unavailable(command, payload.meta)
       }
+    },
+    bindEvent(subscriptionId, listener) {
+      listeners.set(subscriptionId, listener as EventListener<EventKind>)
+      ensureEventBridge()
     },
   }
 }

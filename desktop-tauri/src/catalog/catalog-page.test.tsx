@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { act } from "react"
 import { createRoot } from "react-dom/client"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { CatalogPage } from "./catalog-page"
 import type { AppResult, CatalogItem, CatalogSnapshot, RootGrant } from "../lib/app-api"
 import type { CatalogClient } from "../lib/catalog-client"
+import type { FilesClient } from "../lib/files-client"
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -47,7 +48,7 @@ describe("CatalogPage request ordering", () => {
     const client = {
       selectRoot: async (source = "home") => ok(source === "picker" ? picked : home),
       scan: async (grantId: string) => grantId === "home" ? homeScan : ok(snapshot(picked, "Picked")),
-    } as CatalogClient
+    } as unknown as CatalogClient
     const container = document.createElement("div")
     containers.push(container)
     document.body.append(container)
@@ -61,6 +62,45 @@ describe("CatalogPage request ordering", () => {
     expect(container.textContent).toContain("Project")
     expect(container.textContent).toContain("Picked")
     expect(container.textContent).not.toContain("Stale")
+    await act(async () => root.unmount())
+  })
+
+  it("keeps the selected row when dirty-discard confirmation is cancelled", async () => {
+    const grant = { grantId: "home", displayName: "Home", persisted: true }
+    const first = item(grant, "First")
+    const second = item(grant, "Second")
+    const catalog = {
+      selectRoot: async () => ok(grant),
+      scan: async () => ok({
+        ...snapshot(grant, "First"),
+        items: [first, second],
+        groups: [{ groupId: "g", label: "Global", kind: "skill", platform: "codex", itemIds: ["First", "Second"] }],
+        summary: { ...snapshot(grant, "First").summary, total: 2, byKind: { skill: 2, agent: 0, rule: 0, context: 0 } },
+      }),
+    } as unknown as CatalogClient
+    const files = {
+      read: async (location) => ok(`# ${location.relativePath}`),
+      stat: async (location) => ok({ location, kind: "file", size: 1, createdAt: null, modifiedAt: "now", revision: "rev" }),
+      listDirectory: async () => ok([]),
+      write: async () => { throw new Error("unused") }, delete: async () => { throw new Error("unused") }, recover: async () => { throw new Error("unused") },
+      tree: async () => { throw new Error("unused") }, reveal: async () => ok({ value: null }),
+    } as FilesClient
+    const container = document.createElement("div")
+    containers.push(container)
+    document.body.append(container)
+    const root = createRoot(container)
+    await act(async () => { root.render(<CatalogPage api={catalog} files={files} />); await Promise.resolve() })
+    const raw = [...container.querySelectorAll("button")].find((button) => button.textContent === "Raw")
+    await act(async () => raw?.click())
+    const editor = container.querySelector("textarea")!
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set?.call(editor, "dirty")
+      editor.dispatchEvent(new Event("input", { bubbles: true }))
+    })
+    vi.spyOn(window, "confirm").mockReturnValue(false)
+    const secondRow = [...container.querySelectorAll(".catalog-row")].find((row) => row.textContent?.includes("Second")) as HTMLButtonElement
+    await act(async () => secondRow.click())
+    expect(container.querySelector(".file-detail h2")?.textContent).toBe("First")
     await act(async () => root.unmount())
   })
 })

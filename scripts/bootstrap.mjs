@@ -32,15 +32,13 @@ const t = langZh
       needGit: "需要 Git。安装：https://git-scm.com/downloads",
       needBun:
         "需要 Bun。Windows 一条命令：powershell -c \"irm bun.sh/install.ps1 | iex\"\n  或见 https://bun.sh",
-      needNode:
-        "需要 Node 22–25（桌面版 / SQLite）。下载：https://nodejs.org （选 22 LTS）",
-      nodeBad: (v) =>
-        `当前 Node ${v} 不在 22–25，桌面版可能失败；CLI 仍可尝试继续。`,
+      needNode: "需要 Node 22 或更新版本。下载：https://nodejs.org",
+      nodeBad: (v) => `当前 Node ${v} 低于 22；桌面前端构建可能失败。`,
       done: "安装完成",
       next:
         "新开一个终端，然后运行：\n  skillgate doctor --profile quant\n可选：skillgate gui 或 skillgate tui",
       desktopSkip: "跳过桌面依赖（未加 --desktop）",
-      desktopWinOnly: "--desktop 仅支持 Windows",
+      desktopWinOnly: "当前 bootstrap:desktop 脚本仅在 Windows 自动配置",
       applySkip: "跳过 apply（--skip-apply）",
     }
   : {
@@ -54,8 +52,8 @@ const t = langZh
       title: "Skillgate Team — bootstrap",
       needGit: "Git required: https://git-scm.com/downloads",
       needBun: "Bun required: https://bun.sh",
-      needNode: "Node 22–25 required for desktop: https://nodejs.org",
-      nodeBad: (v) => `Node ${v} is outside 22–25; desktop may fail.`,
+      needNode: "Node 22 or newer is required: https://nodejs.org",
+      nodeBad: (v) => `Node ${v} is below 22; the desktop frontend build may fail.`,
       done: "Bootstrap complete",
       next:
         "Open a new terminal, then:\n  skillgate doctor --profile quant\nOptional: skillgate gui or skillgate tui",
@@ -128,7 +126,7 @@ if (!tryRun("git --version")) t.fail(t.needGit);
 if (!tryRun("bun --version")) t.fail(t.needBun);
 const nodeMajor = parseNodeMajor();
 if (nodeMajor === null) t.fail(t.needNode);
-if (nodeMajor < 22 || nodeMajor > 25) t.warn(t.nodeBad(`v${nodeMajor}`));
+if (nodeMajor < 22) t.warn(t.nodeBad(`v${nodeMajor}`));
 
 t.step(++step, totalSteps, langZh ? "安装依赖" : "Install dependencies");
 run("bun install --ignore-scripts");
@@ -151,7 +149,7 @@ if (wantDesktop) {
   if (process.platform !== "win32") {
     t.warn(t.desktopWinOnly);
   } else {
-    const ps1 = path.join(ROOT, "scripts", "install-gui.ps1");
+    const ps1 = path.join(ROOT, "scripts", "install-tauri-gui.ps1");
     const r = spawnSync(
       "powershell",
       ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ps1],

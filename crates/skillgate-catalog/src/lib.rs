@@ -11,9 +11,10 @@ mod scanner;
 mod service;
 
 pub use error::{AppError, AppErrorCategory, AppErrorCode, AppResult};
-pub use grant::GrantRegistry;
+pub use grant::{AuthorizedPath, GrantRegistry};
 pub use model::{
     CatalogFilter, CatalogGroup, CatalogItem, CatalogKind, CatalogPlatform, CatalogScope,
     CatalogSnapshot, CatalogSummary, ListCatalogInput, ListCatalogOutput, PathRef, RootGrant,
 };
+pub use scanner::is_noise_directory;
 pub use service::CatalogService;

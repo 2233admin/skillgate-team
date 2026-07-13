@@ -1,5 +1,5 @@
 use crate::error::{AppError, AppErrorCategory, AppErrorCode, AppResult};
-use crate::model::RootGrant;
+use crate::model::{PathRef, RootGrant};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
@@ -15,6 +15,21 @@ struct GrantedRoot {
 #[derive(Debug, Clone, Default)]
 pub struct GrantRegistry {
     roots: Arc<RwLock<BTreeMap<String, GrantedRoot>>>,
+}
+
+/// A native path that was resolved by the host-owned grant registry.
+///
+/// This type is deliberately not serializable, so native paths cannot cross
+/// the renderer wire boundary by accident.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AuthorizedPath {
+    path: PathBuf,
+}
+
+impl AuthorizedPath {
+    pub fn as_path(&self) -> &Path {
+        &self.path
+    }
 }
 
 impl GrantRegistry {
@@ -70,41 +85,65 @@ impl GrantRegistry {
         Ok(self.resolve_root(grant_id)?.wire)
     }
 
+    /// Resolves an existing file or directory after rejecting absolute paths,
+    /// parent traversal, and link targets outside the granted root.
+    pub fn authorize_existing(&self, location: &PathRef) -> AppResult<AuthorizedPath> {
+        let root = self.resolve_root_path(&location.grant_id)?;
+        let relative = validate_relative_path(&location.relative_path, true)?;
+        let candidate = root.join(relative);
+        let canonical = std::fs::canonicalize(&candidate)
+            .map_err(|error| AppError::from_io(&error, "granted path resolution"))?;
+        ensure_contained(&root, &canonical)?;
+        Ok(AuthorizedPath { path: canonical })
+    }
+
+    /// Resolves a mutation target. The target may be absent, but its parent
+    /// must already exist and remain inside the grant after canonicalization.
+    pub fn authorize_target(&self, location: &PathRef) -> AppResult<AuthorizedPath> {
+        let root = self.resolve_root_path(&location.grant_id)?;
+        let relative = validate_relative_path(&location.relative_path, false)?;
+        let candidate = root.join(relative);
+
+        if candidate.exists() || std::fs::symlink_metadata(&candidate).is_ok() {
+            let canonical = std::fs::canonicalize(&candidate)
+                .map_err(|error| AppError::from_io(&error, "granted mutation target"))?;
+            ensure_contained(&root, &canonical)?;
+            return Ok(AuthorizedPath { path: canonical });
+        }
+
+        let parent = candidate.parent().ok_or_else(|| {
+            AppError::new(
+                AppErrorCode::PathEscape,
+                AppErrorCategory::Authorization,
+                "mutation target has no granted parent",
+            )
+        })?;
+        let canonical_parent = std::fs::canonicalize(parent)
+            .map_err(|error| AppError::from_io(&error, "granted mutation parent"))?;
+        ensure_contained(&root, &canonical_parent)?;
+        let file_name = candidate.file_name().ok_or_else(|| {
+            AppError::new(
+                AppErrorCode::InvalidArgument,
+                AppErrorCategory::Validation,
+                "relativePath must identify a file or directory",
+            )
+        })?;
+        Ok(AuthorizedPath {
+            path: canonical_parent.join(file_name),
+        })
+    }
+
     pub(crate) fn resolve_root_path(&self, grant_id: &str) -> AppResult<PathBuf> {
         Ok(self.resolve_root(grant_id)?.canonical_path)
     }
 
     #[cfg(test)]
     fn authorize_relative(&self, grant_id: &str, relative: &str) -> AppResult<PathBuf> {
-        use std::path::Component;
-        let root = self.resolve_root_path(grant_id)?;
-        let relative_path = Path::new(relative);
-        if relative_path.is_absolute()
-            || relative_path.components().any(|component| {
-                matches!(
-                    component,
-                    Component::ParentDir | Component::RootDir | Component::Prefix(_)
-                )
-            })
-        {
-            return Err(AppError::new(
-                AppErrorCode::PathEscape,
-                AppErrorCategory::Authorization,
-                "relativePath escapes the granted root",
-            ));
-        }
-
-        let candidate = root.join(relative_path);
-        let canonical = std::fs::canonicalize(&candidate)
-            .map_err(|error| AppError::from_io(&error, "granted path resolution"))?;
-        if !canonical.starts_with(&root) {
-            return Err(AppError::new(
-                AppErrorCode::SymlinkEscape,
-                AppErrorCategory::Authorization,
-                "resolved path escapes the granted root through a link",
-            ));
-        }
-        Ok(canonical)
+        self.authorize_existing(&PathRef {
+            grant_id: grant_id.to_string(),
+            relative_path: relative.to_string(),
+        })
+        .map(|authorized| authorized.path)
     }
 
     fn resolve_root(&self, grant_id: &str) -> AppResult<GrantedRoot> {
@@ -121,6 +160,39 @@ impl GrantRegistry {
                 )
             })
     }
+}
+
+fn validate_relative_path(relative: &str, allow_empty: bool) -> AppResult<&Path> {
+    use std::path::Component;
+
+    let relative_path = Path::new(relative);
+    if (!allow_empty && relative.is_empty())
+        || relative_path.is_absolute()
+        || relative_path.components().any(|component| {
+            matches!(
+                component,
+                Component::ParentDir | Component::RootDir | Component::Prefix(_)
+            )
+        })
+    {
+        return Err(AppError::new(
+            AppErrorCode::PathEscape,
+            AppErrorCategory::Authorization,
+            "relativePath escapes the granted root",
+        ));
+    }
+    Ok(relative_path)
+}
+
+fn ensure_contained(root: &Path, candidate: &Path) -> AppResult<()> {
+    if candidate.starts_with(root) {
+        return Ok(());
+    }
+    Err(AppError::new(
+        AppErrorCode::SymlinkEscape,
+        AppErrorCategory::Authorization,
+        "resolved path escapes the granted root through a link",
+    ))
 }
 
 fn lock_error() -> AppError {
@@ -166,6 +238,35 @@ mod tests {
             registry.get("missing").unwrap_err().code,
             AppErrorCode::PathNotGranted
         );
+    }
+
+    #[test]
+    fn production_authorization_resolves_only_grant_relative_existing_paths() {
+        let temp = tempfile::tempdir().unwrap();
+        std::fs::write(temp.path().join("inside.md"), "safe").unwrap();
+        let registry = GrantRegistry::new();
+        registry
+            .register_host_root("root", temp.path(), "Test", false)
+            .unwrap();
+
+        let authorized = registry
+            .authorize_existing(&crate::PathRef {
+                grant_id: "root".into(),
+                relative_path: "inside.md".into(),
+            })
+            .unwrap();
+        assert_eq!(
+            authorized.as_path(),
+            std::fs::canonicalize(temp.path().join("inside.md")).unwrap()
+        );
+
+        let escaped = registry
+            .authorize_existing(&crate::PathRef {
+                grant_id: "root".into(),
+                relative_path: "../outside.md".into(),
+            })
+            .unwrap_err();
+        assert_eq!(escaped.code, AppErrorCode::PathEscape);
     }
 
     #[cfg(unix)]
