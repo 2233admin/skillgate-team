@@ -8,7 +8,7 @@
   <strong>简体中文</strong> · <a href="README.en.md">English</a>
 </p>
 
-**团队 Agent Skills 目录。一个 Git 仓库，同步到 Codex CLI 与全系 Agent。**
+**本机优先的 AI 编程 Skill 管理平台，也是团队 Skill 的 Git 单一事实源。**
 
 [![Version](https://img.shields.io/badge/version-0.6.0--team.1-blue)](VERSION)
 [![Node](https://img.shields.io/badge/node-22--25-339933?logo=node.js&logoColor=white)](package.json)
@@ -21,9 +21,11 @@
 
 </div>
 
-每人本机的 `~/.codex/skills`、`~/.claude/skills` 各装各的——版本对不上、新人不知道装什么，是团队里最常见的问题。
+每人本机的 `~/.codex/skills`、`~/.claude/skills` 各装各的——装了什么、从哪里来、适配哪个工具、有没有风险，往往没人说得清；团队版本也容易对不上。
 
-Skillgate Team 把技能收进**一个 Git 仓库**。维护者改 `profiles/`，成员 `git pull` 后 Apply，本机 **Codex CLI**、Claude Code、Cursor、Grok 四个目录对齐同一套清单。不用在群里追问「谁没更新 skill」。
+Skillgate Team 先扫描本机 Claude Code、Codex、Cursor 与共享目录里的 Skill，再把需要团队统一的技能收进**一个 Git 仓库**。维护者改 `profiles/`，成员 `git pull` 后 Apply，各工具对齐同一套清单。不用在群里追问「谁装了什么、谁没更新」。
+
+> 这里的 **Skill** 是 AI 编程工具的能力包，不是数据库 SQL。Agent、Rule、Context 也继续保留在统一目录中。
 
 ---
 
@@ -84,6 +86,18 @@ Codex CLI 技能目录：`~/.codex/skills`（或 `$CODEX_HOME/skills`）。
 <p align="center">
   <img src="docs/images/architecture.svg" alt="团队目录 → Skillgate → 本机 Agent" width="920" />
 </p>
+
+#### 本机 Skill 盘点、搜索与体检
+
+Desktop 扫描获准访问的本机目录，集中显示 Skill 总数、适配软件、安装级别、来源、位置数和风险状态：
+
+- **适配软件**：Claude Code、Codex、Cursor 或共享安装
+- **安装级别**：全局、项目级、插件级、外部目录
+- **来源**：插件提供方、`SKILL.md` 声明地址、外部根目录或本机文件系统
+- **风险状态**：对破坏性命令、远程执行、提权和凭据访问做静态信号提示
+- **使用情况**：不拿文件修改时间冒充调用次数；未由 Skillgate 记录时明确显示“未追踪”
+
+风险体检是待复核线索，不是“绝对安全”认证；扫描与搜索优先在本机完成。
 
 #### 团队目录 — 单一事实源
 
