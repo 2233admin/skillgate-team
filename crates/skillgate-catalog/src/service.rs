@@ -1,7 +1,9 @@
 use crate::error::{AppError, AppErrorCategory, AppErrorCode, AppResult};
 use crate::grant::GrantRegistry;
 use crate::model::{
-    CatalogFilter, CatalogItem, CatalogSnapshot, ListCatalogInput, ListCatalogOutput,
+    CatalogFilter, CatalogInstallationLevel, CatalogItem, CatalogPlatform, CatalogRiskLevel,
+    CatalogRiskSignal, CatalogSnapshot, CatalogSourceKind, CatalogUsageStatus, ListCatalogInput,
+    ListCatalogOutput,
 };
 use crate::scanner::{groups_for, item_order, scan_root, summary_for};
 use std::collections::BTreeMap;
@@ -149,16 +151,24 @@ fn matches_filter(item: &CatalogItem, filter: &CatalogFilter) -> bool {
                 let compatible_with = metadata
                     .compatible_with
                     .iter()
-                    .map(|platform| platform.label())
+                    .map(|platform| platform_search_terms(*platform))
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                let risk_signals = metadata
+                    .risk_signals
+                    .iter()
+                    .map(|signal| risk_signal_search_terms(*signal))
                     .collect::<Vec<_>>()
                     .join(" ");
                 format!(
-                    "{} {} {:?} {:?} {:?}",
+                    "{} {} {} {} {} {} {}",
                     metadata.source_label,
                     compatible_with,
-                    metadata.installation_level,
-                    metadata.risk_level,
-                    metadata.risk_signals
+                    installation_search_terms(metadata.installation_level),
+                    source_search_terms(metadata.source_kind),
+                    usage_search_terms(metadata.usage_status),
+                    risk_search_terms(metadata.risk_level),
+                    risk_signals
                 )
             })
             .unwrap_or_default();
@@ -169,7 +179,7 @@ fn matches_filter(item: &CatalogItem, filter: &CatalogFilter) -> bool {
             item.description,
             item.creator.as_deref().unwrap_or(""),
             item.display_path,
-            item.platform.label(),
+            platform_search_terms(item.platform),
             skill_metadata
         )
         .to_lowercase();
@@ -239,6 +249,58 @@ fn matches_filter(item: &CatalogItem, filter: &CatalogFilter) -> bool {
         return false;
     }
     true
+}
+
+fn platform_search_terms(platform: CatalogPlatform) -> &'static str {
+    match platform {
+        CatalogPlatform::Cursor => "cursor",
+        CatalogPlatform::Claude => "claude claude code",
+        CatalogPlatform::Codex => "codex",
+        CatalogPlatform::Shared => "shared",
+    }
+}
+
+fn installation_search_terms(level: CatalogInstallationLevel) -> &'static str {
+    match level {
+        CatalogInstallationLevel::Global => "global",
+        CatalogInstallationLevel::Project => "project",
+        CatalogInstallationLevel::Plugin => "plugin",
+        CatalogInstallationLevel::External => "external",
+    }
+}
+
+fn source_search_terms(kind: CatalogSourceKind) -> &'static str {
+    match kind {
+        CatalogSourceKind::Local => "local local filesystem",
+        CatalogSourceKind::Plugin => "plugin plugin cache",
+        CatalogSourceKind::Manifest => "manifest declared source",
+        CatalogSourceKind::External => "external external root",
+    }
+}
+
+fn usage_search_terms(status: CatalogUsageStatus) -> &'static str {
+    match status {
+        CatalogUsageStatus::Untracked => "untracked usage not tracked",
+        CatalogUsageStatus::Active => "active usage active",
+        CatalogUsageStatus::Stale => "stale usage stale",
+    }
+}
+
+fn risk_search_terms(level: CatalogRiskLevel) -> &'static str {
+    match level {
+        CatalogRiskLevel::Low => "low no signals",
+        CatalogRiskLevel::Medium => "medium review signals",
+        CatalogRiskLevel::High => "high high-severity signals",
+    }
+}
+
+fn risk_signal_search_terms(signal: CatalogRiskSignal) -> &'static str {
+    match signal {
+        CatalogRiskSignal::DestructiveCommand => "destructive command",
+        CatalogRiskSignal::RemoteExecution => "remote execution",
+        CatalogRiskSignal::ElevatedPrivileges => "elevated privileges",
+        CatalogRiskSignal::CredentialAccess => "credential access",
+    }
 }
 
 fn cache_error() -> AppError {

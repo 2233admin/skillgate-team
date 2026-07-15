@@ -50,7 +50,8 @@ fn home_scan_enriches_skill_inventory_facts_without_guessing_usage() {
     grants
         .register_host_root("home", temp.path(), "Home", true)
         .unwrap();
-    let snapshot = CatalogService::new(grants).scan("home").unwrap();
+    let service = CatalogService::new(grants);
+    let snapshot = service.scan("home").unwrap();
 
     let claude = snapshot
         .items
@@ -137,6 +138,50 @@ fn home_scan_enriches_skill_inventory_facts_without_guessing_usage() {
     let wire = serde_json::to_value(snapshot).unwrap();
     assert_eq!(wire["items"][0]["skillMeta"]["usageStatus"], "untracked");
     assert!(wire["summary"]["byInstallationLevel"].is_object());
+
+    for query in [
+        "Claude Code",
+        "Declared source",
+        "Elevated privileges",
+        "Usage not tracked",
+    ] {
+        let matches = service
+            .search(&ListCatalogInput {
+                grant_id: "home".to_string(),
+                filter: Some(CatalogFilter {
+                    query: Some(query.to_string()),
+                    kinds: Some(vec![CatalogKind::Skill]),
+                    ..CatalogFilter::default()
+                }),
+                offset: None,
+                limit: None,
+            })
+            .unwrap();
+        assert!(
+            matches
+                .items
+                .iter()
+                .any(|item| item.name == "Claude global"),
+            "human-readable query did not match the displayed metadata: {query}"
+        );
+    }
+
+    let high_signal_matches = service
+        .search(&ListCatalogInput {
+            grant_id: "home".to_string(),
+            filter: Some(CatalogFilter {
+                query: Some("High-severity signals".to_string()),
+                kinds: Some(vec![CatalogKind::Skill]),
+                ..CatalogFilter::default()
+            }),
+            offset: None,
+            limit: None,
+        })
+        .unwrap();
+    assert!(high_signal_matches
+        .items
+        .iter()
+        .any(|item| item.name == "Plugin skill"));
 }
 
 #[test]
