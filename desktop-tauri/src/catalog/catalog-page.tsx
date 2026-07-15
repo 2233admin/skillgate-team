@@ -133,7 +133,7 @@ export function CatalogPage({
         <div className="topbar-actions">
           {grant?.grantId !== "home" ? <button className="secondary" onClick={() => void loadCatalog(false, "home")}>Home</button> : null}
           <button className="secondary" onClick={() => void loadCatalog(false, "picker")}>Choose root</button>
-          <button onClick={() => void loadCatalog(true)}>Rescan</button>
+          <button disabled={loading} onClick={() => void loadCatalog(true)}>Rescan</button>
         </div>
       </header>
 
@@ -155,10 +155,11 @@ export function CatalogPage({
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name, description, or location…" aria-label="Search catalog" />
             <span>{visibleItems.length} results</span>
           </div>
-          {loading ? <State title="Scanning local catalog…" detail="Skillgate is reading only the granted root." /> : null}
+          {loading && items.length === 0 ? <State title="Scanning local catalog…" detail="Skillgate is reading only the granted root." /> : null}
+          {loading && items.length > 0 ? <div className="refresh-status" role="status"><strong>Refreshing catalog…</strong><span>Existing results remain available.</span></div> : null}
           {!loading && error ? <State title="Catalog unavailable" detail={error} tone="error" /> : null}
           {!loading && !error && visibleItems.length === 0 ? <State title="No matching items" detail="Choose another root or clear the filters." /> : null}
-          {!loading && !error ? (
+          {!error && visibleItems.length > 0 ? (
             <div className="item-list">
               {visibleItems.map((item) => <CatalogRow key={item.itemId} item={item} selected={selection?.location.relativePath === item.location.relativePath} onSelect={() => chooseSelection(toFileSelection(item))} />)}
             </div>
