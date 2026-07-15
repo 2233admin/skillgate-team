@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUN_VERSION: 1.3.14
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Verify version and release tooling
+        shell: bash
+        run: |
+          node --test scripts/release-tools.test.mjs
+          node scripts/release-preflight.mjs --tag "v$(tr -d '\r\n[:space:]' < VERSION)"
+      - run: bun run test
+      - run: bun run gui:tauri:check
+      - name: Verify Rust crates
+        run: |
+          cargo fmt --manifest-path desktop-tauri/src-tauri/Cargo.toml -- --check
+          cargo clippy --manifest-path desktop-tauri/src-tauri/Cargo.toml --all-targets -- -D warnings
+          cargo test --manifest-path desktop-tauri/src-tauri/Cargo.toml
+          cargo test --manifest-path crates/skillgate-catalog/Cargo.toml
+          cargo test --manifest-path crates/skillgate-files/Cargo.toml
+          cargo test --manifest-path crates/skillgate-runtime/Cargo.toml
+          cargo test --manifest-path crates/skillgate-store/Cargo.toml
