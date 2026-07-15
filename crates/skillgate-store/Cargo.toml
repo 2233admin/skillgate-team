@@ -1,0 +1,22 @@
+[package]
+name = "skillgate-store"
+version = "0.1.0"
+description = "Skillgate SQLite persistence, migration, and single-writer boundary"
+edition = "2021"
+rust-version = "1.85.0"
+license = "MIT"
+
+[dependencies]
+fs2 = "0.4.3"
+rusqlite = { version = "0.32.1", features = ["backup", "bundled"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+sha2 = "0.10.9"
+thiserror = "2.0.17"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59.0", features = ["Win32_Foundation", "Win32_Storage_FileSystem"] }
+
+[dev-dependencies]
+tempfile = "3.23.0"
+

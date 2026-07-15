@@ -1,0 +1,15 @@
+[package]
+name = "skillgate-catalog"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Read-only local catalog core for Skillgate Desktop"
+
+[dependencies]
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde"] }
+serde = { version = "1", features = ["derive"] }
+walkdir = "2"
+
+[dev-dependencies]
+serde_json = "1"
+tempfile = "3"

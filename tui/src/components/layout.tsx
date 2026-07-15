@@ -191,7 +191,7 @@ export function Layout() {
         }}
       >
         <text fg={colors.primary}>
-          <strong>Skillgate TUI</strong> <span fg={colors.textDim}>v0.3.0</span>
+          <strong>Skillgate TUI</strong> <span fg={colors.textDim}>v0.6.0-team.1</span>
         </text>
       </box>
 

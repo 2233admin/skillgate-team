@@ -291,7 +291,7 @@ function printHelp(): void {
   console.log(`    mcp                Run as MCP server (stdio transport)`);
   console.log(`    setup              Configure MCP for AI tools`);
   console.log(`    tui                Launch terminal UI (OpenTUI; requires Bun + tui/)`);
-  console.log(`    gui                Launch desktop GUI (Electron; requires npm install)`);
+  console.log(`    gui                Launch the installed Skillgate Desktop (Tauri)`);
   console.log();
   console.log(`  ${BOLD("Examples:")}`);
   console.log(`    skillgate add @username/audit-website ${DIM("# install from SkillsGate")}`);

@@ -16,7 +16,7 @@ Use with [README.en.md](../README.en.md).
 
 | Step | Action |
 |------|--------|
-| 0 | Install [Bun](https://bun.sh) + [Git](https://git-scm.com/downloads) (desktop: [Node 22](https://nodejs.org)) |
+| 0 | Install [Bun](https://bun.sh) + [Git](https://git-scm.com/downloads) (desktop source development also needs [Node 22](https://nodejs.org) and [Rust](https://rustup.rs)) |
 | 1 | Clone to `~/.skillgate-team` |
 | 2 | Run **`bun run bootstrap`** (`bootstrap:desktop` on Windows for GUI) |
 | 3 | **New terminal** → `skillgate doctor --profile quant` |
@@ -28,7 +28,7 @@ One-liner:
 git clone https://github.com/2233admin/skillgate-team.git ~/.skillgate-team && cd ~/.skillgate-team && bun run bootstrap
 ```
 
-Prefer an installer? [GitHub Releases](https://github.com/2233admin/skillgate-team/releases) (Windows). Then bind the team catalog in Settings.
+Signed installers are published to [GitHub Releases](https://github.com/2233admin/skillgate-team/releases) after the migration ledger gates pass. During the Tauri preview, use CLI/TUI or the Electron compatibility UI for the complete Team workflow.
 
 ---
 
@@ -48,7 +48,7 @@ Daily workflow: **pick profile → Apply**. Maintainers own YAML and lock.
 
 ### Prerequisites
 
-[Bun](https://bun.sh) + **Node 22 or 25**. Clone to a stable path:
+[Bun](https://bun.sh) + **Node 22 or newer** + [Rust 1.85 or newer](https://rustup.rs). Clone to a stable path:
 
 - macOS / Linux: `~/.skillgate-team`
 - Windows: `D:\skillgate-team` (avoid spaces and non-ASCII paths)

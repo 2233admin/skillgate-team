@@ -11,3 +11,11 @@ package-lock.json
 
 .nx/cache
 .nx/workspace-data
+.release/
+**/target/
+desktop-tauri/src-tauri/icons/64x64.png
+desktop-tauri/src-tauri/icons/StoreLogo.png
+desktop-tauri/src-tauri/icons/Square*Logo.png
+desktop-tauri/src-tauri/icons/android/
+desktop-tauri/src-tauri/icons/ios/
+.gstack/

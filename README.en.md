@@ -8,9 +8,9 @@
   <a href="README.en.md">Home</a> · <a href="README.md">简体中文</a> · <strong>English</strong>
 </p>
 
-**Git-backed team skill catalog. One repo — aligned installs on Codex CLI and every agent.**
+**A local-first AI coding Skill manager and a Git source of truth for team Skills.**
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](VERSION)
+[![Version](https://img.shields.io/badge/version-0.6.0--team.1-blue)](VERSION)
 [![Node](https://img.shields.io/badge/node-22--25-339933?logo=node.js&logoColor=white)](package.json)
 [![Bun](https://img.shields.io/badge/bun-1.3.14-black?logo=bun&logoColor=white)](package.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](cli/package.json)
@@ -21,9 +21,11 @@
 
 </div>
 
-Every machine drifts: `~/.codex/skills` on one laptop, three extra skills on another, stale copies on a third. Onboarding becomes guesswork.
+Every machine drifts: `~/.codex/skills` on one laptop, three extra skills on another, stale copies on a third. Teams lose track of what is installed, where it came from, which tool supports it, and what deserves review.
 
-Skillgate Team is the **single Git catalog** for your squad. Maintainers edit `profiles/`; everyone `git pull` and **Apply**. **Codex CLI**, Claude Code, Cursor, and Grok receive the same pinned skill set — no more channel pings about who forgot to sync.
+Skillgate Team inventories local Claude Code, Codex, Cursor, and shared Skills first, then manages the team-approved set through a **single Git catalog**. Maintainers edit `profiles/`; everyone `git pull` and **Apply**. The supported tools receive the same pinned skill set.
+
+> **Skill** means an AI coding capability package here, not database SQL. Agent, Rule, and Context assets remain available in the unified catalog.
 
 ---
 
@@ -31,7 +33,7 @@ Skillgate Team is the **single Git catalog** for your squad. Maintainers edit `p
 
 ### Easy path (recommended)
 
-**One-time:** [Bun](https://bun.sh) + [Git](https://git-scm.com/downloads). Desktop: [Node 22 LTS](https://nodejs.org).
+**One-time:** [Bun](https://bun.sh) + [Git](https://git-scm.com/downloads). Desktop source development also needs [Node 22 LTS](https://nodejs.org) and [Rust](https://rustup.rs).
 
 ```bash
 git clone https://github.com/2233admin/skillgate-team.git ~/.skillgate-team && cd ~/.skillgate-team && bun run bootstrap
@@ -43,7 +45,7 @@ Open a **new terminal**, then `skillgate doctor --profile quant`.
 
 ### Desktop installer (no compile)
 
-Download the Windows installer from [Releases](https://github.com/2233admin/skillgate-team/releases), clone this repo to a fixed path, then in the app: **Settings → Team catalog root** → **Team → quant → Apply**.
+Signed Windows, macOS, and Linux installers are published to [Releases](https://github.com/2233admin/skillgate-team/releases) only after the compatibility ledger, signing, and clean-machine gates pass. `0.6.0-team.1` is a Tauri migration preview; use the CLI/TUI or Electron compatibility UI for complete Team, Discover, SSH, and Push workflows until cutover.
 
 ### Manual (maintainers)
 
@@ -61,6 +63,18 @@ Codex CLI target: `~/.codex/skills` (or `$CODEX_HOME/skills`).
 <p align="center">
   <img src="docs/images/architecture.svg" alt="Team catalog → Skillgate → local agents" width="920" />
 </p>
+
+#### Local Skill inventory, search, and health checks
+
+Desktop scans explicitly granted local roots and shows Skill totals, compatible tools, installation level, provenance, location count, and risk status:
+
+- **Compatibility** — Claude Code, Codex, Cursor, or shared installs
+- **Installation** — global, project, plugin, or external
+- **Provenance** — plugin provider, a source declared in `SKILL.md`, an external root, or the local filesystem
+- **Risk status** — static signals for destructive commands, remote execution, privilege elevation, and credential access
+- **Usage** — file modification time is never presented as invocation count; unrecorded usage is explicitly shown as untracked
+
+Health checks are review signals, not a guarantee that a Skill is safe. Inventory and search stay local-first.
 
 #### Team catalog — source of truth
 
@@ -191,7 +205,7 @@ Smoke check: `bun run smoke-team` (15 checks). Full paths: [docs/GETTING_STARTED
 Wrong or missing **Team catalog root**, or set `SKILLGATE_ROOT` to the clone.
 
 **Desktop won’t start?**  
-Use Node 22–25 and run `bun run gui:install` from the repo root.
+Installer users should choose the asset matching their OS and architecture. Source developers can run `bun run gui:install` from the repo root.
 
 **Maintainer shipped skill updates?**  
 `git pull` → **Apply**; maintainers run `skillgate lock verify --write` and commit the lock.
@@ -206,7 +220,8 @@ Use Node 22–25 and run `bun run gui:install` from the repo root.
 | [`profiles/`](profiles/) | Profile definitions |
 | [`skills.lock.yaml`](skills.lock.yaml) | Content hash lock |
 | [`cli/`](cli/) | `skillgate` CLI + `team-api` |
-| [`desktop/`](desktop/) | Electron app (en / zh-CN UI) |
+| [`desktop-tauri/`](desktop-tauri/) | React + Tauri 2/Rust desktop application |
+| [`desktop/`](desktop/) | Electron compatibility UI retained until Tauri feature parity |
 | [`tui/`](tui/) | OpenTUI terminal UI |
 | [`docs/DESIGN.md`](docs/DESIGN.md) | Visual system |
 | [`docs/images/`](docs/images/) | README assets |
@@ -219,6 +234,8 @@ Use Node 22–25 and run `bun run gui:install` from the repo root.
 bun install --ignore-scripts
 bun run test
 bun run build
+bun run gui:tauri:check
+node --test scripts/release-tools.test.mjs
 bun run graph
 ```
 

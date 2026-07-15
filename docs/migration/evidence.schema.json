@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://skillgate.local/schemas/migration-evidence.schema.json",
+  "title": "Skillgate migration evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "milestone",
+    "runId",
+    "commit",
+    "platform",
+    "fixtureVersion",
+    "commands",
+    "counts",
+    "blockers"
+  ],
+  "properties": {
+    "milestone": { "type": "string", "pattern": "^M[0-4]$" },
+    "runId": { "type": "string", "minLength": 1 },
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["os", "arch"],
+      "properties": {
+        "os": { "enum": ["windows", "macos", "linux"] },
+        "arch": { "type": "string", "minLength": 1 },
+        "version": { "type": "string" },
+        "runner": { "type": "string" }
+      }
+    },
+    "fixtureVersion": { "type": "string", "minLength": 1 },
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "exitCode"],
+        "properties": {
+          "command": { "type": "string", "minLength": 1 },
+          "exitCode": { "type": "integer" },
+          "durationMs": { "type": "integer", "minimum": 0 },
+          "outputArtifact": { "type": "string" }
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passed", "failed", "skipped"],
+      "properties": {
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "ciLinks": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" }
+    },
+    "blockers": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

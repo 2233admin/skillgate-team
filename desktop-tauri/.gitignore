@@ -1,0 +1,5 @@
+/dist/*
+!/dist/.gitkeep
+/src-tauri/gen/schemas/
+/src-tauri/target/
+*.tsbuildinfo

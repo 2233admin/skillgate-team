@@ -8,9 +8,9 @@
   <strong>简体中文</strong> · <a href="README.en.md">English</a>
 </p>
 
-**团队 Agent Skills 目录。一个 Git 仓库，同步到 Codex CLI 与全系 Agent。**
+**本机优先的 AI 编程 Skill 管理平台，也是团队 Skill 的 Git 单一事实源。**
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](VERSION)
+[![Version](https://img.shields.io/badge/version-0.6.0--team.1-blue)](VERSION)
 [![Node](https://img.shields.io/badge/node-22--25-339933?logo=node.js&logoColor=white)](package.json)
 [![Bun](https://img.shields.io/badge/bun-1.3.14-black?logo=bun&logoColor=white)](package.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](cli/package.json)
@@ -21,9 +21,11 @@
 
 </div>
 
-每人本机的 `~/.codex/skills`、`~/.claude/skills` 各装各的——版本对不上、新人不知道装什么，是团队里最常见的问题。
+每人本机的 `~/.codex/skills`、`~/.claude/skills` 各装各的——装了什么、从哪里来、适配哪个工具、有没有风险，往往没人说得清；团队版本也容易对不上。
 
-Skillgate Team 把技能收进**一个 Git 仓库**。维护者改 `profiles/`，成员 `git pull` 后 Apply，本机 **Codex CLI**、Claude Code、Cursor、Grok 四个目录对齐同一套清单。不用在群里追问「谁没更新 skill」。
+Skillgate Team 先扫描本机 Claude Code、Codex、Cursor 与共享目录里的 Skill，再把需要团队统一的技能收进**一个 Git 仓库**。维护者改 `profiles/`，成员 `git pull` 后 Apply，各工具对齐同一套清单。不用在群里追问「谁装了什么、谁没更新」。
+
+> 这里的 **Skill** 是 AI 编程工具的能力包，不是数据库 SQL。Agent、Rule、Context 也继续保留在统一目录中。
 
 ---
 
@@ -31,7 +33,7 @@ Skillgate Team 把技能收进**一个 Git 仓库**。维护者改 `profiles/`�
 
 ### 零脑力版（推荐）
 
-**只做一次：** 装 [Bun](https://bun.sh) 和 [Git](https://git-scm.com/downloads)。桌面版再装 [Node 22 LTS](https://nodejs.org)。
+**只做一次：** 装 [Bun](https://bun.sh) 和 [Git](https://git-scm.com/downloads)。从源码开发桌面版还需 [Node 22 LTS](https://nodejs.org) 与 [Rust](https://rustup.rs)。
 
 **Windows（PowerShell，一条命令）：**
 
@@ -58,7 +60,7 @@ bun run setup
 
 ### 桌面安装包（不用自己编译）
 
-在 [Releases](https://github.com/2233admin/skillgate-team/releases) 下载 Windows 安装包。装好后：
+正式的 Windows、macOS、Linux 安装包会在兼容性 ledger、三平台签名和干净机器验证全部通过后发布到 [Releases](https://github.com/2233admin/skillgate-team/releases)。`0.6.0-team.1` 是 Tauri 迁移预览版；Team、Discover、SSH/Push 等完整工作流在迁移门禁完成前继续使用 CLI/TUI 或 Electron 兼容界面。
 
 1. 把本仓库 clone 到 `~/.skillgate-team`（或任意固定路径）
 2. 打开 Skillgate → **设置** → **Team catalog root** 填该路径
@@ -73,7 +75,7 @@ bun install --ignore-scripts && bun run build && bun run install-global
 skillgate apply --profile quant -y
 ```
 
-Windows 桌面开发：`bun run gui:install`（需 Node 22–25）。
+Windows 桌面开发：`bun run gui:install`，然后 `bun run gui`（React + Tauri 2/Rust）。
 
 Codex CLI 技能目录：`~/.codex/skills`（或 `$CODEX_HOME/skills`）。
 
@@ -84,6 +86,18 @@ Codex CLI 技能目录：`~/.codex/skills`（或 `$CODEX_HOME/skills`）。
 <p align="center">
   <img src="docs/images/architecture.svg" alt="团队目录 → Skillgate → 本机 Agent" width="920" />
 </p>
+
+#### 本机 Skill 盘点、搜索与体检
+
+Desktop 扫描获准访问的本机目录，集中显示 Skill 总数、适配软件、安装级别、来源、位置数和风险状态：
+
+- **适配软件**：Claude Code、Codex、Cursor 或共享安装
+- **安装级别**：全局、项目级、插件级、外部目录
+- **来源**：插件提供方、`SKILL.md` 声明地址、外部根目录或本机文件系统
+- **风险状态**：对破坏性命令、远程执行、提权和凭据访问做静态信号提示
+- **使用情况**：不拿文件修改时间冒充调用次数；未由 Skillgate 记录时明确显示“未追踪”
+
+风险体检是待复核线索，不是“绝对安全”认证；扫描与搜索优先在本机完成。
 
 #### 团队目录 — 单一事实源
 
@@ -212,7 +226,7 @@ Context7 MCP 拉库文档，避免过期 API。
 **Team catalog root** 路径错误或不存在；或设置 `SKILLGATE_ROOT`。
 
 **Desktop 起不来？**  
-确认 Node 22–25，`bun run gui:install`。
+安装包用户请在 Release 附件中选择对应系统与架构；源码开发执行 `bun run gui:install`。
 
 **维护者更新了技能？**  
 `git pull` → **Apply**；维护者 `skillgate lock verify --write` 并提交 lock。
@@ -227,7 +241,8 @@ Context7 MCP 拉库文档，避免过期 API。
 | [`profiles/`](profiles/) | Profile 定义 |
 | [`skills.lock.yaml`](skills.lock.yaml) | 内容哈希锁定 |
 | [`cli/`](cli/) | `skillgate` CLI + `team-api` |
-| [`desktop/`](desktop/) | Electron 桌面（默认中文界面，可切英文） |
+| [`desktop-tauri/`](desktop-tauri/) | React + Tauri 2/Rust 桌面应用 |
+| [`desktop/`](desktop/) | 迁移期 Electron 兼容界面（Tauri 功能完整前保留） |
 | [`tui/`](tui/) | OpenTUI 终端 UI |
 | [`docs/DESIGN.md`](docs/DESIGN.md) | 视觉系统 |
 | [`docs/images/`](docs/images/) | 配图 |
@@ -240,6 +255,8 @@ Context7 MCP 拉库文档，避免过期 API。
 bun install --ignore-scripts
 bun run test
 bun run build
+bun run gui:tauri:check
+node --test scripts/release-tools.test.mjs
 bun run graph
 ```
 
