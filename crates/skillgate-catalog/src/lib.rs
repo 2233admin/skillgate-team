@@ -13,8 +13,10 @@ mod service;
 pub use error::{AppError, AppErrorCategory, AppErrorCode, AppResult};
 pub use grant::{AuthorizedPath, GrantRegistry};
 pub use model::{
-    CatalogFilter, CatalogGroup, CatalogItem, CatalogKind, CatalogPlatform, CatalogScope,
-    CatalogSnapshot, CatalogSummary, ListCatalogInput, ListCatalogOutput, PathRef, RootGrant,
+    CatalogFilter, CatalogGroup, CatalogInstallationLevel, CatalogItem, CatalogKind,
+    CatalogPlatform, CatalogRiskLevel, CatalogRiskSignal, CatalogScope, CatalogSkillMetadata,
+    CatalogSnapshot, CatalogSourceKind, CatalogSummary, CatalogUsageStatus, ListCatalogInput,
+    ListCatalogOutput, PathRef, RootGrant,
 };
 pub use scanner::is_noise_directory;
 pub use service::CatalogService;

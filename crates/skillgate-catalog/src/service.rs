@@ -142,13 +142,27 @@ fn matches_filter(item: &CatalogItem, filter: &CatalogFilter) -> bool {
         .filter(|q| !q.is_empty())
     {
         let query = query.to_lowercase();
+        let skill_metadata = item
+            .skill_meta
+            .as_ref()
+            .map(|metadata| {
+                format!(
+                    "{} {:?} {:?} {:?}",
+                    metadata.source_label,
+                    metadata.installation_level,
+                    metadata.risk_level,
+                    metadata.risk_signals
+                )
+            })
+            .unwrap_or_default();
         let haystack = format!(
-            "{} {} {} {} {}",
+            "{} {} {} {} {} {}",
             item.name,
             item.slug,
             item.description,
             item.creator.as_deref().unwrap_or(""),
-            item.display_path
+            item.display_path,
+            skill_metadata
         )
         .to_lowercase();
         if !haystack.contains(&query) {
@@ -174,6 +188,20 @@ fn matches_filter(item: &CatalogItem, filter: &CatalogFilter) -> bool {
         .as_ref()
         .is_some_and(|values| !values.contains(&item.scope))
     {
+        return false;
+    }
+    if filter.installation_levels.as_ref().is_some_and(|values| {
+        item.skill_meta
+            .as_ref()
+            .is_none_or(|metadata| !values.contains(&metadata.installation_level))
+    }) {
+        return false;
+    }
+    if filter.risk_levels.as_ref().is_some_and(|values| {
+        item.skill_meta
+            .as_ref()
+            .is_none_or(|metadata| !values.contains(&metadata.risk_level))
+    }) {
         return false;
     }
     if filter.project_names.as_ref().is_some_and(|values| {

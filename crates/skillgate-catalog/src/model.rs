@@ -78,6 +78,72 @@ impl CatalogScope {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum CatalogInstallationLevel {
+    Global,
+    Project,
+    Plugin,
+    External,
+}
+
+impl CatalogInstallationLevel {
+    pub(crate) const ALL: [Self; 4] = [Self::Global, Self::Project, Self::Plugin, Self::External];
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum CatalogSourceKind {
+    Local,
+    Plugin,
+    Manifest,
+    External,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum CatalogUsageStatus {
+    Untracked,
+    Active,
+    Stale,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum CatalogRiskLevel {
+    Low,
+    Medium,
+    High,
+}
+
+impl CatalogRiskLevel {
+    pub(crate) const ALL: [Self; 3] = [Self::Low, Self::Medium, Self::High];
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum CatalogRiskSignal {
+    DestructiveCommand,
+    RemoteExecution,
+    ElevatedPrivileges,
+    CredentialAccess,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CatalogSkillMetadata {
+    pub compatible_with: Vec<CatalogPlatform>,
+    pub installation_level: CatalogInstallationLevel,
+    pub source_kind: CatalogSourceKind,
+    pub source_label: String,
+    pub usage_status: CatalogUsageStatus,
+    pub usage_count: Option<u64>,
+    pub last_used_at: Option<String>,
+    pub installation_count: usize,
+    pub risk_level: CatalogRiskLevel,
+    pub risk_signals: Vec<CatalogRiskSignal>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CatalogAlias {
@@ -98,6 +164,8 @@ pub struct CatalogItem {
     pub group_label: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub plugin_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skill_meta: Option<CatalogSkillMetadata>,
     pub name: String,
     pub slug: String,
     pub description: String,
@@ -127,6 +195,8 @@ pub struct CatalogSummary {
     pub by_kind: BTreeMap<CatalogKind, usize>,
     pub by_platform: BTreeMap<CatalogPlatform, usize>,
     pub by_scope: BTreeMap<CatalogScope, usize>,
+    pub by_installation_level: BTreeMap<CatalogInstallationLevel, usize>,
+    pub by_risk_level: BTreeMap<CatalogRiskLevel, usize>,
     pub project_names: Vec<String>,
 }
 
@@ -148,6 +218,8 @@ pub struct CatalogFilter {
     pub kinds: Option<Vec<CatalogKind>>,
     pub platforms: Option<Vec<CatalogPlatform>>,
     pub scopes: Option<Vec<CatalogScope>>,
+    pub installation_levels: Option<Vec<CatalogInstallationLevel>>,
+    pub risk_levels: Option<Vec<CatalogRiskLevel>>,
     pub project_names: Option<Vec<String>>,
     pub group_ids: Option<Vec<String>>,
 }

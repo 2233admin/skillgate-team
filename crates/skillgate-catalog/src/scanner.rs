@@ -1,7 +1,8 @@
 use crate::error::{AppError, AppErrorCategory, AppErrorCode, AppResult};
 use crate::model::{
-    CatalogGroup, CatalogItem, CatalogKind, CatalogPlatform, CatalogScope, CatalogSnapshot,
-    CatalogSummary, PathRef, RootGrant,
+    CatalogGroup, CatalogInstallationLevel, CatalogItem, CatalogKind, CatalogPlatform,
+    CatalogRiskLevel, CatalogRiskSignal, CatalogScope, CatalogSkillMetadata, CatalogSnapshot,
+    CatalogSourceKind, CatalogSummary, CatalogUsageStatus, PathRef, RootGrant,
 };
 use crate::parser::parse_markdown;
 use chrono::{DateTime, Utc};
@@ -287,6 +288,17 @@ impl<'a> SnapshotBuilder<'a> {
             .then(|| relative.components().nth(classification.config_index - 1))
             .flatten()
             .map(|part| part.as_os_str().to_string_lossy().to_string());
+        let skill_meta = (classification.kind == CatalogKind::Skill).then(|| {
+            skill_metadata(
+                &self.grant,
+                classification.platform,
+                scope,
+                classification.plugin_name.as_deref(),
+                classification.plugin_source.as_deref(),
+                parsed.source.as_deref(),
+                &content,
+            )
+        });
         let slug = slugify(&parsed.name, &fallback_name);
         let group_label = classification
             .plugin_name
@@ -319,6 +331,7 @@ impl<'a> SnapshotBuilder<'a> {
             group_id,
             group_label,
             plugin_name: classification.plugin_name,
+            skill_meta,
             name: parsed.name,
             slug,
             description: parsed.description,
@@ -359,6 +372,9 @@ impl<'a> SnapshotBuilder<'a> {
             });
             item.aliases
                 .dedup_by(|left, right| left.location == right.location);
+            if let Some(skill_meta) = &mut item.skill_meta {
+                skill_meta.installation_count = item.aliases.len() + 1;
+            }
         }
         items.sort_by(item_order);
         let groups = groups_for(&items);
@@ -443,6 +459,7 @@ struct Classification {
     platform: CatalogPlatform,
     config_index: usize,
     plugin_name: Option<String>,
+    plugin_source: Option<String>,
 }
 
 fn classify(relative: &Path) -> Option<Classification> {
@@ -471,6 +488,7 @@ fn classify(relative: &Path) -> Option<Classification> {
             platform,
             config_index,
             plugin_name: None,
+            plugin_source: None,
         });
     }
 
@@ -493,11 +511,13 @@ fn classify(relative: &Path) -> Option<Classification> {
         && tail.windows(2).any(|parts| parts == ["plugins", "cache"]);
     if file_name == "SKILL.md" && (standard_skill || cursor_builtin_skill || plugin_skill) {
         let plugin_name = plugin_name(tail);
+        let plugin_source = plugin_source(tail);
         return Some(Classification {
             kind: CatalogKind::Skill,
             platform,
             config_index,
             plugin_name,
+            plugin_source,
         });
     }
     if platform != CatalogPlatform::Shared
@@ -510,6 +530,7 @@ fn classify(relative: &Path) -> Option<Classification> {
             platform,
             config_index,
             plugin_name: None,
+            plugin_source: None,
         });
     }
     if matches!(platform, CatalogPlatform::Cursor | CatalogPlatform::Codex)
@@ -522,6 +543,7 @@ fn classify(relative: &Path) -> Option<Classification> {
             platform,
             config_index,
             plugin_name: None,
+            plugin_source: None,
         });
     }
     None
@@ -547,6 +569,142 @@ fn plugin_name(tail: &[String]) -> Option<String> {
         Some(2) => after_cache.get(1).cloned(),
         _ => after_cache.first().cloned(),
     }
+}
+
+fn plugin_source(tail: &[String]) -> Option<String> {
+    let cache_index = tail
+        .windows(2)
+        .position(|parts| parts == ["plugins", "cache"])?
+        + 2;
+    tail.get(cache_index).cloned()
+}
+
+fn skill_metadata(
+    grant: &RootGrant,
+    platform: CatalogPlatform,
+    scope: CatalogScope,
+    plugin_name: Option<&str>,
+    plugin_source: Option<&str>,
+    declared_source: Option<&str>,
+    content: &str,
+) -> CatalogSkillMetadata {
+    let compatible_with = match platform {
+        CatalogPlatform::Shared => vec![
+            CatalogPlatform::Claude,
+            CatalogPlatform::Codex,
+            CatalogPlatform::Cursor,
+        ],
+        platform => vec![platform],
+    };
+    let installation_level = if plugin_name.is_some() {
+        CatalogInstallationLevel::Plugin
+    } else if grant.grant_id != "home" {
+        CatalogInstallationLevel::External
+    } else {
+        match scope {
+            CatalogScope::Global => CatalogInstallationLevel::Global,
+            CatalogScope::Project => CatalogInstallationLevel::Project,
+        }
+    };
+    let (source_kind, source_label) = if plugin_name.is_some() {
+        (
+            CatalogSourceKind::Plugin,
+            plugin_source
+                .or(plugin_name)
+                .unwrap_or("Plugin cache")
+                .to_string(),
+        )
+    } else if let Some(source) = declared_source {
+        (CatalogSourceKind::Manifest, source.to_string())
+    } else if grant.grant_id != "home" {
+        (CatalogSourceKind::External, grant.display_name.clone())
+    } else {
+        (CatalogSourceKind::Local, "Local filesystem".to_string())
+    };
+    let (risk_level, risk_signals) = assess_skill_risk(content);
+
+    CatalogSkillMetadata {
+        compatible_with,
+        installation_level,
+        source_kind,
+        source_label,
+        usage_status: CatalogUsageStatus::Untracked,
+        usage_count: None,
+        last_used_at: None,
+        installation_count: 1,
+        risk_level,
+        risk_signals,
+    }
+}
+
+fn assess_skill_risk(content: &str) -> (CatalogRiskLevel, Vec<CatalogRiskSignal>) {
+    let normalized = content.to_lowercase();
+    let mut signals = Vec::new();
+    if contains_any(
+        &normalized,
+        &[
+            "rm -rf",
+            "remove-item -recurse",
+            "git reset --hard",
+            "git clean -fd",
+            "rmdir /s",
+            "del /s",
+            "drop database",
+            "format c:",
+        ],
+    ) {
+        signals.push(CatalogRiskSignal::DestructiveCommand);
+    }
+    if contains_any(
+        &normalized,
+        &[
+            "| sh",
+            "| bash",
+            "invoke-expression",
+            "downloadstring(",
+            "bash <(",
+        ],
+    ) {
+        signals.push(CatalogRiskSignal::RemoteExecution);
+    }
+    if contains_any(
+        &normalized,
+        &["sudo ", "runas ", "chmod 777", "set-executionpolicy bypass"],
+    ) {
+        signals.push(CatalogRiskSignal::ElevatedPrivileges);
+    }
+    if contains_any(
+        &normalized,
+        &[
+            ".aws/credentials",
+            "~/.ssh",
+            "api_key",
+            "api key",
+            "access_token",
+            "access token",
+            "private key",
+        ],
+    ) {
+        signals.push(CatalogRiskSignal::CredentialAccess);
+    }
+
+    let level = if signals.iter().any(|signal| {
+        matches!(
+            signal,
+            CatalogRiskSignal::DestructiveCommand | CatalogRiskSignal::RemoteExecution
+        )
+    }) {
+        CatalogRiskLevel::High
+    } else if signals.is_empty() {
+        CatalogRiskLevel::Low
+    } else {
+        CatalogRiskLevel::Medium
+    };
+    (level, signals)
+}
+
+fn contains_any(content: &str, patterns: &[&str]) -> bool {
+    patterns.iter().any(|pattern| content.contains(pattern))
 }
 
 fn is_version_segment(value: &str) -> bool {
@@ -715,11 +873,26 @@ pub(crate) fn summary_for(items: &[CatalogItem]) -> CatalogSummary {
         .collect();
     let mut by_scope: BTreeMap<CatalogScope, usize> =
         CatalogScope::ALL.into_iter().map(|key| (key, 0)).collect();
+    let mut by_installation_level: BTreeMap<CatalogInstallationLevel, usize> =
+        CatalogInstallationLevel::ALL
+            .into_iter()
+            .map(|key| (key, 0))
+            .collect();
+    let mut by_risk_level: BTreeMap<CatalogRiskLevel, usize> = CatalogRiskLevel::ALL
+        .into_iter()
+        .map(|key| (key, 0))
+        .collect();
     let mut projects = BTreeSet::new();
     for item in items {
         *by_kind.entry(item.kind).or_default() += 1;
         *by_platform.entry(item.platform).or_default() += 1;
         *by_scope.entry(item.scope).or_default() += 1;
+        if let Some(skill_meta) = &item.skill_meta {
+            *by_installation_level
+                .entry(skill_meta.installation_level)
+                .or_default() += 1;
+            *by_risk_level.entry(skill_meta.risk_level).or_default() += 1;
+        }
         if let Some(project) = &item.project_name {
             projects.insert(project.clone());
         }
@@ -729,6 +902,8 @@ pub(crate) fn summary_for(items: &[CatalogItem]) -> CatalogSummary {
         by_kind,
         by_platform,
         by_scope,
+        by_installation_level,
+        by_risk_level,
         project_names: projects.into_iter().collect(),
     }
 }

@@ -3,6 +3,7 @@ pub(crate) struct Metadata {
     pub name: String,
     pub description: String,
     pub creator: Option<String>,
+    pub source: Option<String>,
 }
 
 pub(crate) fn parse_markdown(content: &str, fallback_name: &str) -> Metadata {
@@ -14,11 +15,15 @@ pub(crate) fn parse_markdown(content: &str, fallback_name: &str) -> Metadata {
     let creator = ["author", "createdBy", "created_by", "created-by", "creator"]
         .iter()
         .find_map(|key| scalar(frontmatter, key));
+    let source = ["source", "repository", "homepage", "url"]
+        .iter()
+        .find_map(|key| scalar(frontmatter, key));
 
     Metadata {
         name,
         description: collapse(&description, 500),
         creator,
+        source,
     }
 }
 
@@ -104,6 +109,7 @@ mod tests {
         assert_eq!(parsed.name, "Release helper");
         assert_eq!(parsed.description, "Ships safely with checks");
         assert_eq!(parsed.creator.as_deref(), Some("Ada"));
+        assert_eq!(parsed.source, None);
     }
 
     #[test]
@@ -116,6 +122,18 @@ mod tests {
         assert_eq!(
             parsed.description,
             "Useful project instructions. Second line."
+        );
+    }
+
+    #[test]
+    fn captures_declared_download_source() {
+        let parsed = parse_markdown(
+            "---\nname: Imported skill\nrepository: https://github.com/example/skills\n---",
+            "fallback",
+        );
+        assert_eq!(
+            parsed.source.as_deref(),
+            Some("https://github.com/example/skills")
         );
     }
 }
