@@ -31,4 +31,15 @@ describe("Skillgate host bootstrap", () => {
     value.capabilities["catalog.local"].operations = ["scan"]
     expect(validateHostDescription(value).status).toBe("unavailable")
   })
+
+  it("blocks a malformed catalog capability without throwing", () => {
+    const value = host()
+    value.capabilities["catalog.local"] = {
+      state: "available",
+      version: "1.0",
+    } as unknown as AppDescription["capabilities"]["catalog.local"]
+
+    expect(() => validateHostDescription(value)).not.toThrow()
+    expect(validateHostDescription(value).status).toBe("unavailable")
+  })
 })

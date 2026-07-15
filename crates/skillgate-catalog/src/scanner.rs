@@ -246,6 +246,13 @@ impl<'a> SnapshotBuilder<'a> {
         }
         let metadata = fs::metadata(&canonical_path)
             .map_err(|error| AppError::from_io(&error, "catalog metadata"))?;
+        if !metadata.is_file() {
+            return Err(AppError::new(
+                AppErrorCode::InvalidArgument,
+                AppErrorCategory::Validation,
+                "catalog metadata path is not a regular file",
+            ));
+        }
         if metadata.len() > MAX_FILE_BYTES {
             return Err(AppError::new(
                 AppErrorCode::InvalidArgument,
@@ -482,11 +489,12 @@ struct Classification {
 
 fn classify(relative: &Path) -> Option<Classification> {
     let candidate = relative.file_name()?.to_string_lossy();
+    let candidate_lower = candidate.to_ascii_lowercase();
     if !matches!(
-        candidate.as_ref(),
-        "CLAUDE.md" | "claude.md" | "AGENTS.md" | "SKILL.md"
-    ) && !candidate.ends_with(".md")
-        && !candidate.ends_with(".mdc")
+        candidate_lower.as_str(),
+        "claude.md" | "agents.md" | "skill.md"
+    ) && !candidate_lower.ends_with(".md")
+        && !candidate_lower.ends_with(".mdc")
     {
         return None;
     }
@@ -495,10 +503,11 @@ fn classify(relative: &Path) -> Option<Classification> {
         .map(|part| part.as_os_str().to_string_lossy().to_string())
         .collect();
     let file_name = components.last()?;
+    let file_name_lower = file_name.to_ascii_lowercase();
 
-    if matches!(file_name.as_str(), "CLAUDE.md" | "claude.md" | "AGENTS.md") {
-        let (platform, config_index) = match file_name.as_str() {
-            "AGENTS.md" => (CatalogPlatform::Shared, components.len().saturating_sub(1)),
+    if matches!(file_name_lower.as_str(), "claude.md" | "agents.md") {
+        let (platform, config_index) = match file_name_lower.as_str() {
+            "agents.md" => (CatalogPlatform::Shared, components.len().saturating_sub(1)),
             _ => (CatalogPlatform::Claude, components.len().saturating_sub(1)),
         };
         return Some(Classification {
@@ -527,7 +536,7 @@ fn classify(relative: &Path) -> Option<Classification> {
         && tail.first().is_some_and(|part| part == "skills-cursor");
     let plugin_skill = platform != CatalogPlatform::Shared
         && tail.windows(2).any(|parts| parts == ["plugins", "cache"]);
-    if file_name == "SKILL.md" && (standard_skill || cursor_builtin_skill || plugin_skill) {
+    if file_name_lower == "skill.md" && (standard_skill || cursor_builtin_skill || plugin_skill) {
         let plugin_name = plugin_name(tail);
         let plugin_source = plugin_source(tail);
         return Some(Classification {
@@ -541,7 +550,7 @@ fn classify(relative: &Path) -> Option<Classification> {
     if platform != CatalogPlatform::Shared
         && tail.len() == 2
         && tail.first().is_some_and(|part| part == "agents")
-        && file_name.ends_with(".md")
+        && file_name_lower.ends_with(".md")
     {
         return Some(Classification {
             kind: CatalogKind::Agent,
@@ -554,7 +563,7 @@ fn classify(relative: &Path) -> Option<Classification> {
     if matches!(platform, CatalogPlatform::Cursor | CatalogPlatform::Codex)
         && tail.len() == 2
         && tail.first().is_some_and(|part| part == "rules")
-        && file_name.ends_with(".mdc")
+        && file_name_lower.ends_with(".mdc")
     {
         return Some(Classification {
             kind: CatalogKind::Rule,
@@ -873,88 +882,89 @@ fn is_catalog_config_root(name: &str) -> bool {
 /// Returns whether a directory belongs to the canonical AgentDex-compatible
 /// noise table shared by catalog scans and lazy worktree listings.
 pub fn is_noise_directory(path: &Path, name: &str) -> bool {
-    if name == "pkg"
+    if name.eq_ignore_ascii_case("pkg")
         && path
             .parent()
             .and_then(Path::file_name)
-            .is_some_and(|parent| parent == "go")
+            .is_some_and(|parent| parent.to_string_lossy().eq_ignore_ascii_case("go"))
     {
         return true;
     }
 
-    matches!(
-        name,
-        "node_modules"
-            | "bower_components"
-            | ".pnpm-store"
-            | ".yarn"
-            | ".turbo"
-            | ".parcel-cache"
-            | ".nuxt"
-            | ".output"
-            | ".svelte-kit"
-            | ".angular"
-            | ".docusaurus"
-            | ".vite"
-            | ".astro"
-            | "jspm_packages"
-            | "web_modules"
-            | ".npm"
-            | ".sass-cache"
-            | ".nyc_output"
-            | "target"
-            | ".cargo"
-            | ".rustup"
-            | ".venv"
-            | "venv"
-            | "site-packages"
-            | "__pycache__"
-            | ".tox"
-            | ".mypy_cache"
-            | ".pytest_cache"
-            | ".ruff_cache"
-            | ".eggs"
-            | "__pypackages__"
-            | ".nox"
-            | ".ipynb_checkpoints"
-            | ".hatch"
-            | ".pdm-build"
-            | ".bundle"
-            | ".dart_tool"
-            | "_build"
-            | "deps"
-            | ".stack-work"
-            | "dist-newstyle"
-            | ".gradle"
-            | ".m2"
-            | "Pods"
-            | ".swiftpm"
-            | "DerivedData"
-            | "Carthage"
-            | ".terraform"
-            | ".terragrunt-cache"
-            | ".serverless"
-            | ".vscode"
-            | ".idea"
-            | ".vs"
-            | ".fleet"
-            | ".history"
-            | ".svn"
-            | ".hg"
-            | "$RECYCLE.BIN"
-            | "System Volume Information"
-            | "Library"
-            | ".Trash"
-            | "dist"
-            | ".git"
-            | "build"
-            | ".next"
-            | "vendor"
-            | "coverage"
-            | "cache"
-            | ".cache"
-            | "Caches"
-    )
+    [
+        "node_modules",
+        "bower_components",
+        ".pnpm-store",
+        ".yarn",
+        ".turbo",
+        ".parcel-cache",
+        ".nuxt",
+        ".output",
+        ".svelte-kit",
+        ".angular",
+        ".docusaurus",
+        ".vite",
+        ".astro",
+        "jspm_packages",
+        "web_modules",
+        ".npm",
+        ".sass-cache",
+        ".nyc_output",
+        "target",
+        ".cargo",
+        ".rustup",
+        ".venv",
+        "venv",
+        "site-packages",
+        "__pycache__",
+        ".tox",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".eggs",
+        "__pypackages__",
+        ".nox",
+        ".ipynb_checkpoints",
+        ".hatch",
+        ".pdm-build",
+        ".bundle",
+        ".dart_tool",
+        "_build",
+        "deps",
+        ".stack-work",
+        "dist-newstyle",
+        ".gradle",
+        ".m2",
+        "Pods",
+        ".swiftpm",
+        "DerivedData",
+        "Carthage",
+        ".terraform",
+        ".terragrunt-cache",
+        ".serverless",
+        ".vscode",
+        ".idea",
+        ".vs",
+        ".fleet",
+        ".history",
+        ".svn",
+        ".hg",
+        "$RECYCLE.BIN",
+        "System Volume Information",
+        "Library",
+        ".Trash",
+        "dist",
+        ".git",
+        "build",
+        ".next",
+        "vendor",
+        "coverage",
+        "cache",
+        ".cache",
+        "Caches",
+    ]
+    .iter()
+    .any(|candidate| name.eq_ignore_ascii_case(candidate))
 }
 
 pub(crate) fn groups_for(items: &[CatalogItem]) -> Vec<CatalogGroup> {
@@ -1122,6 +1132,10 @@ mod tests {
         assert_eq!(skill.platform, CatalogPlatform::Codex);
         assert_eq!(skill.config_index, 0);
 
+        let mixed_case_skill = classify(Path::new(".codex/skills/release/Skill.MD")).unwrap();
+        assert_eq!(mixed_case_skill.kind, CatalogKind::Skill);
+        assert_eq!(mixed_case_skill.platform, CatalogPlatform::Codex);
+
         let rule = classify(Path::new("project/.cursor/rules/safe.mdc")).unwrap();
         assert_eq!(rule.kind, CatalogKind::Rule);
         assert_eq!(rule.config_index, 1);
@@ -1129,6 +1143,10 @@ mod tests {
         let context = classify(Path::new("project/AGENTS.md")).unwrap();
         assert_eq!(context.kind, CatalogKind::Context);
         assert_eq!(context.platform, CatalogPlatform::Shared);
+
+        let mixed_case_context = classify(Path::new("project/agents.MD")).unwrap();
+        assert_eq!(mixed_case_context.kind, CatalogKind::Context);
+        assert_eq!(mixed_case_context.platform, CatalogPlatform::Shared);
     }
 
     #[test]
@@ -1286,6 +1304,21 @@ mod tests {
             temp.path(),
             "go/pkg/project/.codex/skills/noise/SKILL.md",
             "---\nname: Go cache noise\n---",
+        );
+        write(
+            temp.path(),
+            "Node_Modules/mixed/.codex/skills/noise/SKILL.md",
+            "---\nname: Mixed node modules noise\n---",
+        );
+        write(
+            temp.path(),
+            "TARGET/mixed/.codex/skills/noise/SKILL.md",
+            "---\nname: Mixed target noise\n---",
+        );
+        write(
+            temp.path(),
+            "GO/PKG/mixed/.codex/skills/noise/SKILL.md",
+            "---\nname: Mixed Go cache noise\n---",
         );
         write(
             temp.path(),
@@ -1470,6 +1503,30 @@ mod tests {
             )
             .unwrap_err();
         assert_eq!(error.code, AppErrorCode::SymlinkEscape);
+        assert!(builder.items.is_empty());
+        assert!(builder.content_digests.is_empty());
+    }
+
+    #[test]
+    fn non_regular_metadata_path_is_rejected_before_reading() {
+        let root = tempfile::tempdir().unwrap();
+        let relative = Path::new(".codex/agents/directory.md");
+        let directory = root.path().join(relative);
+        fs::create_dir_all(&directory).unwrap();
+        let canonical_root = fs::canonicalize(root.path()).unwrap();
+        let mut builder = SnapshotBuilder::new(&canonical_root, test_grant());
+
+        let error = builder
+            .add_item(
+                &directory,
+                relative,
+                classify(relative).unwrap(),
+                None,
+                None,
+            )
+            .unwrap_err();
+
+        assert_eq!(error.code, AppErrorCode::InvalidArgument);
         assert!(builder.items.is_empty());
         assert!(builder.content_digests.is_empty());
     }

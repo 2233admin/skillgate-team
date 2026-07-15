@@ -67,10 +67,22 @@ impl CatalogService {
     }
 
     pub fn get_item(&self, grant_id: &str, item_id: &str) -> AppResult<CatalogItem> {
-        self.snapshot(grant_id)?
+        self.grants.get(grant_id)?;
+        self.snapshots
+            .read()
+            .map_err(|_| cache_error())?
+            .get(grant_id)
+            .ok_or_else(|| {
+                AppError::new(
+                    AppErrorCode::NotFound,
+                    AppErrorCategory::NotFound,
+                    "catalog has not been scanned for this grant",
+                )
+            })?
             .items
-            .into_iter()
+            .iter()
             .find(|item| item.item_id == item_id)
+            .cloned()
             .ok_or_else(|| {
                 AppError::new(
                     AppErrorCode::NotFound,

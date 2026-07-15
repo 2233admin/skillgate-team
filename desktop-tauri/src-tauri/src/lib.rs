@@ -779,18 +779,19 @@ fn catalog_select_root(
 
     let (grant_id, path, display_name, persisted) = match input.source.as_str() {
         "home" => {
-            let home = std::env::var_os("USERPROFILE")
-                .or_else(|| std::env::var_os("HOME"))
-                .map(std::path::PathBuf::from);
-            let Some(home) = home else {
-                return failure(
-                    AppError::new(
-                        AppErrorCode::NotFound,
-                        AppErrorCategory::NotFound,
-                        "home directory is unavailable",
-                    ),
-                    &meta,
-                );
+            let home = match app.path().home_dir() {
+                Ok(home) => home,
+                Err(error) => {
+                    return failure(
+                        AppError::new(
+                            AppErrorCode::NotFound,
+                            AppErrorCategory::NotFound,
+                            "home directory is unavailable",
+                        )
+                        .with_detail("pathResolver", error.to_string()),
+                        &meta,
+                    );
+                }
             };
             ("home".to_string(), home, "Home".to_string(), true)
         }
@@ -847,17 +848,17 @@ fn next_picker_grant_id() -> String {
 async fn catalog_scan(
     input: Value,
     meta: Value,
-    state: State<'_, CatalogState>,
-) -> Result<AppResult<skillgate_catalog::CatalogSnapshot>, ()> {
+    app: tauri::AppHandle,
+) -> AppResult<skillgate_catalog::CatalogSnapshot> {
     let meta = match decode_meta(meta) {
         Ok(meta) => meta,
-        Err((meta, error)) => return Ok(failure(error, &meta)),
+        Err((meta, error)) => return failure(error, &meta),
     };
     let input: ScanCatalogInput = match decode_input(input, "catalog.scan") {
         Ok(input) => input,
-        Err(error) => return Ok(failure(error, &meta)),
+        Err(error) => return failure(error, &meta),
     };
-    let service = state.service.clone();
+    let service = app.state::<CatalogState>().service.clone();
     let grant_id = input.grant_id;
     let force = input.force;
     let result =
@@ -866,7 +867,7 @@ async fn catalog_scan(
     let result = match result {
         Ok(result) => result,
         Err(error) => {
-            return Ok(failure(
+            return failure(
                 AppError::new(
                     AppErrorCode::Internal,
                     AppErrorCategory::Internal,
@@ -874,16 +875,16 @@ async fn catalog_scan(
                 )
                 .with_detail("worker", error.to_string()),
                 &meta,
-            ));
+            );
         }
     };
-    Ok(match result {
+    match result {
         Ok(snapshot) => {
             let revision = Some(snapshot.revision.clone());
             success(snapshot, &meta, revision)
         }
         Err(error) => failure(error, &meta),
-    })
+    }
 }
 
 #[tauri::command]

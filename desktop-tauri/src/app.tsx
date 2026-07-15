@@ -24,7 +24,7 @@ export function validateHostDescription(description: AppDescription): BootstrapS
     return { status: "incompatible", message: `AppAPI major ${major} is incompatible with renderer major 1.` }
   }
   const localCatalog = description.capabilities["catalog.local"]
-  const missing = requiredCatalogOperations.filter((operation) => !localCatalog?.operations.includes(operation))
+  const missing = requiredCatalogOperations.filter((operation) => !localCatalog?.operations?.includes(operation))
   if (!localCatalog || localCatalog.state === "unavailable" || missing.length > 0) {
     const reason = localCatalog?.reason?.message
     return { status: "unavailable", message: reason ?? `catalog.local is unavailable or missing operations: ${missing.join(", ") || "unknown"}.` }
