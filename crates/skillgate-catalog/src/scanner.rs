@@ -17,14 +17,30 @@ pub(crate) fn scan_root(root: &Path, grant: RootGrant) -> AppResult<CatalogSnaps
         .map_err(|error| AppError::from_io(&error, "catalog root canonicalization"))?;
     let is_home_scan = grant.grant_id == "home";
     let mut builder = SnapshotBuilder::new(&canonical_root, grant.clone());
-    let walker = WalkDir::new(&canonical_root)
+    let mut walker = WalkDir::new(&canonical_root)
         .follow_links(false)
         .into_iter();
-    for entry in walker.filter_entry(|entry| should_descend(entry, is_home_scan)) {
-        match entry {
-            Ok(entry) => builder.inspect(&entry),
-            Err(_) => builder.skipped_unreadable += 1,
+    while let Some(entry) = walker.next() {
+        let entry = match entry {
+            Ok(entry) => entry,
+            Err(_) => {
+                builder.skipped_unreadable += 1;
+                continue;
+            }
+        };
+        if entry.file_type().is_dir() && entry.depth() > 0 {
+            if !should_descend(&entry, is_home_scan) {
+                walker.skip_current_dir();
+                continue;
+            }
+            if is_home_scan && is_catalog_config_root(entry.file_name().to_string_lossy().as_ref())
+            {
+                builder.inspect_config_root(entry.path());
+                walker.skip_current_dir();
+                continue;
+            }
         }
+        builder.inspect(&entry);
     }
     builder.finish()
 }
@@ -69,6 +85,75 @@ impl<'a> SnapshotBuilder<'a> {
         };
         if let Err(_error) = self.add_item(path, relative, classification, None) {
             self.skipped_unreadable += 1;
+        }
+    }
+
+    fn inspect_config_root(&mut self, config_root: &Path) {
+        self.inspect_catalog_tree(config_root, Some(1));
+        for name in ["skills", "skills-cursor"] {
+            self.inspect_catalog_tree(&config_root.join(name), None);
+        }
+        for name in ["agents", "rules"] {
+            self.inspect_catalog_tree(&config_root.join(name), Some(1));
+        }
+        if is_plugin_platform_root(
+            config_root
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .as_ref(),
+        ) {
+            self.inspect_plugin_cache(config_root);
+        }
+    }
+
+    fn inspect_catalog_tree(&mut self, root: &Path, max_depth: Option<usize>) {
+        if !root.is_dir() {
+            return;
+        }
+        let mut walker = WalkDir::new(root).follow_links(false);
+        if let Some(max_depth) = max_depth {
+            walker = walker.max_depth(max_depth);
+        }
+        for entry in walker
+            .into_iter()
+            .filter_entry(|entry| should_descend(entry, false))
+        {
+            let Ok(entry) = entry else {
+                self.skipped_unreadable += 1;
+                continue;
+            };
+            if entry.path() != root {
+                self.inspect(&entry);
+            }
+        }
+    }
+
+    fn inspect_plugin_cache(&mut self, config_root: &Path) {
+        let cache_root = config_root.join("plugins").join("cache");
+        if !cache_root.is_dir() {
+            return;
+        }
+
+        let mut walker = WalkDir::new(cache_root).follow_links(false).into_iter();
+        while let Some(entry) = walker.next() {
+            let entry = match entry {
+                Ok(entry) => entry,
+                Err(_) => {
+                    self.skipped_unreadable += 1;
+                    continue;
+                }
+            };
+            if entry_is_link_like(&entry) {
+                if entry.path().is_dir() {
+                    walker.skip_current_dir();
+                }
+                self.inspect(&entry);
+                continue;
+            }
+            if entry.file_type().is_file() && entry.file_name() == "SKILL.md" {
+                self.inspect(&entry);
+            }
         }
     }
 
@@ -449,12 +534,25 @@ fn plugin_name(tail: &[String]) -> Option<String> {
         + 2;
     // Common layouts are cache/<hash>/<plugin>/... and cache/<plugin>/... .
     let after_cache = tail.get(cache_index..)?;
-    match after_cache {
-        [plugin, next, ..] if next == "skills" => Some(plugin.clone()),
-        [_, plugin, ..] => Some(plugin.clone()),
-        [plugin] => Some(plugin.clone()),
-        [] => None,
+    let skills_index = after_cache.iter().position(|part| part == "skills");
+    match skills_index {
+        Some(index) if index >= 3 => after_cache.get(1).cloned(),
+        Some(2)
+            if after_cache
+                .get(1)
+                .is_some_and(|part| is_version_segment(part)) =>
+        {
+            after_cache.first().cloned()
+        }
+        Some(2) => after_cache.get(1).cloned(),
+        _ => after_cache.first().cloned(),
     }
+}
+
+fn is_version_segment(value: &str) -> bool {
+    value == "unknown"
+        || value.starts_with(|character: char| character.is_ascii_digit())
+        || (value.len() >= 7 && value.chars().all(|character| character.is_ascii_hexdigit()))
 }
 
 fn should_descend(entry: &DirEntry, is_home_scan: bool) -> bool {
@@ -462,13 +560,36 @@ fn should_descend(entry: &DirEntry, is_home_scan: bool) -> bool {
         return true;
     }
     let name = entry.file_name().to_string_lossy();
-    if is_noise_directory(entry.path(), &name) {
+    if is_noise_directory(entry.path(), &name) && !is_inside_plugin_cache(entry.path()) {
         return false;
     }
     if is_home_scan && entry.depth() == 1 && name == "AppData" {
         return false;
     }
     true
+}
+
+fn is_inside_plugin_cache(path: &Path) -> bool {
+    path.ancestors().any(|ancestor| {
+        ancestor.file_name().is_some_and(|name| name == "cache")
+            && ancestor
+                .parent()
+                .and_then(Path::file_name)
+                .is_some_and(|name| name == "plugins")
+            && ancestor
+                .parent()
+                .and_then(Path::parent)
+                .and_then(Path::file_name)
+                .is_some_and(|name| is_plugin_platform_root(name.to_string_lossy().as_ref()))
+    })
+}
+
+fn is_plugin_platform_root(name: &str) -> bool {
+    matches!(name, ".claude" | ".codex" | ".cursor")
+}
+
+fn is_catalog_config_root(name: &str) -> bool {
+    name == ".agents" || is_plugin_platform_root(name)
 }
 
 /// Returns whether a directory belongs to the canonical AgentDex-compatible
