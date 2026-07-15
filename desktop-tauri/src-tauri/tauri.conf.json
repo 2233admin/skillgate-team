@@ -50,5 +50,10 @@
         "displayLanguageSelector": true
       }
     }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": ""
+    }
   }
 }
