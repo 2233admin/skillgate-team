@@ -15,13 +15,14 @@ const MAX_FILE_BYTES: u64 = 2 * 1024 * 1024;
 pub(crate) fn scan_root(root: &Path, grant: RootGrant) -> AppResult<CatalogSnapshot> {
     let canonical_root = fs::canonicalize(root)
         .map_err(|error| AppError::from_io(&error, "catalog root canonicalization"))?;
+    let is_home_scan = grant.grant_id == "home";
     let mut builder = SnapshotBuilder::new(&canonical_root, grant.clone());
     let walker = WalkDir::new(&canonical_root)
         .follow_links(false)
         .into_iter();
-    for entry in walker.filter_entry(should_descend) {
+    for entry in walker.filter_entry(|entry| should_descend(entry, is_home_scan)) {
         match entry {
-            Ok(entry) => builder.inspect(entry.path()),
+            Ok(entry) => builder.inspect(&entry),
             Err(_) => builder.skipped_unreadable += 1,
         }
     }
@@ -47,15 +48,16 @@ impl<'a> SnapshotBuilder<'a> {
         }
     }
 
-    fn inspect(&mut self, path: &Path) {
+    fn inspect(&mut self, entry: &DirEntry) {
+        let path = entry.path();
         if path == self.root {
             return;
         }
-        if is_link_like(path) {
+        if entry_is_link_like(entry) {
             self.inspect_link(path);
             return;
         }
-        if path.is_dir() {
+        if entry.file_type().is_dir() {
             return;
         }
         let Ok(relative) = path.strip_prefix(self.root) else {
@@ -97,15 +99,15 @@ impl<'a> SnapshotBuilder<'a> {
         // A symlink/junction to an in-root catalog directory is an alias. Walk
         // the canonical target once without following any nested links.
         let walker = WalkDir::new(&canonical).follow_links(false).into_iter();
-        for entry in walker.filter_entry(should_descend) {
+        for entry in walker.filter_entry(|entry| should_descend(entry, false)) {
             let Ok(entry) = entry else {
                 self.skipped_unreadable += 1;
                 continue;
             };
-            if entry.path() == canonical || entry.path().is_dir() {
+            if entry.path() == canonical || entry.file_type().is_dir() {
                 continue;
             }
-            if is_link_like(entry.path()) {
+            if entry_is_link_like(&entry) {
                 self.skipped_unreadable += 1;
                 continue;
             }
@@ -339,6 +341,17 @@ fn is_link_like(path: &Path) -> bool {
     }
 }
 
+fn entry_is_link_like(entry: &DirEntry) -> bool {
+    if entry.file_type().is_symlink() {
+        return true;
+    }
+    #[cfg(windows)]
+    if entry.file_type().is_dir() {
+        return is_link_like(entry.path());
+    }
+    false
+}
+
 #[derive(Debug)]
 struct Classification {
     kind: CatalogKind,
@@ -348,6 +361,15 @@ struct Classification {
 }
 
 fn classify(relative: &Path) -> Option<Classification> {
+    let candidate = relative.file_name()?.to_string_lossy();
+    if !matches!(
+        candidate.as_ref(),
+        "CLAUDE.md" | "claude.md" | "AGENTS.md" | "SKILL.md"
+    ) && !candidate.ends_with(".md")
+        && !candidate.ends_with(".mdc")
+    {
+        return None;
+    }
     let components: Vec<String> = relative
         .components()
         .map(|part| part.as_os_str().to_string_lossy().to_string())
@@ -435,11 +457,18 @@ fn plugin_name(tail: &[String]) -> Option<String> {
     }
 }
 
-fn should_descend(entry: &DirEntry) -> bool {
+fn should_descend(entry: &DirEntry, is_home_scan: bool) -> bool {
     if !entry.file_type().is_dir() || entry.depth() == 0 {
         return true;
     }
-    !is_noise_directory(entry.path(), &entry.file_name().to_string_lossy())
+    let name = entry.file_name().to_string_lossy();
+    if is_noise_directory(entry.path(), &name) {
+        return false;
+    }
+    if is_home_scan && entry.depth() == 1 && name == "AppData" {
+        return false;
+    }
+    true
 }
 
 /// Returns whether a directory belongs to the canonical AgentDex-compatible
