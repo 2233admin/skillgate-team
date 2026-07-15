@@ -166,22 +166,27 @@ fn home_scan_enriches_skill_inventory_facts_without_guessing_usage() {
         );
     }
 
-    let high_signal_matches = service
-        .search(&ListCatalogInput {
-            grant_id: "home".to_string(),
-            filter: Some(CatalogFilter {
-                query: Some("High-severity signals".to_string()),
-                kinds: Some(vec![CatalogKind::Skill]),
-                ..CatalogFilter::default()
-            }),
-            offset: None,
-            limit: None,
-        })
-        .unwrap();
-    assert!(high_signal_matches
-        .items
-        .iter()
-        .any(|item| item.name == "Plugin skill"));
+    for query in ["High-severity signals", "Destructive commands"] {
+        let high_signal_matches = service
+            .search(&ListCatalogInput {
+                grant_id: "home".to_string(),
+                filter: Some(CatalogFilter {
+                    query: Some(query.to_string()),
+                    kinds: Some(vec![CatalogKind::Skill]),
+                    ..CatalogFilter::default()
+                }),
+                offset: None,
+                limit: None,
+            })
+            .unwrap();
+        assert!(
+            high_signal_matches
+                .items
+                .iter()
+                .any(|item| item.name == "Plugin skill"),
+            "human-readable risk query did not match: {query}"
+        );
+    }
 }
 
 #[test]

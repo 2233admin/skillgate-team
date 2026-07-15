@@ -296,7 +296,7 @@ fn risk_search_terms(level: CatalogRiskLevel) -> &'static str {
 
 fn risk_signal_search_terms(signal: CatalogRiskSignal) -> &'static str {
     match signal {
-        CatalogRiskSignal::DestructiveCommand => "destructive command",
+        CatalogRiskSignal::DestructiveCommand => "destructive command destructive commands",
         CatalogRiskSignal::RemoteExecution => "remote execution",
         CatalogRiskSignal::ElevatedPrivileges => "elevated privileges",
         CatalogRiskSignal::CredentialAccess => "credential access",
