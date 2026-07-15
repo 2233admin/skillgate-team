@@ -246,7 +246,7 @@ function CatalogRow({ item, selected, onSelect }: { item: CatalogItem; selected:
     <button className={`catalog-row ${selected ? "selected" : ""}`} onClick={onSelect}>
       <span className={`kind kind-${item.kind}`}>{item.kind.slice(0, 1).toUpperCase()}</span>
       <div className="item-copy">
-        <div><strong>{item.name}</strong><span>{facts ? facts.adapters : `${platformLabel(item.platform)} · ${item.scope}`}</span></div>
+        <div className="item-heading"><strong>{item.name}</strong><span>{facts ? facts.adapters : `${platformLabel(item.platform)} · ${item.scope}`}</span></div>
         <p>{item.description || "No description"}</p>
         {facts ? (
           <div className="item-facts" aria-label="Skill inventory facts">
