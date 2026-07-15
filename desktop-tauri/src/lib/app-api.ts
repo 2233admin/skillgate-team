@@ -61,21 +61,43 @@ export interface InstalledSkill {
 export type CatalogKind = "skill" | "agent" | "rule" | "context"
 export type CatalogPlatform = "cursor" | "claude" | "codex" | "shared"
 export type CatalogScope = "global" | "project"
+export type CatalogInstallationLevel = "global" | "project" | "plugin" | "external"
+export type CatalogSourceKind = "local" | "plugin" | "manifest" | "external"
+export type CatalogUsageStatus = "untracked" | "active" | "stale"
+export type CatalogRiskLevel = "low" | "medium" | "high"
+export type CatalogRiskSignal = "destructiveCommand" | "remoteExecution" | "elevatedPrivileges" | "credentialAccess"
+export interface CatalogSkillMetadata {
+  compatibleWith: CatalogPlatform[]
+  installationLevel: CatalogInstallationLevel
+  sourceKind: CatalogSourceKind
+  sourceLabel: string
+  usageStatus: CatalogUsageStatus
+  usageCount: number | null
+  lastUsedAt: string | null
+  installationCount: number
+  riskLevel: CatalogRiskLevel
+  riskSignals: CatalogRiskSignal[]
+}
 export interface CatalogSkill { id: string; skillId: string; name: string; installs: number; source: string; isOfficial?: boolean }
 export interface CatalogAlias { location: PathRef; displayPath: string }
 export interface CatalogItem {
   itemId: string; canonicalItemId: string; kind: CatalogKind; platform: CatalogPlatform; scope: CatalogScope
   projectName: string | null; groupId: string; groupLabel: string; pluginName?: string; name: string
   slug: string; description: string; creator?: string; location: PathRef; displayPath: string
-  aliases: CatalogAlias[]; createdAt: string | null; modifiedAt: string
+  aliases: CatalogAlias[]; createdAt: string | null; modifiedAt: string; skillMeta?: CatalogSkillMetadata
 }
 export interface CatalogGroup { groupId: string; label: string; kind: CatalogKind; platform: CatalogPlatform; itemIds: string[] }
 export interface CatalogSummary {
   total: number; byKind: Record<CatalogKind, number>; byPlatform: Record<CatalogPlatform, number>
-  byScope: Record<CatalogScope, number>; projectNames: string[]
+  byScope: Record<CatalogScope, number>; byInstallationLevel: Record<CatalogInstallationLevel, number>
+  byRiskLevel: Record<CatalogRiskLevel, number>; projectNames: string[]
 }
 export interface CatalogSnapshot { grant: RootGrant; revision: string; groups: CatalogGroup[]; items: CatalogItem[]; summary: CatalogSummary; skippedUnreadable: number }
-export interface CatalogFilter { query?: string; kinds?: CatalogKind[]; platforms?: CatalogPlatform[]; scopes?: CatalogScope[]; projectNames?: string[]; groupIds?: string[] }
+export interface CatalogFilter {
+  query?: string; kinds?: CatalogKind[]; platforms?: CatalogPlatform[]; scopes?: CatalogScope[]
+  installationLevels?: CatalogInstallationLevel[]; riskLevels?: CatalogRiskLevel[]
+  projectNames?: string[]; groupIds?: string[]
+}
 export interface SelectCatalogRootInput { source: "home" | "picker"; previousGrantId?: string }
 export interface ScanCatalogInput { grantId: string; force?: boolean }
 export interface ListCatalogInput { grantId: string; filter?: CatalogFilter; offset?: number; limit?: number }
