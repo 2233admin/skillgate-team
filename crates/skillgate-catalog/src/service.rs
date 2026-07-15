@@ -146,9 +146,16 @@ fn matches_filter(item: &CatalogItem, filter: &CatalogFilter) -> bool {
             .skill_meta
             .as_ref()
             .map(|metadata| {
+                let compatible_with = metadata
+                    .compatible_with
+                    .iter()
+                    .map(|platform| platform.label())
+                    .collect::<Vec<_>>()
+                    .join(" ");
                 format!(
-                    "{} {:?} {:?} {:?}",
+                    "{} {} {:?} {:?} {:?}",
                     metadata.source_label,
+                    compatible_with,
                     metadata.installation_level,
                     metadata.risk_level,
                     metadata.risk_signals
@@ -156,12 +163,13 @@ fn matches_filter(item: &CatalogItem, filter: &CatalogFilter) -> bool {
             })
             .unwrap_or_default();
         let haystack = format!(
-            "{} {} {} {} {} {}",
+            "{} {} {} {} {} {} {}",
             item.name,
             item.slug,
             item.description,
             item.creator.as_deref().unwrap_or(""),
             item.display_path,
+            item.platform.label(),
             skill_metadata
         )
         .to_lowercase();
@@ -176,11 +184,23 @@ fn matches_filter(item: &CatalogItem, filter: &CatalogFilter) -> bool {
     {
         return false;
     }
-    if filter
-        .platforms
-        .as_ref()
-        .is_some_and(|values| !values.contains(&item.platform))
-    {
+    if filter.platforms.as_ref().is_some_and(|values| {
+        let matches = if item.kind == crate::model::CatalogKind::Skill {
+            item.skill_meta.as_ref().map_or_else(
+                || values.contains(&item.platform),
+                |metadata| {
+                    values.contains(&item.platform)
+                        || metadata
+                            .compatible_with
+                            .iter()
+                            .any(|platform| values.contains(platform))
+                },
+            )
+        } else {
+            values.contains(&item.platform)
+        };
+        !matches
+    }) {
         return false;
     }
     if filter

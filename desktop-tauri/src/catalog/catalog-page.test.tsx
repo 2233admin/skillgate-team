@@ -139,10 +139,77 @@ describe("CatalogPage local skill inventory", () => {
 
     expect(container.textContent).toContain("Skillgate Local Skills")
     expect(container.textContent).toContain("Claude Code + Codex")
-    expect(container.textContent).toContain("openai-bundled")
+    expect(container.textContent).toContain("Plugin · openai-bundled")
     expect(container.textContent).toContain("Usage not tracked")
-    expect(container.textContent).toContain("High risk")
-    expect(container.querySelector(".risk-high")?.getAttribute("title")).toBe("Remote execution")
+    expect(container.textContent).toContain("High-severity signals")
+    expect(container.querySelector(".risk-high")?.getAttribute("title")).toContain("SKILL.md static signals: Remote execution")
+    await act(async () => root.unmount())
+  })
+
+  it("shows both catalog-wide and local-skill summaries", async () => {
+    const grant = { grantId: "home", displayName: "Home", persisted: true }
+    const data = snapshot(grant, "Deploy")
+    data.summary = {
+      ...data.summary,
+      total: 7,
+      byKind: { skill: 4, agent: 1, rule: 1, context: 1 },
+      byInstallationLevel: { global: 3, project: 0, plugin: 1, external: 0 },
+      byRiskLevel: { low: 3, medium: 1, high: 0 },
+    }
+    const catalog = {
+      selectRoot: async () => ok(grant),
+      scan: async () => ok(data),
+    } as unknown as CatalogClient
+    const container = document.createElement("div")
+    containers.push(container)
+    document.body.append(container)
+    const root = createRoot(container)
+
+    await act(async () => { root.render(<CatalogPage api={catalog} />); await Promise.resolve() })
+    const cards = Object.fromEntries([...container.querySelectorAll(".summary-card")].map((card) => [
+      card.querySelector("span")?.textContent,
+      card.querySelector("strong")?.textContent,
+    ]))
+
+    expect(cards).toMatchObject({
+      All: "7", Agents: "1", Rules: "1", Context: "1", "Local skills": "4",
+      "Claude Code": "0", Codex: "1", Plugins: "1", "Needs review": "1",
+    })
+    await act(async () => root.unmount())
+  })
+
+  it("keeps Shared items visible when metadata lists Claude and Codex compatibility", async () => {
+    const grant = { grantId: "home", displayName: "Home", persisted: true }
+    const shared = item(grant, "Shared skill")
+    shared.platform = "shared"
+    shared.skillMeta = { ...shared.skillMeta!, compatibleWith: ["claude", "codex"] }
+    const codex = item(grant, "Codex only")
+    const data = snapshot(grant, "Shared skill")
+    data.items = [shared, codex]
+    data.summary = {
+      ...data.summary,
+      total: 2,
+      byKind: { skill: 2, agent: 0, rule: 0, context: 0 },
+      byPlatform: { cursor: 0, claude: 0, codex: 1, shared: 1 },
+      byInstallationLevel: { global: 2, project: 0, plugin: 0, external: 0 },
+      byRiskLevel: { low: 2, medium: 0, high: 0 },
+    }
+    const catalog = {
+      selectRoot: async () => ok(grant),
+      scan: async () => ok(data),
+    } as unknown as CatalogClient
+    const container = document.createElement("div")
+    containers.push(container)
+    document.body.append(container)
+    const root = createRoot(container)
+
+    await act(async () => { root.render(<CatalogPage api={catalog} />); await Promise.resolve() })
+    const adapterFilters = [...container.querySelectorAll("fieldset")].find((group) => group.querySelector("legend")?.textContent === "Adapter")!
+    const sharedFilter = [...adapterFilters.querySelectorAll("label")].find((label) => label.textContent === "Shared")?.querySelector("input") as HTMLInputElement
+    await act(async () => { sharedFilter.click() })
+
+    expect(container.textContent).toContain("Shared skill")
+    expect(container.textContent).not.toContain("Codex only")
     await act(async () => root.unmount())
   })
 })

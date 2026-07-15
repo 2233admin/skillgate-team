@@ -84,7 +84,7 @@ impl<'a> SnapshotBuilder<'a> {
         let Some(classification) = classify(relative) else {
             return;
         };
-        if let Err(_error) = self.add_item(path, relative, classification, None) {
+        if let Err(_error) = self.add_item(path, relative, classification, None, None) {
             self.skipped_unreadable += 1;
         }
     }
@@ -213,11 +213,13 @@ impl<'a> SnapshotBuilder<'a> {
         let Some(classification) = classify(canonical_relative) else {
             return;
         };
+        let alias_classification = classify(alias_relative);
         if let Err(_error) = self.add_item(
             canonical,
             canonical_relative,
             classification,
             Some(alias_relative),
+            alias_classification,
         ) {
             self.skipped_unreadable += 1;
         }
@@ -229,6 +231,7 @@ impl<'a> SnapshotBuilder<'a> {
         relative: &Path,
         classification: Classification,
         alias_relative: Option<&Path>,
+        alias_classification: Option<Classification>,
     ) -> AppResult<()> {
         // Authorize before opening anything. From this point onward all reads
         // use the verified canonical path, never the traversal/alias path.
@@ -274,31 +277,46 @@ impl<'a> SnapshotBuilder<'a> {
         let fallback_name = fallback_name(relative, classification.kind);
         let parsed = parse_markdown(&content, &fallback_name);
         let relative_path = wire_path(relative);
+        let scope = classification_scope(&classification);
+        let skill_meta = metadata_for_classification(
+            &self.grant,
+            &classification,
+            scope,
+            parsed.source.as_deref(),
+            &content,
+        );
+        let alias_skill_meta = alias_classification.as_ref().and_then(|alias| {
+            (classification.kind == CatalogKind::Skill && alias.kind == CatalogKind::Skill)
+                .then(|| {
+                    metadata_for_classification(
+                        &self.grant,
+                        alias,
+                        classification_scope(alias),
+                        parsed.source.as_deref(),
+                        &content,
+                    )
+                })
+                .flatten()
+        });
         if let Some(existing) = self.items.get_mut(&canonical_path) {
+            if let Some(metadata) = skill_meta.as_ref() {
+                merge_skill_metadata(existing, metadata);
+            }
+            if let Some(metadata) = alias_skill_meta.as_ref() {
+                merge_skill_metadata(existing, metadata);
+            }
             attach_alias(existing, &self.grant.grant_id, alias_relative);
             return Ok(());
         }
 
-        let scope = if classification.config_index == 0 {
-            CatalogScope::Global
-        } else {
-            CatalogScope::Project
-        };
         let project_name = (scope == CatalogScope::Project)
             .then(|| relative.components().nth(classification.config_index - 1))
             .flatten()
             .map(|part| part.as_os_str().to_string_lossy().to_string());
-        let skill_meta = (classification.kind == CatalogKind::Skill).then(|| {
-            skill_metadata(
-                &self.grant,
-                classification.platform,
-                scope,
-                classification.plugin_name.as_deref(),
-                classification.plugin_source.as_deref(),
-                parsed.source.as_deref(),
-                &content,
-            )
-        });
+        let mut skill_meta = skill_meta;
+        if let (Some(existing), Some(alias)) = (&mut skill_meta, alias_skill_meta.as_ref()) {
+            merge_skill_metadata_values(existing, alias);
+        }
         let slug = slugify(&parsed.name, &fallback_name);
         let group_label = classification
             .plugin_name
@@ -577,6 +595,108 @@ fn plugin_source(tail: &[String]) -> Option<String> {
         .position(|parts| parts == ["plugins", "cache"])?
         + 2;
     tail.get(cache_index).cloned()
+}
+
+fn classification_scope(classification: &Classification) -> CatalogScope {
+    if classification.config_index == 0 {
+        CatalogScope::Global
+    } else {
+        CatalogScope::Project
+    }
+}
+
+fn metadata_for_classification(
+    grant: &RootGrant,
+    classification: &Classification,
+    scope: CatalogScope,
+    declared_source: Option<&str>,
+    content: &str,
+) -> Option<CatalogSkillMetadata> {
+    (classification.kind == CatalogKind::Skill).then(|| {
+        skill_metadata(
+            grant,
+            classification.platform,
+            scope,
+            classification.plugin_name.as_deref(),
+            classification.plugin_source.as_deref(),
+            declared_source,
+            content,
+        )
+    })
+}
+
+fn merge_skill_metadata(item: &mut CatalogItem, candidate: &CatalogSkillMetadata) {
+    if item.kind != CatalogKind::Skill {
+        return;
+    }
+    if let Some(metadata) = &mut item.skill_meta {
+        merge_skill_metadata_values(metadata, candidate);
+    }
+}
+
+fn merge_skill_metadata_values(
+    metadata: &mut CatalogSkillMetadata,
+    candidate: &CatalogSkillMetadata,
+) {
+    for platform in &candidate.compatible_with {
+        if !metadata.compatible_with.contains(platform) {
+            metadata.compatible_with.push(*platform);
+        }
+    }
+    metadata
+        .compatible_with
+        .sort_by_key(|platform| compatibility_order(*platform));
+
+    if installation_priority(candidate.installation_level)
+        > installation_priority(metadata.installation_level)
+    {
+        metadata.installation_level = candidate.installation_level;
+    }
+
+    let existing_source = (
+        source_priority(metadata.source_kind),
+        metadata.source_label.to_lowercase(),
+        metadata.source_label.as_str(),
+    );
+    let candidate_source = (
+        source_priority(candidate.source_kind),
+        candidate.source_label.to_lowercase(),
+        candidate.source_label.as_str(),
+    );
+    if candidate_source.0 > existing_source.0
+        || (candidate_source.0 == existing_source.0
+            && (candidate_source.1, candidate_source.2) < (existing_source.1, existing_source.2))
+    {
+        metadata.source_kind = candidate.source_kind;
+        metadata.source_label.clone_from(&candidate.source_label);
+    }
+}
+
+fn compatibility_order(platform: CatalogPlatform) -> u8 {
+    match platform {
+        CatalogPlatform::Claude => 0,
+        CatalogPlatform::Codex => 1,
+        CatalogPlatform::Cursor => 2,
+        CatalogPlatform::Shared => 3,
+    }
+}
+
+fn installation_priority(level: CatalogInstallationLevel) -> u8 {
+    match level {
+        CatalogInstallationLevel::Global => 0,
+        CatalogInstallationLevel::Project => 1,
+        CatalogInstallationLevel::External => 2,
+        CatalogInstallationLevel::Plugin => 3,
+    }
+}
+
+fn source_priority(kind: CatalogSourceKind) -> u8 {
+    match kind {
+        CatalogSourceKind::Local => 0,
+        CatalogSourceKind::External => 1,
+        CatalogSourceKind::Manifest => 2,
+        CatalogSourceKind::Plugin => 3,
+    }
 }
 
 fn skill_metadata(
@@ -1341,7 +1461,13 @@ mod tests {
         let mut builder = SnapshotBuilder::new(&canonical_root, test_grant());
         let relative = Path::new(".codex/agents/outside.md");
         let error = builder
-            .add_item(&outside_file, relative, classify(relative).unwrap(), None)
+            .add_item(
+                &outside_file,
+                relative,
+                classify(relative).unwrap(),
+                None,
+                None,
+            )
             .unwrap_err();
         assert_eq!(error.code, AppErrorCode::SymlinkEscape);
         assert!(builder.items.is_empty());

@@ -18,6 +18,7 @@ import { WorktreePanel } from "../files/worktree-panel"
 import type { TerminalController } from "../terminal/terminal-controller"
 import { TerminalWorkspace } from "../terminal/terminal-workspace"
 import {
+  catalogItemSupportsPlatform,
   catalogSkillFacts,
   catalogSkillSearchText,
   installationLabel,
@@ -108,8 +109,8 @@ export function CatalogPage({
   }, [])
 
   const skillInventory = useMemo(() => ({
-    claude: items.filter((item) => item.skillMeta?.compatibleWith.includes("claude")).length,
-    codex: items.filter((item) => item.skillMeta?.compatibleWith.includes("codex")).length,
+    claude: items.filter((item) => item.kind === "skill" && catalogItemSupportsPlatform(item, "claude")).length,
+    codex: items.filter((item) => item.kind === "skill" && catalogItemSupportsPlatform(item, "codex")).length,
     review: summary.byRiskLevel.medium + summary.byRiskLevel.high,
   }), [items, summary])
 
@@ -117,8 +118,7 @@ export function CatalogPage({
     const needle = query.trim().toLocaleLowerCase()
     return items.filter((item) => {
       if (selectedKinds.length && !selectedKinds.includes(item.kind)) return false
-      const compatibleWith = item.skillMeta?.compatibleWith ?? [item.platform]
-      if (selectedPlatforms.length && !selectedPlatforms.some((platform) => compatibleWith.includes(platform))) return false
+      if (selectedPlatforms.length && !selectedPlatforms.some((platform) => catalogItemSupportsPlatform(item, platform))) return false
       if (selectedInstallationLevels.length && (!item.skillMeta || !selectedInstallationLevels.includes(item.skillMeta.installationLevel))) return false
       if (selectedRiskLevels.length && (!item.skillMeta || !selectedRiskLevels.includes(item.skillMeta.riskLevel))) return false
       return !needle || `${item.name} ${item.description} ${item.displayPath} ${catalogSkillSearchText(item)}`.toLocaleLowerCase().includes(needle)
@@ -157,12 +157,20 @@ export function CatalogPage({
         </div>
       </header>
 
-      <section className="summary-grid" aria-label="Skill inventory summary">
-        <SummaryCard label="Skills" value={summary.byKind.skill} />
-        <SummaryCard label="Claude Code" value={skillInventory.claude} />
-        <SummaryCard label="Codex" value={skillInventory.codex} />
-        <SummaryCard label="Plugins" value={summary.byInstallationLevel.plugin} />
-        <SummaryCard label="Needs review" value={skillInventory.review} tone={skillInventory.review ? "review" : undefined} />
+      <section className="summary-stack" aria-label="Catalog and local skill summary">
+        <div className="summary-grid summary-grid-catalog" aria-label="Catalog overview">
+          <SummaryCard label="All" value={summary.total} />
+          <SummaryCard label="Agents" value={summary.byKind.agent} />
+          <SummaryCard label="Rules" value={summary.byKind.rule} />
+          <SummaryCard label="Context" value={summary.byKind.context} />
+        </div>
+        <div className="summary-grid summary-grid-skills" aria-label="Local skill overview">
+          <SummaryCard label="Local skills" value={summary.byKind.skill} />
+          <SummaryCard label="Claude Code" value={skillInventory.claude} />
+          <SummaryCard label="Codex" value={skillInventory.codex} />
+          <SummaryCard label="Plugins" value={summary.byInstallationLevel.plugin} />
+          <SummaryCard label="Needs review" value={skillInventory.review} tone={skillInventory.review ? "review" : undefined} />
+        </div>
       </section>
 
       <section className="catalog-card">
@@ -177,7 +185,7 @@ export function CatalogPage({
         <div className="results">
           <div className="inventory-note">
             <strong>AI coding Skills, not SQL.</strong>
-            <span>Invocation history stays private and is not inferred; usage shows as untracked until Skillgate records it.</span>
+            <span>Usage is not inferred. Health checks inspect SKILL.md for selected static signals only; no result is a safety guarantee.</span>
           </div>
           <div className="search-row">
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search skill, adapter, source, risk, or location…" aria-label="Search local skills and assets" />

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest"
 import type { CatalogItem } from "../lib/app-api"
-import { catalogSkillFacts, catalogSkillSearchText } from "./catalog-skill-facts"
+import {
+  catalogItemSupportsPlatform,
+  catalogSkillFacts,
+  catalogSkillSearchText,
+  catalogSourceLabel,
+} from "./catalog-skill-facts"
 
 const item: CatalogItem = {
   itemId: "skill", canonicalItemId: "skill", kind: "skill", platform: "shared", scope: "global",
@@ -19,16 +24,42 @@ describe("catalog skill facts", () => {
     expect(catalogSkillFacts(item)).toEqual({
       adapters: "Claude Code + Codex",
       installation: "Plugin",
-      source: "openai-bundled",
+      source: "Plugin · openai-bundled",
       usage: "Usage not tracked",
       locations: "2 locations",
-      risk: "Review",
-      riskDetail: "Elevated privileges",
+      risk: "Review signals",
+      riskDetail: "SKILL.md static signals: Elevated privileges. Partial check only; review in context.",
     })
   })
 
   it("makes skill-only facts searchable", () => {
     expect(catalogSkillSearchText(item)).toContain("openai-bundled")
     expect(catalogSkillSearchText(item)).toContain("Elevated privileges")
+    expect(catalogSkillSearchText(item)).toContain("Shared")
+  })
+
+  it("keeps the scanned platform as an adapter even when metadata lists other compatible tools", () => {
+    expect(catalogItemSupportsPlatform(item, "shared")).toBe(true)
+    expect(catalogItemSupportsPlatform(item, "claude")).toBe(true)
+    expect(catalogItemSupportsPlatform(item, "cursor")).toBe(false)
+  })
+
+  it("labels provenance by evidence instead of presenting declarations as downloads", () => {
+    expect(catalogSourceLabel("manifest", "https://example.com/skill")).toBe("Declared source · https://example.com/skill")
+    expect(catalogSourceLabel("plugin", "openai-bundled")).toBe("Plugin · openai-bundled")
+    expect(catalogSourceLabel("local", "ignored label")).toBe("Local filesystem")
+    expect(catalogSourceLabel("external", "Selected folder")).toBe("External root · Selected folder")
+  })
+
+  it("describes an empty static-signal result without claiming the skill is safe", () => {
+    const quiet = {
+      ...item,
+      skillMeta: { ...item.skillMeta!, riskLevel: "low" as const, riskSignals: [] },
+    }
+    const facts = catalogSkillFacts(quiet)
+
+    expect(facts?.risk).toBe("No signals")
+    expect(facts?.riskDetail).toContain("SKILL.md")
+    expect(facts?.riskDetail).toContain("does not establish safety")
   })
 })
