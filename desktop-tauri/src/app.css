@@ -42,7 +42,7 @@ fieldset input { accent-color: var(--accent); }
 .inventory-note { display: flex; gap: 8px; padding: 10px 16px; border-bottom: 1px solid #252837; color: #9ba0ad; background: linear-gradient(90deg, #171a2a, #111216); font-size: 11px; }
 .inventory-note strong { flex: none; color: #dfe1ff; }
 .search-row { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
-.search-row input { width: 100%; border: 1px solid var(--border); border-radius: 8px; outline: none; padding: 10px 12px; color: #f2f2f3; background: #0b0c0e; }
+.search-row input { width: auto; min-width: 0; flex: 1; border: 1px solid var(--border); border-radius: 8px; outline: none; padding: 10px 12px; color: #f2f2f3; background: #0b0c0e; }
 .search-row input:focus { border-color: #626dd2; box-shadow: 0 0 0 3px #5e6ad222; }
 .search-row span { flex: none; color: var(--muted); font-size: 12px; }
 .refresh-status { display: flex; align-items: center; gap: 8px; padding: 8px 16px; color: var(--muted); background: #171a2b; font-size: 12px; }
