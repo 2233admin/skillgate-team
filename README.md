@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="docs/images/logo.svg" width="72" height="72" alt="Skillgate logo" />
+<img src="docs/images/logo.svg" width="72" height="72" alt="SkillHub logo" />
 
-# Skillgate Team
+# SkillHub
 
 <p>
   <strong>简体中文</strong> · <a href="README.en.md">English</a>
@@ -23,7 +23,7 @@
 
 每人本机的 `~/.codex/skills`、`~/.claude/skills` 各装各的——装了什么、从哪里来、适配哪个工具、有没有风险，往往没人说得清；团队版本也容易对不上。
 
-Skillgate Team 先扫描本机 Claude Code、Codex、Cursor 与共享目录里的 Skill，再把需要团队统一的技能收进**一个 Git 仓库**。维护者改 `profiles/`，成员 `git pull` 后 Apply，各工具对齐同一套清单。不用在群里追问「谁装了什么、谁没更新」。
+SkillHub 先扫描本机 Claude Code、Codex、Cursor 与共享目录里的 Skill，再把需要团队统一的技能收进**一个 Git 仓库**。维护者改 `profiles/`，成员 `git pull` 后 Apply，各工具对齐同一套清单。不用在群里追问「谁装了什么、谁没更新」。
 
 > 这里的 **Skill** 是 AI 编程工具的能力包，不是数据库 SQL。Agent、Rule、Context 也继续保留在统一目录中。
 

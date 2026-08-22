@@ -1,13 +1,14 @@
 {
   "name": "skillgate",
   "version": "0.6.0-team.1",
-  "description": "Team skill distribution CLI (fork of skillsgate installer)",
+  "description": "SkillHub lifecycle and team distribution CLI",
   "type": "module",
   "exports": {
     "./team-api": "./dist/team-api/index.js"
   },
   "bin": {
-    "skillgate": "./bin/skillgate.mjs"
+    "skillgate": "./bin/skillgate.mjs",
+    "skillctl": "./bin/skillctl.mjs"
   },
   "files": [
     "bin",

@@ -20,6 +20,7 @@ import { runInstallGlobal } from "./commands/install-global.js";
 import { runTeamInit } from "./commands/team-init.js";
 import { runSmokeTest } from "./commands/smoke-test.js";
 import { runUpdateCheck } from "./commands/update-check.js";
+import { runSkillctl } from "./commands/skillctl.js";
 import { launchTui } from "./core/launch-tui.js";
 import { launchGui } from "./core/launch-gui.js";
 
@@ -62,6 +63,7 @@ async function main(): Promise<void> {
   const nonInteractive = new Set([
     "smoke-test",
     "update-check",
+    "skillctl",
     "install-global",
     "team-init",
     "doctor",
@@ -109,6 +111,7 @@ async function main(): Promise<void> {
     "team-init",
     "smoke-test",
     "update-check",
+    "skillctl",
     "tui",
     "gui",
     "desktop",
@@ -222,6 +225,10 @@ async function main(): Promise<void> {
       await runUpdateCheck(restArgs);
       break;
 
+    case "skillctl":
+      await runSkillctl(restArgs);
+      break;
+
     case "tui":
       launchTui(restArgs);
       break;
@@ -255,11 +262,12 @@ function printHelp(): void {
   const BOLD = pc.bold;
 
   console.log();
-  console.log(`  ${BOLD("skillgate")} ${DIM(`v${VERSION}`)}`);
-  console.log(`  ${DIM("Team skill distribution + agent install engine")}`);
+  console.log(`  ${BOLD("skillctl")} ${DIM(`v${VERSION}`)}`);
+  console.log(`  ${DIM("Skill lifecycle, routing, and team distribution engine")}`);
   console.log();
   console.log(`  ${BOLD("Usage:")}`);
-  console.log(`    skillgate ${DIM("<command>")} ${DIM("[options]")}`);
+  console.log(`    skillctl ${DIM("<command>")} ${DIM("[options]")}`);
+  console.log(`    skillgate ${DIM("<command>")} ${DIM("[options]")} ${DIM("(compatibility alias)")}`);
   console.log();
   console.log(`  ${BOLD("Team commands:")}`);
   console.log(`    apply ${DIM("[--profile quant]")}   Install profile from skillgate-team lock`);
@@ -270,6 +278,7 @@ function printHelp(): void {
   console.log(`    team-init ${DIM("[--mode required]")}  Bind project (.skillgate + hook)`);
   console.log(`    smoke-test ${DIM("[--skip-apply]")}  Post-merge verification`);
   console.log(`    update-check ${DIM("[--force]")}   Catalog version drift (for hooks)`);
+  console.log(`    skillctl ${DIM("<subcommand>")}  Read-only lifecycle inventory/status/profile/index`);
   console.log();
   console.log(`  ${BOLD("Legacy commands:")}`);
   console.log(
