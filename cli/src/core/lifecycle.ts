@@ -54,7 +54,9 @@ export async function collectLifecycleSnapshot(): Promise<LifecycleSnapshot> {
     const warnings: string[] = [];
     const description = parsed?.description ?? "";
     if (!parsed) issues.push("missing-or-invalid-frontmatter");
-    if (info.agents.length > 1) warnings.push("installed-in-multiple-agents");
+    if (info.agents.length > 1 && (await hasDistinctInstallations(info.paths))) {
+      warnings.push("duplicated-across-agents");
+    }
 
     skills.push({
       name,
@@ -162,6 +164,19 @@ const NON_SKILL_DIRECTORIES = new Set([
   "images",
   "scripts",
 ]);
+
+async function hasDistinctInstallations(paths: string[]): Promise<boolean> {
+  const resolved = await Promise.all(
+    paths.map(async (entry) => {
+      try {
+        return await fs.realpath(entry);
+      } catch {
+        return path.resolve(entry);
+      }
+    }),
+  );
+  return new Set(resolved).size > 1;
+}
 
 async function shouldIgnoreInventoryEntry(name: string, directory: string): Promise<boolean> {
   if (name.startsWith(".") || NON_SKILL_DIRECTORIES.has(name)) return true;
