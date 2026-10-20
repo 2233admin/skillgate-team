@@ -111,6 +111,58 @@ describe("CatalogPage request ordering", () => {
     expect(container.querySelector(".file-detail h2")?.textContent).toBe("First")
     await act(async () => root.unmount())
   })
+
+  it("does not let a late save response contaminate the newly selected file", async () => {
+    const grant = { grantId: "home", displayName: "Home", persisted: true }
+    const first = item(grant, "First")
+    const second = item(grant, "Second")
+    let resolveWrite!: (value: AppResult<{ revision: string; receipt: object }>) => void
+    const pendingWrite = new Promise<AppResult<{ revision: string; receipt: object }>>((resolve) => { resolveWrite = resolve })
+    const catalog = {
+      selectRoot: async () => ok(grant),
+      scan: async () => ok({
+        ...snapshot(grant, "First"),
+        items: [first, second],
+        groups: [{ groupId: "g", label: "Global", kind: "skill", platform: "codex", itemIds: ["First", "Second"] }],
+        summary: { ...snapshot(grant, "First").summary, total: 2, byKind: { skill: 2, agent: 0, rule: 0, context: 0 } },
+      }),
+    } as unknown as CatalogClient
+    const files = {
+      read: async (location) => ok(`# ${location.relativePath}`),
+      stat: async (location) => ok({ location, kind: "file", size: 1, createdAt: null, modifiedAt: "now", revision: `rev-${location.relativePath}` }),
+      listDirectory: async () => ok([]),
+      write: async () => pendingWrite,
+      delete: async () => { throw new Error("unused") }, recover: async () => { throw new Error("unused") },
+      tree: async () => { throw new Error("unused") }, reveal: async () => ok({ value: null }),
+    } as FilesClient
+    const container = document.createElement("div")
+    containers.push(container)
+    document.body.append(container)
+    const root = createRoot(container)
+    await act(async () => { root.render(<CatalogPage api={catalog} files={files} />); await Promise.resolve() })
+    const raw = [...container.querySelectorAll("button")].find((button) => button.textContent === "Raw")
+    await act(async () => raw?.click())
+    const editor = container.querySelector("textarea")!
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")?.set?.call(editor, "edited first")
+      editor.dispatchEvent(new Event("input", { bubbles: true }))
+    })
+    vi.spyOn(window, "confirm").mockReturnValue(true)
+    const save = [...container.querySelectorAll("button")].find((button) => button.textContent === "Save")
+    await act(async () => { save?.click(); await Promise.resolve() })
+    const secondRow = [...container.querySelectorAll(".catalog-row")].find((row) => row.textContent?.includes("Second")) as HTMLButtonElement
+    await act(async () => secondRow.click())
+    const rawAgain = [...container.querySelectorAll("button")].find((button) => button.textContent === "Raw")
+    await act(async () => rawAgain?.click())
+    expect(container.querySelector(".file-detail h2")?.textContent).toBe("Second")
+    expect((container.querySelector("textarea") as HTMLTextAreaElement).value).toBe("# .codex/skills/Second/SKILL.md")
+    expect(container.textContent).not.toContain("Unsaved changes")
+    await act(async () => { resolveWrite(ok({ revision: "rev-next", receipt: { committed: true } })); await Promise.resolve() })
+    expect(container.querySelector(".file-detail h2")?.textContent).toBe("Second")
+    expect((container.querySelector("textarea") as HTMLTextAreaElement).value).toBe("# .codex/skills/Second/SKILL.md")
+    expect(container.textContent).not.toContain("Unsaved changes")
+    await act(async () => root.unmount())
+  })
 })
 
 describe("CatalogPage local skill inventory", () => {

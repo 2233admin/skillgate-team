@@ -216,7 +216,7 @@ export function CatalogPage({
                 <button onClick={() => setLaunchAgent(selectedItem)}>Start agent</button>
               </div>
             ) : null}
-            {selection ? <FileDetail selection={selection} files={files} onDirtyChange={setDirty} onMutation={refreshAfterMutation} /> : <State title="Select a file" detail="Choose a catalog or Worktree file to preview it." />}
+            {selection ? <FileDetail key={`${selection.location.grantId}::${selection.location.relativePath}`} selection={selection} files={files} onDirtyChange={setDirty} onMutation={refreshAfterMutation} /> : <State title="Select a file" detail="Choose a catalog or Worktree file to preview it." />}
           </div>
         </section>
       ) : null}
