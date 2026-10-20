@@ -20,6 +20,43 @@ env:
   BUN_VERSION: 1.3.14
 
 jobs:
+  msrv:
+    # Three crates declare `rust-version = "1.85.0"` (skillgate-runtime,
+    # skillgate-store, desktop-tauri/src-tauri), and
+    # docs/GETTING_STARTED.en.md publishes that as a user-facing promise.
+    # The `test` job builds with @stable, so the promise was never exercised:
+    # a routine `cargo update` silently pulled in idna_adapter 1.2.2 and
+    # icu 2.2.0, which need rustc 1.86, and nothing failed. This job pins the
+    # declared toolchain so the floor stays true.
+    #
+    # `--locked` is deliberate: without it cargo would re-resolve and upgrade
+    # the very versions under test, hiding exactly that regression.
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - uses: dtolnay/rust-toolchain@1.85.0
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      # The desktop crate is checked below and `tauri.conf.json` points
+      # `frontendDist` at `../dist`, which is gitignored and therefore absent on
+      # a fresh checkout. Build it first, as `bun run gui:tauri:check` does.
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - name: Build the web frontend
+        working-directory: desktop-tauri
+        run: bun run build:web
+      - name: Check declaring crates on the declared MSRV
+        run: |
+          cargo check --locked --manifest-path crates/skillgate-store/Cargo.toml
+          cargo check --locked --manifest-path crates/skillgate-runtime/Cargo.toml
+          # The desktop crate resolves `tauri = "=2.10.2"`, pulling the ICU and
+          # idna stack. This is the crate that drifted, so keep it covered.
+          cargo check --locked --manifest-path desktop-tauri/src-tauri/Cargo.toml
+
   test:
     runs-on: ubuntu-22.04
     steps:
