@@ -252,8 +252,8 @@ export async function removeCanonicalSkill(skillName: string): Promise<void> {
 export async function listInstalledSkills(
   agents: AgentConfig[],
   scope: InstallScope,
-): Promise<Map<string, { path: string; agents: string[] }>> {
-  const result = new Map<string, { path: string; agents: string[] }>();
+): Promise<Map<string, { path: string; paths: string[]; agents: string[] }>> {
+  const result = new Map<string, { path: string; paths: string[]; agents: string[] }>();
 
   for (const agent of agents) {
     const skillsDir =
@@ -267,11 +267,14 @@ export async function listInstalledSkills(
         if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
 
         const existing = result.get(entry.name);
+        const installedPath = path.join(skillsDir, entry.name);
         if (existing) {
+          existing.paths.push(installedPath);
           existing.agents.push(agent.displayName);
         } else {
           result.set(entry.name, {
-            path: path.join(skillsDir, entry.name),
+            path: installedPath,
+            paths: [installedPath],
             agents: [agent.displayName],
           });
         }

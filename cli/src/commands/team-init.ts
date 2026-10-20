@@ -7,6 +7,10 @@ import { renderCheckSkillgateHook } from "../core/project-hook.js";
 
 type InitMode = "optional" | "required";
 
+export function isHelpRequested(args: string[]): boolean {
+  return args.includes("--help") || args.includes("-h");
+}
+
 function parseArgs(args: string[]): InitMode {
   let mode: InitMode = "optional";
   for (let i = 0; i < args.length; i++) {
@@ -134,6 +138,11 @@ async function patchClaudeMd(repoRoot: string, mode: InitMode): Promise<void> {
 }
 
 export async function runTeamInit(args: string[]): Promise<void> {
+  if (isHelpRequested(args)) {
+    console.log("Usage: skillgate team-init [--mode optional|required]");
+    return;
+  }
+
   const mode = parseArgs(args);
   const cwd = process.cwd();
 

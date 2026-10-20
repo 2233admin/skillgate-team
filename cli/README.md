@@ -1,6 +1,6 @@
-# skillsgate
+# skillctl
 
-Install and manage AI agent skills from GitHub. Works with Claude Code, Cursor, Windsurf, GitHub Copilot, and [15+ other agents](#supported-agents).
+Local-first lifecycle and distribution CLI for AI agent skills. `skillgate` remains a compatibility alias. Works with Claude Code, Cursor, Windsurf, GitHub Copilot, and [15+ other agents](#supported-agents).
 
 ## Install
 
@@ -58,6 +58,23 @@ skillsgate remove --all     # remove all
 skillsgate list
 skillsgate list -g    # global skills
 ```
+
+### Skill lifecycle (read-only prototype)
+
+`skillctl` provides a read-only inventory and progressive-disclosure preview for global skills. It does not freeze, delete, apply, or update files yet. It is also available as the standalone `skillctl` binary.
+
+```bash
+skillctl status
+skillgate skillctl status --json
+skillgate skillctl inventory
+skillgate skillctl doctor --json
+skillgate skillctl profile
+skillgate skillctl index
+skillgate skillctl budget --json
+skillgate skillctl update-check
+```
+
+Lifecycle states are derived from recorded invocation counts: `hot` (3+ uses), `warm` (1–2), and `cold` (no recorded use). Duplicate installation locations are warnings; malformed or missing `SKILL.md` frontmatter is an issue.
 
 ### Update skills
 
