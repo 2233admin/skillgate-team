@@ -1,0 +1,54 @@
+# Dependabot configuration.
+#
+# Why this file exists: without it, Dependabot fell back to its npm ecosystem,
+# which edits package.json but leaves bun.lock untouched. CI runs
+# `bun install --frozen-lockfile`, so the two can never agree and every
+# Dependabot npm PR failed the same way. Log evidence, PR #4:
+#
+#   error: lockfile had changes, but lockfile is frozen
+#   ##[error]Process completed with exit code 1.
+#
+# with package.json at "nx": "22.7.7" while bun.lock still pinned nx@22.7.5.
+#
+# `bun` is a supported Dependabot ecosystem (>= v1.1.39, text-based bun.lock;
+# this repo has no legacy bun.lockb) and, unlike npm, it regenerates bun.lock
+# alongside the manifest. CI pins BUN_VERSION 1.3.14.
+
+version: 2
+updates:
+  # Root manifest plus the six workspace manifests (cli, desktop, desktop-tauri,
+  # tui, ui). Dependabot covers workspaces from the root directory entry.
+  - package-ecosystem: bun
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  # Rust crates, one entry per manifest: there is no workspace root Cargo.toml,
+  # so each crate is its own Dependabot directory.
+  - package-ecosystem: cargo
+    directory: "/crates/skillgate-catalog"
+    schedule:
+      interval: weekly
+  - package-ecosystem: cargo
+    directory: "/crates/skillgate-files"
+    schedule:
+      interval: weekly
+  - package-ecosystem: cargo
+    directory: "/crates/skillgate-runtime"
+    schedule:
+      interval: weekly
+  - package-ecosystem: cargo
+    directory: "/crates/skillgate-store"
+    schedule:
+      interval: weekly
+  - package-ecosystem: cargo
+    directory: "/desktop-tauri/src-tauri"
+    schedule:
+      interval: weekly
+
+  # Keep the CI actions themselves current.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
