@@ -37,6 +37,20 @@ Windows 桌面开发额外执行 `bun run gui:install`（Node 22+、Rust 1.85+�
 - 设计文档：`docs/superpowers/specs/2026-06-17-team-workflows-gui-tui-design.md`
 - 提交前：`bun run test` 与 `bun run smoke-team`
 
+### Tauri 对话框组件
+
+`desktop-tauri/src/components/modal-dialog.tsx` 提供受控的原生 `<dialog>`：
+调用方通过 `open` 控制显示，通过 `onRequestClose` 处理 Escape；
+`initialFocusRef` 只在打开时生效，`restoreFocusTo` 在关闭后解析最新目标。
+无法聚焦该目标时，组件回退到打开前的真实焦点；快速重开、StrictMode
+重放或工作流主动设置的新焦点不能被旧的恢复任务覆盖。
+
+组件测试使用 `src/test/dialog-fixture.ts` 补齐 jsdom 缺失的
+`showModal`/`close`，不模拟原生焦点陷阱、布局或屏幕阅读器。
+请运行 `bun run build:web`（含 `tsc -b`），不要以根 solution 上的
+`tsc --noEmit` 代替项目类型检查。删除和 Agent 启动对话框的调用点迁移
+分别由后续修复完成；真实 Tauri 窗口验收在两项迁移合入后集中执行。
+
 ## PR 约定
 
 - 一个 PR 解决一件事

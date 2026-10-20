@@ -19,45 +19,49 @@ export function ModalDialog({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const openCycle = useRef(0)
+  const capturedTrigger = useRef<Element | null>(null)
+  const latest = useRef({ initialFocusRef, restoreFocusTo, onRequestClose })
 
-  // Controlled lifecycle: React never sets the `open` attribute; this effect
-  // drives showModal()/close() so native modality (focus trap, top layer,
-  // Escape via cancel) is the only mechanism. jsdom lacks both methods until
-  // the test fixture installs them.
+  // Callback updates must not restart modality or steal focus from an editor.
+  useLayoutEffect(() => {
+    latest.current = { initialFocusRef, restoreFocusTo, onRequestClose }
+  })
+
   useLayoutEffect(() => {
     const dialog = dialogRef.current
     if (!dialog || !open) return
     const cycle = ++openCycle.current
-    const trigger = restoreFocusTo()
+    const activeOnOpen = document.activeElement
+    if (!dialog.contains(activeOnOpen)) capturedTrigger.current = activeOnOpen
+    const trigger = capturedTrigger.current
     dialog.showModal()
-    const target = initialFocusRef?.current ?? dialog
-    target.focus({ preventScroll: true })
+    latest.current.initialFocusRef?.current?.focus({ preventScroll: true })
 
     let closeRequested = false
     const onCancel = (event: Event) => {
-      // Escape arrives as a cancelable `cancel` event; take it over so the
-      // parent's onRequestClose is the single close path — once per cycle.
       event.preventDefault()
-      if (cycle !== openCycle.current || closeRequested) return
+      if (closeRequested) return
       closeRequested = true
-      onRequestClose()
+      latest.current.onRequestClose()
     }
     dialog.addEventListener("cancel", onCancel)
     return () => {
       dialog.removeEventListener("cancel", onCancel)
-      if (cycle !== openCycle.current) return
-      const restore = () => {
-        if (cycle !== openCycle.current) return
-        const el = eligible(restoreFocusTo()) ?? eligible(trigger)
-        el?.focus({ preventScroll: true })
-      }
-      // A late restore is harmless: the macrotask re-checks the cycle, so
-      // no clearTimeout bookkeeping is needed here.
-      setTimeout(restore, 0)
+      const beforeClose = document.activeElement
+      const workflowTarget = beforeClose !== trigger && !dialog.contains(beforeClose) ? beforeClose : null
       if (dialog.open) dialog.close()
+      const nativeFocus = document.activeElement
+      // Finish the React commit first; discard obsolete StrictMode/reopen
+      // work and preserve any new external workflow focus after native close.
+      queueMicrotask(() => {
+        if (cycle !== openCycle.current) return
+        const active = document.activeElement
+        if (active !== nativeFocus && active !== document.body && active !== trigger && active?.isConnected && !dialog.contains(active)) return
+        if (focusTarget(workflowTarget)) return
+        if (!focusTarget(latest.current.restoreFocusTo())) focusTarget(trigger)
+      })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- restoreFocusTo is only read at open (trigger capture) and close (final resolution); mid-open identity changes must not re-run the modal lifecycle.
-  }, [open, initialFocusRef, onRequestClose])
+  }, [open])
 
   return (
     <dialog ref={dialogRef} aria-labelledby={labelledBy} className={className}>
@@ -66,10 +70,9 @@ export function ModalDialog({
   )
 }
 
-// Never restore focus to body, and only to a focusable, enabled element.
-function eligible(el: HTMLElement | null | undefined): HTMLElement | null {
-  if (!el || !el.isConnected || el === document.body) return null
-  if (el instanceof HTMLButtonElement && el.disabled) return null
-  if (el instanceof HTMLInputElement && el.disabled) return null
-  return el
+function focusTarget(target: Element | null): boolean {
+  if (!(target instanceof HTMLElement) || !target.isConnected || target === document.body) return false
+  if (target.matches(":disabled") || target.closest('[hidden], [inert], [aria-disabled="true"], [aria-hidden="true"]')) return false
+  target.focus({ preventScroll: true })
+  return document.activeElement === target
 }

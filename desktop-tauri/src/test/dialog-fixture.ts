@@ -1,13 +1,8 @@
-import { vi } from "vitest"
-
 export type DialogFixture = { restore: () => void }
 
-// jsdom 26.1.0 implements neither showModal nor close (verified against the
-// pinned WebIDL in #36 research). This fixture installs minimal stand-ins on
-// the prototype: they only flip the `open` reflection and, for close, emit a
-// `close` event. It deliberately does NOT focus anything, trap Tab, implement
-// inert, or model the browser event loop — focus assertions exercise the
-// component's own policy. Call restore() after React roots are unmounted.
+// jsdom 26 lacks these methods. This fixture changes only open/close state;
+// it does not simulate focus, modality, keyboard trapping, or layout.
+// Unmount React roots before restoring the prototype descriptors.
 export function installDialogFixture(): DialogFixture {
   const prototype = HTMLDialogElement.prototype
   const savedShow = Object.getOwnPropertyDescriptor(prototype, "showModal")
@@ -15,25 +10,24 @@ export function installDialogFixture(): DialogFixture {
   Object.defineProperties(prototype, {
     showModal: {
       configurable: true,
-      value: vi.fn(function (this: HTMLDialogElement) {
-        this.open = true
-      }),
+      value: function (this: HTMLDialogElement) { this.open = true },
     },
     close: {
       configurable: true,
-      value: vi.fn(function (this: HTMLDialogElement) {
+      value: function (this: HTMLDialogElement) {
         if (!this.open) return
         this.open = false
         this.dispatchEvent(new Event("close"))
-      }),
+      },
     },
   })
-  const restore = () => {
-    if (savedShow) Object.defineProperty(prototype, "showModal", savedShow)
-    else Reflect.deleteProperty(prototype, "showModal")
-    if (savedClose) Object.defineProperty(prototype, "close", savedClose)
-    else Reflect.deleteProperty(prototype, "close")
-    vi.restoreAllMocks()
+  return {
+    restore() {
+      if (savedShow) Object.defineProperty(prototype, "showModal", savedShow)
+      else Reflect.deleteProperty(prototype, "showModal")
+      if (savedClose) Object.defineProperty(prototype, "close", savedClose)
+      else Reflect.deleteProperty(prototype, "close")
+    },
   }
-  return { restore }
 }
+
