@@ -45,15 +45,16 @@ export function ModalDialog({
     dialog.addEventListener("cancel", onCancel)
     return () => {
       dialog.removeEventListener("cancel", onCancel)
-      if (cycle !== openCycle.current) return undefined
+      if (cycle !== openCycle.current) return
       const restore = () => {
         if (cycle !== openCycle.current) return
         const el = eligible(restoreFocusTo()) ?? eligible(trigger)
         el?.focus({ preventScroll: true })
       }
-      const timeout = setTimeout(restore, 0)
+      // A late restore is harmless: the macrotask re-checks the cycle, so
+      // no clearTimeout bookkeeping is needed here.
+      setTimeout(restore, 0)
       if (dialog.open) dialog.close()
-      return () => clearTimeout(timeout)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- restoreFocusTo is only read at open (trigger capture) and close (final resolution); mid-open identity changes must not re-run the modal lifecycle.
   }, [open, initialFocusRef, onRequestClose])

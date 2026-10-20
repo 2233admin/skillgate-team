@@ -37,7 +37,12 @@ function dialogOf(container: HTMLElement) {
   return container.querySelector("dialog")!
 }
 
-function content(initialFocus: React.RefObject<HTMLElement | null>, titleId: string) {
+// lib target predates Promise.withResolvers; same shape, no dependency bump.
+function flushMacrotask() {
+  return new Promise<void>((resolve) => { setTimeout(resolve, 0) })
+}
+
+function content(initialFocus: React.Ref<HTMLButtonElement>, titleId: string) {
   return (
     <>
       <h3 id={titleId}>Dialog title</h3>
@@ -91,11 +96,7 @@ describe("ModalDialog", () => {
     // Focus restore is deferred (#36 contract): React's commit remounts the
     // focused child and steals synchronous restores, so the component
     // schedules one macrotask; await it inside act.
-    await act(async () => {
-      const { promise, resolve } = Promise.withResolvers<void>()
-      setTimeout(resolve, 0)
-      await promise
-    })
+    await act(async () => { await flushMacrotask() })
     expect(document.activeElement).toBe(trigger)
     expect(onRequestClose).toHaveBeenCalledTimes(1)
   })
@@ -114,17 +115,9 @@ describe("ModalDialog", () => {
       )
     await render(true)
     // Let the close cycle's deferred focus restore run before reopening.
-    await act(async () => {
-      const { promise, resolve } = Promise.withResolvers<void>()
-      setTimeout(resolve, 0)
-      await promise
-    })
+    await act(async () => { await flushMacrotask() })
     await render(false)
-    await act(async () => {
-      const { promise, resolve } = Promise.withResolvers<void>()
-      setTimeout(resolve, 0)
-      await promise
-    })
+    await act(async () => { await flushMacrotask() })
     await render(true)
     const dialog = dialogOf(view.container)
     expect(dialog.open).toBe(true)
@@ -155,11 +148,7 @@ describe("ModalDialog", () => {
           {content(initialFocus, "t")}
         </ModalDialog>,
       )
-      await act(async () => {
-        const { promise, resolve } = Promise.withResolvers<void>()
-        setTimeout(resolve, 0)
-        await promise
-      })
+      await act(async () => { await flushMacrotask() })
       expect(document.activeElement).not.toBe(disabledTrigger)
       expect(document.activeElement).not.toBe(detached)
     }
@@ -200,11 +189,7 @@ describe("ModalDialog", () => {
         {content(initialFocus, "t")}
       </ModalDialog>,
     )
-    await act(async () => {
-      const { promise, resolve } = Promise.withResolvers<void>()
-      setTimeout(resolve, 0)
-      await promise
-    })
+    await act(async () => { await flushMacrotask() })
     expect(document.activeElement).not.toBe(disabledInput)
     await view.render(
       <ModalDialog open labelledBy="t" initialFocusRef={initialFocus} restoreFocusTo={() => document.body} onRequestClose={() => {}}>
@@ -216,11 +201,7 @@ describe("ModalDialog", () => {
         {content(initialFocus, "t")}
       </ModalDialog>,
     )
-    await act(async () => {
-      const { promise, resolve } = Promise.withResolvers<void>()
-      setTimeout(resolve, 0)
-      await promise
-    })
+    await act(async () => { await flushMacrotask() })
     expect(document.activeElement).not.toBe(document.body)
   })
 
