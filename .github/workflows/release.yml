@@ -152,7 +152,7 @@ jobs:
         shell: bash
         run: node scripts/release-preflight.mjs --tag "$RELEASE_TAG" --write-config .release/tauri.release.conf.json
       - name: Build signed installers and update artifacts
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v1
         with:
           projectPath: desktop-tauri
           tagName: ${{ env.RELEASE_TAG }}
