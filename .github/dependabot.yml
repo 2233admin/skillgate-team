@@ -16,8 +16,9 @@
 
 version: 2
 updates:
-  # Root manifest plus the six workspace manifests (cli, desktop, desktop-tauri,
-  # tui, ui). Dependabot covers workspaces from the root directory entry.
+  # Root manifest plus the five workspace manifests declared in package.json
+  # (cli, ui, desktop, desktop-tauri, tui). Dependabot covers workspaces from
+  # the root directory entry.
   - package-ecosystem: bun
     directory: "/"
     schedule:
