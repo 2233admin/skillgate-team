@@ -175,7 +175,7 @@ jobs:
             .release/SHA256SUMS-${{ matrix.platform }}.txt
           if-no-files-found: error
       - name: Attach platform checksums to draft release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           draft: true
