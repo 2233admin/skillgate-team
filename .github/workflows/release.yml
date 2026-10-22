@@ -167,7 +167,7 @@ jobs:
           args: --config ../.release/tauri.release.conf.json ${{ matrix.args }}
       - name: Validate installers and write checksums
         run: node scripts/validate-release-artifacts.mjs --platform ${{ matrix.platform }} --directory ${{ matrix.bundle_dir }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: skillgate-${{ env.RELEASE_TAG }}-${{ matrix.platform }}-evidence
           path: |
